@@ -4,8 +4,19 @@ import { useSession } from "@/lib/auth-client";
 import Login from "@/components/login";
 import Logout from "@/components/logout";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function HomePage() {
+	return (
+		<Suspense
+			fallback={<main className="min-h-screen bg-zinc-50 p-4 font-sans" />}
+		>
+			<HomePageLogic />
+		</Suspense>
+	);
+}
+
+function HomePageLogic() {
 	const { data: session, isPending } = useSession();
 	const searchParams = useSearchParams();
 	const isSso = searchParams.has("sso");

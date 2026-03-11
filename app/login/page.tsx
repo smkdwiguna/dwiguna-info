@@ -11,7 +11,7 @@ function LoginLogic() {
 	useEffect(() => {
 		authClient.signIn.social({
 			provider: "google",
-			callbackURL: isSso ? "/api/sso" : "/",
+			callbackURL: isSso ? "/sso" : "/",
 		});
 	}, [isSso]);
 
@@ -22,9 +22,11 @@ function LoginLogic() {
 					D
 				</div>
 				<p className="text-zinc-600 font-medium">
-					Menghubungkan ke Dwiguna SSO...
+					Menghubungkan ke Dwiguna.Info...
 				</p>
-				<p className="text-sm text-zinc-400 mt-2">Meneruskan ke Google</p>
+				<p className="text-sm text-zinc-400 mt-2">
+					Meneruskan SSO dengan Google
+				</p>
 			</div>
 		</div>
 	);
