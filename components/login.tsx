@@ -8,9 +8,9 @@ export default function Login({ isSso }: { isSso: boolean }) {
 					<span className="text-white font-bold text-2xl">D</span>
 				</div>
 
-				<h1 className="text-2xl font-bold text-zinc-900 mb-2">Dwiguna ID</h1>
+				<h1 className="text-2xl font-bold text-zinc-900 mb-2">Dwiguna.Info</h1>
 				<p className="text-sm text-zinc-500 mb-8">
-					Satu akun untuk seluruh ekosistem digital SMK TI Dwiguna.
+					Satu akun ekosistem SMK TI Dwiguna
 				</p>
 
 				<Link
