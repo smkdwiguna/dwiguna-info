@@ -1,22 +1,43 @@
 import { betterAuth } from "better-auth/minimal";
-
-const baseURL =
-	process.env.BETTER_AUTH_URL ||
-	(process.env.NODE_ENV === "development"
-		? "http://localhost:3000"
-		: undefined);
+import { fetchUserOUFromWorkspace } from "./google-api";
 
 export const auth = betterAuth({
-	baseURL,
-	trustedOrigins: ["http://localhost:3000", "https://dwiguna.info"],
+	baseURL: process.env.BETTER_AUTH_URL,
+	trustedOrigins: [
+		"http://localhost:3000",
+		"http://localhost:3001",
+		"https://dwiguna.info",
+	],
+	advanced: {
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: "localhost",
+		},
+	},
 	socialProviders: {
 		google: {
 			clientId: process.env.GOOGLE_CLIENT_ID!,
 			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+			mapProfileToUser: async (profile) => {
+				const userOU = await fetchUserOUFromWorkspace(profile.email);
+				return {
+					firstName: profile.given_name,
+					lastName: profile.family_name,
+					ou: userOU,
+				};
+			},
+		},
+	},
+	user: {
+		additionalFields: {
+			ou: {
+				type: "string",
+				required: false,
+				input: false,
+			},
 		},
 	},
 	account: {
-		// Store OAuth account data in cookies since we're running stateless
 		storeAccountCookie: true,
 	},
 	telemetry: {
