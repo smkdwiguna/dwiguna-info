@@ -21,6 +21,7 @@ export async function getSessionToken() {
 	return jwt.sign(session, process.env.SSO_PRIVATE_KEY!.replace(/\\n/g, "\n"), {
 		algorithm: "RS256",
 		expiresIn: "5m",
+		jwtid: crypto.randomUUID(),
 		issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
 		header: {
 			alg: "RS256",

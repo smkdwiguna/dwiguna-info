@@ -23,11 +23,21 @@ export async function GET(request: Request) {
 					algorithms: ["RS256"],
 					issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
 				},
-			) as {
-				callbackUrl: string;
-			};
+			) as jwt.JwtPayload;
 
-			appUrl = decodedReq.callbackUrl;
+			const audience = decodedReq.aud;
+			const audCallback =
+				typeof audience === "string"
+					? audience
+					: Array.isArray(audience)
+						? audience[0]
+						: undefined;
+
+			if (!audCallback) {
+				throw new Error("aud callback URL tidak ditemukan di app token");
+			}
+
+			appUrl = audCallback;
 		} else if (pendingCookie) {
 			const decodedCookie = decryptCookiePayload<{ callbackUrl: string }>(
 				pendingCookie,
@@ -65,6 +75,7 @@ export async function GET(request: Request) {
 		{
 			algorithm: "RS256",
 			expiresIn: "5m",
+			jwtid: crypto.randomUUID(),
 			issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
 			header: {
 				alg: "RS256",
@@ -76,7 +87,19 @@ export async function GET(request: Request) {
 		},
 	);
 
-	const response = NextResponse.redirect(`${appUrl}?token=${ssoToken}`);
+	let callbackUrl: URL;
+	try {
+		callbackUrl = new URL(appUrl);
+	} catch {
+		return NextResponse.json(
+			{ error: "Callback URL tidak valid di app token" },
+			{ status: 400 },
+		);
+	}
+
+	callbackUrl.searchParams.set("token", ssoToken);
+
+	const response = NextResponse.redirect(callbackUrl);
 	response.cookies.delete("pending_sso_app");
 	return response;
 }

@@ -29,28 +29,29 @@ async function generateAppKeyAction(formData: FormData) {
 
 	await checkAccess();
 
-	const appName = String(formData.get("appName") ?? "").trim();
-	const callbackUrl = String(formData.get("callbackUrl") ?? "").trim();
+	const sub = String(formData.get("sub") ?? "").trim();
+	const aud = String(formData.get("aud") ?? "").trim();
 
-	if (!appName || !callbackUrl) {
+	if (!sub || !aud) {
 		redirect("/app-secret?error=input_wajib");
 	}
 
-	let normalizedCallbackUrl: URL;
+	let normalizedAud: URL;
 	try {
-		normalizedCallbackUrl = new URL(callbackUrl);
+		normalizedAud = new URL(aud);
 	} catch {
-		redirect("/app-secret?error=callback_invalid");
+		redirect("/app-secret?error=aud_invalid");
 	}
 
 	const appKey = jwt.sign(
-		{
-			appName,
-			callbackUrl: normalizedCallbackUrl.toString(),
-		},
+		{},
 		process.env.SSO_PRIVATE_KEY!.replace(/\\n/g, "\n"),
 		{
 			algorithm: "RS256",
+			subject: sub,
+			audience: normalizedAud.toString(),
+			expiresIn: "365d",
+			jwtid: crypto.randomUUID(),
 			issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
 			header: {
 				alg: "RS256",
@@ -95,30 +96,30 @@ export default async function AdminGenerateKeyPage({
 				<form action={generateAppKeyAction} className="mt-8 space-y-4">
 					<div>
 						<label
-							htmlFor="appName"
+							htmlFor="sub"
 							className="mb-1 block text-sm font-medium text-zinc-700"
 						>
-							App Name
+							sub (Client App Identifier)
 						</label>
 						<input
-							id="appName"
-							name="appName"
+							id="sub"
+							name="sub"
 							required
-							placeholder="Perpus Dwiguna"
+							placeholder="perpus-dwiguna"
 							className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none ring-0 focus:border-zinc-500"
 						/>
 					</div>
 
 					<div>
 						<label
-							htmlFor="callbackUrl"
+							htmlFor="aud"
 							className="mb-1 block text-sm font-medium text-zinc-700"
 						>
-							Callback URL
+							aud (Callback URL)
 						</label>
 						<input
-							id="callbackUrl"
-							name="callbackUrl"
+							id="aud"
+							name="aud"
 							type="url"
 							required
 							placeholder="http://localhost:3001/auth"
@@ -130,7 +131,7 @@ export default async function AdminGenerateKeyPage({
 						type="submit"
 						className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
 					>
-						Generate App Secret
+						Generate
 					</button>
 				</form>
 
