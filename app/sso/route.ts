@@ -1,7 +1,12 @@
 import { auth } from "@/lib/auth";
+import {
+	decryptCookiePayload,
+	encryptCookiePayload,
+} from "@/lib/secure-cookie";
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 
 export async function GET(request: Request) {
 	const url = new URL(request.url);
@@ -11,28 +16,32 @@ export async function GET(request: Request) {
 
 	try {
 		if (appToken) {
-			const decodedReq = jwt.verify(appToken, process.env.SSO_APP_SECRET!) as {
-				app_url: string;
+			const decodedReq = jwt.verify(
+				appToken,
+				process.env.SSO_PUBLIC_KEY!.replace(/\\n/g, "\n"),
+				{
+					algorithms: ["RS256"],
+					issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
+				},
+			) as {
+				callbackUrl: string;
 			};
-			appUrl = decodedReq.app_url;
+
+			appUrl = decodedReq.callbackUrl;
 		} else if (pendingCookie) {
-			const decodedCookie = jwt.verify(
+			const decodedCookie = decryptCookiePayload<{ callbackUrl: string }>(
 				pendingCookie,
-				process.env.SSO_APP_SECRET!,
-			) as { app_url: string };
-			appUrl = decodedCookie.app_url;
+			);
+			appUrl = decodedCookie.callbackUrl;
 		} else {
 			return NextResponse.json(
-				{ error: "Permintaan login tidak valid/hilang" },
+				{ error: "Permintaan login tidak valid" },
 				{ status: 400 },
 			);
 		}
 	} catch (error) {
 		console.error("Token verification failed:", error);
-		return NextResponse.json(
-			{ error: "Akses Ditolak: Tiket Kadaluarsa atau Dimanipulasi" },
-			{ status: 403 },
-		);
+		return NextResponse.json({ error: "Akses Ditolak" }, { status: 403 });
 	}
 
 	const session = await auth.api.getSession({
@@ -40,11 +49,7 @@ export async function GET(request: Request) {
 	});
 
 	if (!session) {
-		const safeCookieValue = jwt.sign(
-			{ app_url: appUrl },
-			process.env.SSO_APP_SECRET!,
-			{ expiresIn: "15m" },
-		);
+		const safeCookieValue = encryptCookiePayload({ callbackUrl: appUrl });
 		const response = NextResponse.redirect(new URL("/?sso", request.url));
 		response.cookies.set("pending_sso_app", safeCookieValue, {
 			httpOnly: true,
@@ -54,11 +59,22 @@ export async function GET(request: Request) {
 		return response;
 	}
 
-	const privateKey = process.env.SSO_PRIVATE_KEY?.replace(/\\n/g, "\n");
-	const ssoToken = jwt.sign(session, privateKey!, {
-		algorithm: "RS256",
-		expiresIn: "5m",
-	});
+	const ssoToken = jwt.sign(
+		session,
+		process.env.SSO_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+		{
+			algorithm: "RS256",
+			expiresIn: "5m",
+			issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
+			header: {
+				alg: "RS256",
+				kid: crypto
+					.createHash("sha256")
+					.update(process.env.SSO_PUBLIC_KEY!.replace(/\\n/g, "\n"))
+					.digest("base64url"),
+			},
+		},
+	);
 
 	const response = NextResponse.redirect(`${appUrl}?token=${ssoToken}`);
 	response.cookies.delete("pending_sso_app");

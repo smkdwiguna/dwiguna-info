@@ -3,17 +3,7 @@ import { fetchUserOUFromWorkspace } from "./google-api";
 
 export const auth = betterAuth({
 	baseURL: process.env.BETTER_AUTH_URL,
-	trustedOrigins: [
-		"http://localhost:3000",
-		"http://localhost:3001",
-		"https://dwiguna.info",
-	],
-	advanced: {
-		crossSubDomainCookies: {
-			enabled: true,
-			domain: "localhost",
-		},
-	},
+	trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	socialProviders: {
 		google: {
 			clientId: process.env.GOOGLE_CLIENT_ID!,
