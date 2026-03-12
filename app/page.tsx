@@ -5,6 +5,7 @@ import Login from "@/components/login";
 import Logout from "@/components/logout";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Perpus from "@/components/perpus";
 
 export default function HomePage() {
 	return (
@@ -53,12 +54,13 @@ function HomePageLogic() {
 
 				<div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
 					<h2 className="text-lg font-semibold text-zinc-800">
-						Selamat datang di Dwiguna Center
+						Selamat datang di Dwiguna.Info
 					</h2>
 					<p className="text-zinc-500 mt-2">
-						Ini adalah halaman utama (Dashboard) karena kamu sudah login.
+						Ini adalah halaman utama (portal) karena kamu sudah login.
 					</p>
 				</div>
+				<Perpus />
 			</div>
 		</main>
 	);

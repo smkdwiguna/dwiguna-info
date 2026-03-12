@@ -16,7 +16,7 @@ export default function Login({ isSso }: { isSso: boolean }) {
 
 				<button
 					onClick={() => router.replace("/login" + (isSso ? "?sso" : ""))}
-					className="w-full flex items-center justify-center gap-3 bg-white border border-zinc-200 text-zinc-800 font-medium py-3 px-4 rounded-xl hover:bg-zinc-50 hover:shadow-sm transition-all disabled:opacity-50"
+					className="cursor-pointer w-full flex items-center justify-center gap-3 bg-white border border-zinc-200 text-zinc-800 font-medium py-3 px-4 rounded-xl hover:bg-zinc-50 hover:shadow-sm transition-all disabled:opacity-50"
 				>
 					Lanjutkan SSO dengan Google
 				</button>
