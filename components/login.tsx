@@ -17,7 +17,7 @@ export default function Login({ isSso }: { isSso: boolean }) {
 				<Image
 					src="/SMK-TI-Dwiguna.png"
 					alt="Logo SMK TI Dwiguna"
-					className="text-center w-[75%] mx-auto"
+					className="text-center h-12 w-auto mx-auto"
 					width={1219}
 					height={195}
 				/>

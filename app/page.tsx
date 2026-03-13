@@ -13,27 +13,29 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import { Spinner } from "@/components/spinner";
 
 export default function HomePage() {
 	return (
-		<Suspense fallback={<PageSkeleton />}>
+		<Suspense fallback={<PageLoading />}>
 			<HomePageLogic />
 		</Suspense>
 	);
 }
 
-function PageSkeleton() {
+function PageLoading() {
 	return (
-		<main className="min-h-screen bg-muted/40 p-4 md:p-8">
-			<div className="max-w-3xl mx-auto space-y-6">
-				<div className="flex justify-between items-center">
-					<Skeleton className="h-8 w-48" />
-					<Skeleton className="h-8 w-20" />
-				</div>
-				<Skeleton className="h-32 w-full" />
-				<Skeleton className="h-48 w-full" />
+		<main className="min-h-screen bg-muted/40">
+			<div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-4">
+				<Image
+					src="/SMK-TI-Dwiguna.png"
+					alt="Logo SMK TI Dwiguna"
+					width={1219}
+					height={195}
+					className="h-12 w-auto"
+				/>
+				<Spinner variant="muted" />
 			</div>
 		</main>
 	);
@@ -45,7 +47,7 @@ function HomePageLogic() {
 	const isSso = searchParams.has("sso");
 
 	if (isPending) {
-		return <PageSkeleton />;
+		return <PageLoading />;
 	}
 
 	if (!session) {
@@ -61,7 +63,7 @@ function HomePageLogic() {
 					<Image
 						src="/SMK-TI-Dwiguna.png"
 						alt="Logo SMK TI Dwiguna"
-						className="h-8 w-auto"
+						className="h-12 w-auto"
 						width={1219}
 						height={195}
 					/>
