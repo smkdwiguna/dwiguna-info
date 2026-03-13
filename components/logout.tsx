@@ -2,6 +2,8 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { SignOutIcon } from "@phosphor-icons/react";
 
 export default function Logout() {
 	const router = useRouter();
@@ -16,11 +18,9 @@ export default function Logout() {
 	};
 
 	return (
-		<button
-			onClick={handleLogout}
-			className="text-sm cursor-pointer text-red-500 font-medium p-2 bg-red-50 rounded-lg"
-		>
+		<Button variant="destructive" onClick={handleLogout}>
+			<SignOutIcon data-icon="inline-start" weight="bold" />
 			Logout
-		</button>
+		</Button>
 	);
 }

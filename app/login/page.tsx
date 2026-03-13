@@ -3,6 +3,7 @@
 import { authClient } from "@/lib/auth-client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function LoginLogic() {
 	const searchParams = useSearchParams();
@@ -16,17 +17,20 @@ function LoginLogic() {
 	}, [isSso]);
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-zinc-50">
-			<div className="text-center animate-pulse">
-				<div className="w-12 h-12 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center text-white font-bold">
-					D
+		<div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+			<div className="w-full max-w-xs text-center flex flex-col items-center gap-5">
+				<div className="size-14 bg-primary rounded-xl flex items-center justify-center shadow-md animate-pulse">
+					<span className="text-primary-foreground font-bold text-2xl leading-none">
+						D
+					</span>
 				</div>
-				<p className="text-zinc-600 font-medium">
-					Menghubungkan ke Dwiguna.Info...
-				</p>
-				<p className="text-sm text-zinc-400 mt-2">
-					Meneruskan SSO dengan Google
-				</p>
+				<div className="flex flex-col gap-2 w-full items-center">
+					<p className="font-semibold text-sm">Menghubungkan ke Google...</p>
+					<div className="flex flex-col gap-2 w-full mt-2">
+						<Skeleton className="h-3 w-full" />
+						<Skeleton className="h-3 w-4/5 mx-auto" />
+					</div>
+				</div>
 			</div>
 		</div>
 	);
@@ -34,7 +38,11 @@ function LoginLogic() {
 
 export default function LoginPage() {
 	return (
-		<Suspense fallback={<p>Loading...</p>}>
+		<Suspense
+			fallback={
+				<div className="flex min-h-screen items-center justify-center bg-muted/40" />
+			}
+		>
 			<LoginLogic />
 		</Suspense>
 	);

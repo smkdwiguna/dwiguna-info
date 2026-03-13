@@ -3,6 +3,23 @@ import jwt from "jsonwebtoken";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import crypto from "crypto";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+	CheckCircleIcon,
+	WarningCircleIcon,
+	KeyIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 const PROKTOR_EMAIL = "proktor@smkdwiguna.sch.id";
 const FLASH_COOKIE = "generated_app_key";
@@ -24,7 +41,7 @@ async function checkAccess() {
 	return session;
 }
 
-async function generateAppKeyAction(formData: FormData) {
+async function generateAppSecretAction(formData: FormData) {
 	"use server";
 
 	await checkAccess();
@@ -87,73 +104,90 @@ export default async function AdminGenerateKeyPage({
 		params.generated != null ? cookieStore.get(FLASH_COOKIE)?.value : null;
 
 	return (
-		<main className="min-h-screen bg-zinc-50 px-4 py-10 font-sans">
-			<div className="mx-auto max-w-3xl rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-				<h1 className="text-2xl font-bold text-zinc-900">
-					App Secret Generator
-				</h1>
-
-				<form action={generateAppKeyAction} className="mt-8 space-y-4">
-					<div>
-						<label
-							htmlFor="sub"
-							className="mb-1 block text-sm font-medium text-zinc-700"
-						>
-							sub (Client App Identifier)
-						</label>
-						<input
-							id="sub"
-							name="sub"
-							required
-							placeholder="perpus-dwiguna"
-							className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none ring-0 focus:border-zinc-500"
-						/>
+		<main className="min-h-screen bg-muted/40 px-4 py-10">
+			<div className="mx-auto max-w-2xl space-y-6">
+				<div className="flex items-center gap-3">
+					<div className="size-9 bg-primary rounded-lg flex items-center justify-center shadow-sm">
+						<span className="text-primary-foreground font-bold text-lg leading-none">
+							D
+						</span>
 					</div>
-
 					<div>
-						<label
-							htmlFor="aud"
-							className="mb-1 block text-sm font-medium text-zinc-700"
-						>
-							aud (Callback URL)
-						</label>
-						<input
-							id="aud"
-							name="aud"
-							type="url"
-							required
-							placeholder="http://localhost:3001/auth"
-							className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm outline-none ring-0 focus:border-zinc-500"
-						/>
-					</div>
-
-					<button
-						type="submit"
-						className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
-					>
-						Generate
-					</button>
-				</form>
-
-				{params.error ? (
-					<p className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-						Error: {params.error}
-					</p>
-				) : null}
-
-				{generatedAppKey ? (
-					<div className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-						<p className="text-sm font-semibold text-emerald-700">
-							App Secret berhasil dibuat
+						<p className="font-semibold text-sm leading-tight">Dwiguna.Info</p>
+						<p className="text-xs text-muted-foreground leading-tight">
+							Admin Panel
 						</p>
-						<textarea
-							readOnly
-							value={generatedAppKey}
-							rows={8}
-							className="mt-3 w-full rounded-md border border-emerald-200 bg-white p-3 font-mono text-xs text-zinc-800"
-						/>
 					</div>
-				) : null}
+				</div>
+
+				<Card>
+					<CardHeader className="border-b">
+						<div className="flex items-center gap-2">
+							<KeyIcon className="size-5 text-primary" weight="duotone" />
+							<CardTitle>App Secret Generator</CardTitle>
+						</div>
+						<CardDescription>
+							Generate JWT app secret untuk integrasi aplikasi eksternal dengan
+							SSO Dwiguna.Info.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="pt-6">
+						<form
+							action={generateAppSecretAction}
+							className="flex flex-col gap-5"
+						>
+							<div className="flex flex-col gap-2">
+								<Label htmlFor="sub">sub — Client App Identifier</Label>
+								<Input
+									id="sub"
+									name="sub"
+									required
+									placeholder="perpus-dwiguna"
+								/>
+							</div>
+
+							<div className="flex flex-col gap-2">
+								<Label htmlFor="aud">aud — Callback URL</Label>
+								<Input
+									id="aud"
+									name="aud"
+									type="url"
+									required
+									placeholder="http://localhost:3001/auth"
+								/>
+							</div>
+
+							<Separator />
+
+							<Button type="submit" className="self-start">
+								Generate App Secret
+							</Button>
+						</form>
+					</CardContent>
+				</Card>
+
+				{params.error && (
+					<Alert variant="destructive">
+						<WarningCircleIcon className="size-4" />
+						<AlertTitle>Terjadi Kesalahan</AlertTitle>
+						<AlertDescription>Error: {params.error}</AlertDescription>
+					</Alert>
+				)}
+
+				{generatedAppKey && (
+					<Alert>
+						<CheckCircleIcon className="size-4" />
+						<AlertTitle>App Secret Berhasil Dibuat</AlertTitle>
+						<AlertDescription className="mt-3">
+							<textarea
+								readOnly
+								defaultValue={generatedAppKey}
+								rows={8}
+								className="w-full rounded-md border bg-background p-3 font-mono text-xs text-foreground resize-none focus:outline-none"
+							/>
+						</AlertDescription>
+					</Alert>
+				)}
 			</div>
 		</main>
 	);
