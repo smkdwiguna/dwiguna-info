@@ -1,8 +1,8 @@
-import { google } from "googleapis";
+import { admin, auth } from "@googleapis/admin";
 
 export async function fetchUserOUFromWorkspace(email: string) {
 	try {
-		const auth = new google.auth.GoogleAuth({
+		const googleAuth = new auth.GoogleAuth({
 			credentials: {
 				client_email: process.env.GOOGLE_CLIENT_EMAIL,
 				private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
@@ -13,7 +13,7 @@ export async function fetchUserOUFromWorkspace(email: string) {
 			},
 		});
 
-		const adminService = google.admin({ version: "directory_v1", auth });
+		const adminService = admin({ version: "directory_v1", auth: googleAuth });
 
 		const response = await adminService.users.get({
 			userKey: email,

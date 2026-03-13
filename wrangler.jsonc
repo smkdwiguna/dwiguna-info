@@ -1,0 +1,25 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "dwiguna-info",
+	"compatibility_date": "2026-03-13",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS",
+	},
+	"workers_dev": false,
+	"preview_urls": false,
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "dwiguna-info",
+		},
+	],
+	"images": {
+		"binding": "IMAGES",
+	},
+	"observability": {
+		"enabled": true,
+	},
+}
