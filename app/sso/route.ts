@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { createAuthorizationCode } from "@/lib/sso-auth-code-store";
 import {
 	decryptCookiePayload,
 	encryptCookiePayload,
@@ -6,18 +7,17 @@ import {
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
 
 export async function GET(request: Request) {
 	const url = new URL(request.url);
-	const appToken = url.searchParams.get("app");
 	const pendingCookie = (await cookies()).get("pending_sso_app")?.value;
 	let appUrl = "";
+	let appSecret = url.searchParams.get("app");
 
 	try {
-		if (appToken) {
+		if (appSecret) {
 			const decodedReq = jwt.verify(
-				appToken,
+				appSecret,
 				process.env.SSO_PUBLIC_KEY!.replace(/\\n/g, "\n"),
 				{
 					algorithms: ["RS256"],
@@ -39,10 +39,12 @@ export async function GET(request: Request) {
 
 			appUrl = audCallback;
 		} else if (pendingCookie) {
-			const decodedCookie = decryptCookiePayload<{ callbackUrl: string }>(
-				pendingCookie,
-			);
+			const decodedCookie = decryptCookiePayload<{
+				callbackUrl: string;
+				appSecret: string;
+			}>(pendingCookie);
 			appUrl = decodedCookie.callbackUrl;
+			appSecret = decodedCookie.appSecret;
 		} else {
 			return NextResponse.json(
 				{ error: "Permintaan login tidak valid" },
@@ -59,7 +61,10 @@ export async function GET(request: Request) {
 	});
 
 	if (!session) {
-		const safeCookieValue = encryptCookiePayload({ callbackUrl: appUrl });
+		const safeCookieValue = encryptCookiePayload({
+			callbackUrl: appUrl,
+			appSecret,
+		});
 		const response = NextResponse.redirect(new URL("/?sso", request.url));
 		response.cookies.set("pending_sso_app", safeCookieValue, {
 			httpOnly: true,
@@ -69,23 +74,12 @@ export async function GET(request: Request) {
 		return response;
 	}
 
-	const ssoToken = jwt.sign(
-		session,
-		process.env.SSO_PRIVATE_KEY!.replace(/\\n/g, "\n"),
-		{
-			algorithm: "RS256",
-			expiresIn: "5m",
-			jwtid: crypto.randomUUID(),
-			issuer: process.env.BETTER_AUTH_URL!.replace(/\/$/, ""),
-			header: {
-				alg: "RS256",
-				kid: crypto
-					.createHash("sha256")
-					.update(process.env.SSO_PUBLIC_KEY!.replace(/\\n/g, "\n"))
-					.digest("base64url"),
-			},
-		},
-	);
+	const decodedAppSecret = jwt.decode(appSecret) as jwt.JwtPayload | null;
+	const authCode = createAuthorizationCode({
+		session: session as unknown as Record<string, unknown>,
+		audience: appUrl,
+		subject: decodedAppSecret?.sub,
+	});
 
 	let callbackUrl: URL;
 	try {
@@ -97,7 +91,7 @@ export async function GET(request: Request) {
 		);
 	}
 
-	callbackUrl.searchParams.set("token", ssoToken);
+	callbackUrl.searchParams.set("code", authCode);
 
 	const response = NextResponse.redirect(callbackUrl);
 	response.cookies.delete("pending_sso_app");
