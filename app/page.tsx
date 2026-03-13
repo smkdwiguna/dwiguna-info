@@ -13,7 +13,6 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
@@ -55,7 +54,6 @@ function HomePageLogic() {
 	}
 
 	const { user } = session;
-	const userOu = (user as { ou?: string }).ou;
 
 	return (
 		<main className="min-h-screen bg-muted/40 p-4 md:p-8">
@@ -75,7 +73,7 @@ function HomePageLogic() {
 
 				<Card>
 					<CardHeader>
-						<div className="flex items-center gap-4">
+						<div className="flex items-start gap-4">
 							<Avatar className="size-14">
 								<AvatarImage
 									referrerPolicy="no-referrer"
@@ -86,14 +84,11 @@ function HomePageLogic() {
 									{user.name?.charAt(0).toUpperCase()}
 								</AvatarFallback>
 							</Avatar>
-							<div className="flex flex-col gap-1">
-								<CardTitle className="text-lg">Halo, {user.name}!</CardTitle>
+							<div className="flex flex-col pt-0.5">
+								<CardTitle className="text-xl font-bold">
+									Halo, {user.name}!
+								</CardTitle>
 								<CardDescription>{user.email}</CardDescription>
-								{userOu && (
-									<Badge variant="secondary" className="self-start mt-1">
-										{userOu}
-									</Badge>
-								)}
 							</div>
 						</div>
 					</CardHeader>
