@@ -5,7 +5,6 @@ import Login from "@/components/login";
 import Logout from "@/components/logout";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import Perpus from "@/components/perpus";
 import {
 	Card,
 	CardDescription,
@@ -93,8 +92,6 @@ function HomePageLogic() {
 						</div>
 					</CardHeader>
 				</Card>
-
-				<Perpus />
 			</div>
 		</main>
 	);

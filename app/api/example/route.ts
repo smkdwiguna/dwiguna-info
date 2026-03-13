@@ -13,11 +13,11 @@ export async function GET() {
 		);
 	}
 
-	const perpusApiUrl =
-		process.env.PERPUS_DATA_API_URL ?? "http://localhost:3001/api/test";
+	const exampleApiUrl =
+		process.env.EXAMPLE_DATA_API_URL ?? "http://localhost:3001/api/test";
 
 	try {
-		const response = await fetch(perpusApiUrl, {
+		const response = await fetch(exampleApiUrl, {
 			method: "GET",
 			headers: {
 				Authorization: `Bearer ${token}`,
@@ -38,7 +38,7 @@ export async function GET() {
 		return NextResponse.json(
 			{
 				token,
-				error: "Gagal menghubungi Perpus API",
+				error: "Gagal menghubungi Example API",
 				detail: error instanceof Error ? error.message : "unknown",
 			},
 			{ status: 502 },

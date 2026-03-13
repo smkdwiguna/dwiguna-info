@@ -1,9 +1,9 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 
 function LoginLogic() {
 	const searchParams = useSearchParams();
@@ -19,17 +19,16 @@ function LoginLogic() {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
 			<div className="w-full max-w-xs text-center flex flex-col items-center gap-5">
-				<div className="size-14 bg-primary rounded-xl flex items-center justify-center shadow-md animate-pulse">
-					<span className="text-primary-foreground font-bold text-2xl leading-none">
-						D
-					</span>
-				</div>
+				<Image
+					src="/SMK-TI-Dwiguna.png"
+					alt="Logo SMK TI Dwiguna"
+					className="text-center w-[75%] mx-auto"
+					width={1219}
+					height={195}
+				/>
+
 				<div className="flex flex-col gap-2 w-full items-center">
 					<p className="font-semibold text-sm">Menghubungkan ke Google...</p>
-					<div className="flex flex-col gap-2 w-full mt-2">
-						<Skeleton className="h-3 w-full" />
-						<Skeleton className="h-3 w-4/5 mx-auto" />
-					</div>
 				</div>
 			</div>
 		</div>

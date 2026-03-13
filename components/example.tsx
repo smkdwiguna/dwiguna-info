@@ -13,7 +13,7 @@ import {
 	WarningCircleIcon,
 } from "@phosphor-icons/react";
 
-export default function Perpus() {
+export default function Example() {
 	const { data: session } = useSession();
 	const [data, setData] = useState<unknown>(null);
 	const [token, setToken] = useState<unknown>(null);
@@ -21,7 +21,7 @@ export default function Perpus() {
 	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
-		const loadPerpusData = async () => {
+		const loadExampleData = async () => {
 			if (!session) {
 				setData(null);
 				return;
@@ -31,7 +31,7 @@ export default function Perpus() {
 			setError(null);
 
 			try {
-				const response = await fetch("/api/perpus", {
+				const response = await fetch("/api/example", {
 					cache: "no-store",
 				});
 				const payload = (await response.json()) as {
@@ -56,7 +56,7 @@ export default function Perpus() {
 			}
 		};
 
-		void loadPerpusData();
+		void loadExampleData();
 	}, [session]);
 
 	if (!session) return null;
@@ -67,7 +67,7 @@ export default function Perpus() {
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
 						<BooksIcon className="size-5 text-primary" weight="duotone" />
-						<CardTitle>Perpustakaan Dwiguna</CardTitle>
+						<CardTitle>Example Integration</CardTitle>
 					</div>
 					<Button asChild variant="default" size="icon">
 						<Link
