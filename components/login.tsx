@@ -12,7 +12,7 @@ import Image from "next/image";
 export default function Login({ isSso }: { isSso: boolean }) {
 	const router = useRouter();
 	return (
-		<main className="min-h-screen bg-muted/40 flex flex-col items-center justify-center p-4">
+		<main className="min-h-svh bg-muted/40 flex flex-col items-center justify-center p-4">
 			<div className="w-full max-w-sm space-y-6">
 				<Image
 					src="/SMK-TI-Dwiguna.png"

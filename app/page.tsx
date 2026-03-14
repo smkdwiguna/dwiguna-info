@@ -26,8 +26,8 @@ export default function HomePage() {
 
 function PageLoading() {
 	return (
-		<main className="min-h-screen bg-muted/40">
-			<div className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-4">
+		<main className="min-h-svh bg-muted/40">
+			<div className="mx-auto flex min-h-svh max-w-3xl flex-col items-center justify-center gap-4">
 				<Image
 					src="/SMK-TI-Dwiguna.png"
 					alt="Logo SMK TI Dwiguna"
@@ -57,15 +57,22 @@ function HomePageLogic() {
 	const { user } = session;
 
 	return (
-		<main className="min-h-screen bg-muted/40 p-4 md:p-8">
+		<main className="min-h-svh bg-muted/40 p-4 md:p-8">
 			<div className="max-w-3xl mx-auto space-y-6">
 				<header className="flex items-center justify-between">
 					<Image
 						src="/SMK-TI-Dwiguna.png"
 						alt="Logo SMK TI Dwiguna"
-						className="h-12 w-auto"
+						className="h-12 w-auto max-md:hidden"
 						width={1219}
 						height={195}
+					/>
+					<Image
+						src="/Logo.png"
+						alt="Logo SMK TI Dwiguna"
+						className="h-12 w-auto"
+						width={4060}
+						height={4047}
 					/>
 					<Logout />
 				</header>

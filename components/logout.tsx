@@ -20,7 +20,7 @@ export default function Logout() {
 	return (
 		<Button variant="destructive" onClick={handleLogout}>
 			<SignOutIcon data-icon="inline-start" weight="bold" />
-			Logout
+			<span className="max-md:hidden">Logout</span>
 		</Button>
 	);
 }

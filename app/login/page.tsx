@@ -17,7 +17,7 @@ function LoginLogic() {
 	}, [isSso]);
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+		<div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
 			<div className="w-full max-w-xs text-center flex flex-col items-center gap-5">
 				<Image
 					src="/SMK-TI-Dwiguna.png"
@@ -39,7 +39,7 @@ export default function LoginPage() {
 	return (
 		<Suspense
 			fallback={
-				<div className="flex min-h-screen items-center justify-center bg-muted/40" />
+				<div className="flex min-h-svh items-center justify-center bg-muted/40" />
 			}
 		>
 			<LoginLogic />

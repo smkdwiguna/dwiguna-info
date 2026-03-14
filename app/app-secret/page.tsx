@@ -104,7 +104,7 @@ export default async function AdminGenerateKeyPage({
 		params.generated != null ? cookieStore.get(FLASH_COOKIE)?.value : null;
 
 	return (
-		<main className="min-h-screen bg-muted/40 px-4 py-10">
+		<main className="min-h-svh bg-muted/40 px-4 py-10">
 			<div className="mx-auto max-w-2xl space-y-6">
 				<div className="flex items-center gap-3">
 					<div className="size-9 bg-primary rounded-lg flex items-center justify-center shadow-sm">
