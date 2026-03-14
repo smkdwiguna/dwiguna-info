@@ -58,7 +58,7 @@ function HomePageLogic() {
 
 	return (
 		<main className="min-h-svh bg-muted/40 p-4 md:p-8">
-			<div className="max-w-3xl mx-auto space-y-6">
+			<div className="max-w-3xl mx-auto space-y-4">
 				<header className="flex items-center justify-between">
 					<Image
 						src="/SMK-TI-Dwiguna.png"
@@ -70,7 +70,7 @@ function HomePageLogic() {
 					<Image
 						src="/Logo.png"
 						alt="Logo SMK TI Dwiguna"
-						className="h-12 w-auto"
+						className="h-12 w-auto md:hidden"
 						width={4060}
 						height={4047}
 					/>
