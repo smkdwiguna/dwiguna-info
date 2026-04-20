@@ -9,31 +9,14 @@ type AuthCodeRecord = {
 	expiresAt: number;
 };
 
-const authCodeStore = new Map<string, AuthCodeRecord>();
+const AES_ALGORITHM = "aes-256-gcm";
 const AUTH_CODE_TTL_MS = 60_000;
-const MAX_CODES = 5_000;
 
-function cleanupExpiredCodes(now: number) {
-	for (const [code, record] of authCodeStore.entries()) {
-		if (record.expiresAt <= now) {
-			authCodeStore.delete(code);
-		}
-	}
-}
-
-function trimIfNeeded() {
-	if (authCodeStore.size <= MAX_CODES) {
-		return;
-	}
-
-	let removed = 0;
-	for (const code of authCodeStore.keys()) {
-		authCodeStore.delete(code);
-		removed += 1;
-		if (removed >= Math.ceil(MAX_CODES * 0.1)) {
-			break;
-		}
-	}
+function getEncryptionKey(): Buffer {
+	return crypto
+		.createHash("sha256")
+		.update(process.env.SSO_PRIVATE_KEY!)
+		.digest();
 }
 
 export function createAuthorizationCode(input: {
@@ -42,18 +25,23 @@ export function createAuthorizationCode(input: {
 	subject?: string;
 }): string {
 	const now = Date.now();
-	cleanupExpiredCodes(now);
-	trimIfNeeded();
+	const expiresAt = now + AUTH_CODE_TTL_MS;
 
-	const code = crypto.randomBytes(32).toString("base64url");
-	authCodeStore.set(code, {
+	const record: AuthCodeRecord = {
 		session: input.session,
 		audience: input.audience,
 		subject: input.subject,
-		expiresAt: now + AUTH_CODE_TTL_MS,
-	});
+		expiresAt,
+	};
 
-	return code;
+	const key = getEncryptionKey();
+	const iv = crypto.randomBytes(12);
+	const cipher = crypto.createCipheriv(AES_ALGORITHM, key, iv);
+	const plaintext = Buffer.from(JSON.stringify(record), "utf8");
+	const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+	const authTag = cipher.getAuthTag();
+
+	return `${iv.toString("base64url")}.${authTag.toString("base64url")}.${encrypted.toString("base64url")}`;
 }
 
 export function consumeAuthorizationCode(input: {
@@ -62,14 +50,31 @@ export function consumeAuthorizationCode(input: {
 	subject?: string;
 }): StoredSession {
 	const now = Date.now();
-	cleanupExpiredCodes(now);
 
-	const record = authCodeStore.get(input.code);
-	if (!record) {
-		throw new Error("Authorization code tidak ditemukan atau sudah digunakan");
+	const [ivB64, tagB64, encryptedB64] = input.code.split(".");
+	if (!ivB64 || !tagB64 || !encryptedB64) {
+		throw new Error("Format authorization code tidak valid");
 	}
 
-	authCodeStore.delete(input.code);
+	let record: AuthCodeRecord;
+	try {
+		const key = getEncryptionKey();
+		const iv = Buffer.from(ivB64, "base64url");
+		const authTag = Buffer.from(tagB64, "base64url");
+		const encrypted = Buffer.from(encryptedB64, "base64url");
+		const decipher = crypto.createDecipheriv(AES_ALGORITHM, key, iv);
+		decipher.setAuthTag(authTag);
+
+		const decrypted = Buffer.concat([
+			decipher.update(encrypted),
+			decipher.final(),
+		]).toString("utf8");
+
+		record = JSON.parse(decrypted) as AuthCodeRecord;
+	} catch (error) {
+		console.error("Auth code decryption failed:", error);
+		throw new Error("Authorization code tidak valid atau rusak");
+	}
 
 	if (record.expiresAt <= now) {
 		throw new Error("Authorization code sudah kedaluwarsa");
