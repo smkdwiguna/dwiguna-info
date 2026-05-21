@@ -10,9 +10,9 @@ export async function fetchAllWorkspaceUsers() {
 		try {
 			const res: any = await adminService.users.list({
 				customer: "my_customer",
-				maxResults: 500,
 				pageToken: pageToken,
-				fields: "users(id,name,primaryEmail,orgUnitPath,suspended,thumbnailPhotoUrl),nextPageToken",
+				fields:
+					"users(id,name,primaryEmail,orgUnitPath,suspended,thumbnailPhotoUrl),nextPageToken",
 			});
 			if (res.data.users) {
 				allUsers = allUsers.concat(res.data.users);
@@ -66,7 +66,7 @@ export function buildIgnoreList(userNames: string[]): Set<string> {
 export function generateUniqueUsername(
 	fullName: string,
 	existingUsernames: Set<string>,
-	ignoreList: Set<string>
+	ignoreList: Set<string>,
 ): string {
 	const words = fullName
 		.toLowerCase()
@@ -75,7 +75,7 @@ export function generateUniqueUsername(
 		.filter((w) => w.length > 0);
 
 	const filteredWords = words.filter((w) => !ignoreList.has(w));
-	
+
 	// If all words were filtered out (e.g. name is just stop-words), fallback to original words
 	const usableWords = filteredWords.length > 0 ? filteredWords : words;
 	if (usableWords.length === 0) {

@@ -14,24 +14,22 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
-export interface StudentInput {
+export interface UserInput {
 	fullName: string;
 }
 
 export interface GroupBlock {
 	id: string;
-	entryYear: string;
-	className: string;
-	students: StudentInput[];
+	orgUnitPath: string;
+	users: UserInput[];
 }
 
 export function BulkUploadClient() {
 	const [blocks, setBlocks] = useState<GroupBlock[]>([
 		{
 			id: crypto.randomUUID(),
-			entryYear: new Date().getFullYear().toString(),
-			className: "",
-			students: [],
+			orgUnitPath: "",
+			users: [],
 		},
 	]);
 	const [isProcessing, setIsProcessing] = useState(false);
@@ -41,9 +39,8 @@ export function BulkUploadClient() {
 			...blocks,
 			{
 				id: crypto.randomUUID(),
-				entryYear: new Date().getFullYear().toString(),
-				className: "",
-				students: [],
+				orgUnitPath: "",
+				users: [],
 			},
 		]);
 	};
@@ -69,8 +66,8 @@ export function BulkUploadClient() {
 			.map((n) => n.trim())
 			.filter((n) => n.length > 0);
 
-		const students = names.map((name) => ({ fullName: name }));
-		updateBlock(id, "students", students);
+		const users = names.map((name) => ({ fullName: name }));
+		updateBlock(id, "users", users);
 	};
 
 	const handleProcessBatch = async () => {
@@ -96,7 +93,7 @@ export function BulkUploadClient() {
 	};
 
 	const totalStudents = blocks.reduce(
-		(acc, block) => acc + block.students.length,
+		(acc, block) => acc + block.users.length,
 		0,
 	);
 
@@ -110,7 +107,7 @@ export function BulkUploadClient() {
 				</div>
 				<div className="flex gap-2">
 					<Button onClick={addBlock} variant="outline">
-						<Plus className="mr-2 h-4 w-4" /> Tambah Kelas
+						<Plus className="mr-2 h-4 w-4" /> Tambah Blok Unit
 					</Button>
 					<Button
 						onClick={handleProcessBatch}
@@ -128,15 +125,15 @@ export function BulkUploadClient() {
 							<div className="space-y-1 w-full">
 								<CardTitle>
 									<Input
-										placeholder="contoh: /Siswa/10-PPLG-1"
-										value={block.className}
+										placeholder="contoh: /Siswa/2026/PPLG-1"
+										value={block.orgUnitPath}
 										onChange={(e) =>
-											updateBlock(block.id, "className", e.target.value)
+											updateBlock(block.id, "orgUnitPath", e.target.value)
 										}
 									/>
 								</CardTitle>
 								<CardDescription>
-									{block.students.length} pengguna akan ditambahkan ke unit ini
+									{block.users.length} pengguna akan ditambahkan ke unit ini
 								</CardDescription>
 							</div>
 							{blocks.length > 1 && (
@@ -156,9 +153,7 @@ export function BulkUploadClient() {
 								<Textarea
 									placeholder="Paste daftar nama dari Excel di sini (satu nama per baris)"
 									className="min-h-37.5"
-									defaultValue={block.students
-										.map((s) => s.fullName)
-										.join("\n")}
+									defaultValue={block.users.map((s) => s.fullName).join("\n")}
 									onChange={(e) => handlePasteNames(block.id, e.target.value)}
 								/>
 							</div>

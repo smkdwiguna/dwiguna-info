@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Upload } from "lucide-react";
+import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
 
 export default function UsersPage() {
 	return (
@@ -14,11 +15,14 @@ export default function UsersPage() {
 				<div>
 					<h1 className="text-2xl font-bold">Daftar Pengguna</h1>
 				</div>
-				<Button asChild>
-					<Link href="/bulk-upload">
-						<Upload className="mr-2 h-4 w-4" /> Unggah Massal Pengguna
-					</Link>
-				</Button>
+				<span className="flex">
+					<BulkPhotoUploadClient />
+					<Button asChild>
+						<Link href="/bulk-upload">
+							<Upload className="mr-2 h-4 w-4" /> Unggah Massal Pengguna
+						</Link>
+					</Button>
+				</span>
 			</div>
 
 			<div className="rounded-md border bg-background">

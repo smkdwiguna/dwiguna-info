@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
 	Table,
 	TableBody,
@@ -9,20 +9,326 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Edit } from "lucide-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
+} from "@/components/ui/dialog";
+import { Select, SelectItem } from "@/components/ui/select";
+import {
+	ChevronLeft,
+	ChevronRight,
+	Edit,
+	Search,
+	ImagePlus,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 export function UsersTableClient({ users }: { users: any[] }) {
+	const [localUsers, setLocalUsers] = useState(users);
 	const [currentPage, setCurrentPage] = useState(1);
-	const rowsPerPage = 20;
+	const [searchTerm, setSearchTerm] = useState("");
+	const [filterUnit, setFilterUnit] = useState("");
+	const [editUser, setEditUser] = useState<any>(null);
+	const [isDialogOpen, setIsDialogOpen] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 
-	const totalPages = Math.ceil(users.length / rowsPerPage);
+	// Single Photo Upload state
+	const [newPhotoBase64, setNewPhotoBase64] = useState<string | null>(null);
+	const [newPhotoPreview, setNewPhotoPreview] = useState<string | null>(null);
+
+	const rowsPerPage = 10;
+
+	useEffect(() => {
+		setLocalUsers(users);
+	}, [users]);
+
+	const units = Array.from(
+		new Set(localUsers.map((u) => u.orgUnitPath).filter(Boolean)),
+	) as string[];
+
+	const filtered = localUsers.filter((u) => {
+		const matchesSearch =
+			u.name?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+			u.primaryEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+		const matchesUnit =
+			!filterUnit || filterUnit === "all"
+				? true
+				: (u.orgUnitPath?.includes(filterUnit) ?? false);
+		return matchesSearch && matchesUnit;
+	});
+
+	const totalPages = Math.ceil(filtered.length / rowsPerPage);
 	const startIndex = (currentPage - 1) * rowsPerPage;
-	const currentUsers = users.slice(startIndex, startIndex + rowsPerPage);
+	const currentUsers = filtered.slice(startIndex, startIndex + rowsPerPage);
+
+	const openEdit = (user: any) => {
+		// Create a deep copy so we can cleanly handle changes and fallback
+		setEditUser(JSON.parse(JSON.stringify(user)));
+		setNewPhotoBase64(null);
+		setNewPhotoPreview(null);
+		setIsDialogOpen(true);
+	};
+
+	const processImageToSquareBase64 = (
+		file: File | Blob,
+	): Promise<{ base64: string; preview: string }> => {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = (event) => {
+				const img = new Image();
+				img.onload = () => {
+					const canvas = document.createElement("canvas");
+					const size = Math.min(img.width, img.height);
+					const startX = (img.width - size) / 2;
+					const startY = (img.height - size) / 2;
+
+					canvas.width = 256;
+					canvas.height = 256;
+					const ctx = canvas.getContext("2d");
+					if (ctx) {
+						// Center crop and resize
+						ctx.drawImage(img, startX, startY, size, size, 0, 0, 256, 256);
+						const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+						// Google wants web-safe base64: replace + with - and / with _
+						const base64 = dataUrl
+							.split(",")[1]
+							.replace(/\+/g, "-")
+							.replace(/\//g, "_");
+						resolve({ base64, preview: dataUrl });
+					} else {
+						reject(new Error("Could not get canvas context"));
+					}
+				};
+				img.onerror = () => reject(new Error("Failed to load image"));
+				img.src = event.target?.result as string;
+			};
+			reader.onerror = () => reject(new Error("Failed to read file"));
+			reader.readAsDataURL(file);
+		});
+	};
+
+	const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		try {
+			const { base64, preview } = await processImageToSquareBase64(file);
+			setNewPhotoBase64(base64);
+			setNewPhotoPreview(preview);
+		} catch (error) {
+			console.error("Failed to process image", error);
+			alert("Gagal memproses gambar.");
+		}
+	};
+
+	const handleSave = async () => {
+		if (!editUser) return;
+		setIsSaving(true);
+		try {
+			const { updateUser } = await import("../actions/update-user");
+
+			// Extract names correctly for Google Admin API
+			const fullName = editUser.name?.fullName || "";
+			const parts = fullName.split(" ");
+			const givenName = parts[0] || "-";
+			const familyName = parts.slice(1).join(" ") || "-";
+
+			const payload = {
+				name: {
+					givenName,
+					familyName,
+					fullName,
+				},
+				orgUnitPath: editUser.orgUnitPath,
+			};
+
+			await updateUser(editUser.primaryEmail, payload);
+
+			// If new photo was selected, upload it
+			let finalPhotoUrl = editUser.thumbnailPhotoUrl;
+			if (newPhotoBase64) {
+				const { updateUserPhoto } =
+					await import("../actions/update-user-photo");
+				await updateUserPhoto(editUser.primaryEmail, newPhotoBase64);
+				finalPhotoUrl = newPhotoPreview;
+			}
+
+			// Update local state immediately without reloading the page
+			setLocalUsers((prev) =>
+				prev.map((u) =>
+					u.primaryEmail === editUser.primaryEmail
+						? {
+								...u,
+								name: { ...u.name, ...payload.name },
+								orgUnitPath: payload.orgUnitPath,
+								thumbnailPhotoUrl: finalPhotoUrl,
+							}
+						: u,
+				),
+			);
+			setIsDialogOpen(false);
+		} catch (error) {
+			console.error("Failed to update user", error);
+			alert("Gagal memperbarui pengguna.");
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	const handleDelete = async () => {
+		if (!editUser) return;
+		if (
+			!window.confirm(
+				`Apakah Anda yakin ingin menghapus pengguna ${editUser.name?.fullName}? Tindakan ini tidak dapat dibatalkan.`,
+			)
+		) {
+			return;
+		}
+
+		setIsDeleting(true);
+		try {
+			const { deleteUser } = await import("../actions/delete-user");
+			await deleteUser(editUser.primaryEmail);
+
+			// Remove from local state immediately
+			setLocalUsers((prev) =>
+				prev.filter((u) => u.primaryEmail !== editUser.primaryEmail),
+			);
+			setIsDialogOpen(false);
+		} catch (error) {
+			console.error("Failed to delete user", error);
+			alert("Gagal menghapus pengguna.");
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	return (
 		<div>
+			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle>Edit Pengguna</DialogTitle>
+					</DialogHeader>
+					{editUser && (
+						<div className="space-y-4 py-4">
+							<div className="flex flex-col items-center gap-4 mb-4">
+								<Avatar className="size-24">
+									<AvatarImage
+										referrerPolicy="no-referrer"
+										src={
+											newPhotoPreview || editUser.thumbnailPhotoUrl || undefined
+										}
+										alt={editUser.name?.fullName || ""}
+									/>
+									<AvatarFallback className="bg-primary text-primary-foreground text-3xl font-bold not-italic">
+										{editUser.name?.fullName?.charAt(0).toUpperCase() || "?"}
+									</AvatarFallback>
+								</Avatar>
+								<div className="flex items-center justify-center w-full">
+									<Label
+										htmlFor="photo-upload"
+										className="flex items-center gap-2 cursor-pointer bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+									>
+										<ImagePlus className="w-4 h-4" />
+										Ubah Foto
+									</Label>
+									<Input
+										id="photo-upload"
+										type="file"
+										accept="image/*"
+										className="hidden"
+										onChange={handleImageSelect}
+									/>
+								</div>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="fullName">Nama Lengkap</Label>
+								<Input
+									id="fullName"
+									value={editUser.name?.fullName || ""}
+									onChange={(e) =>
+										setEditUser({
+											...editUser,
+											name: { ...editUser.name, fullName: e.target.value },
+										})
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="email">Email</Label>
+								<Input
+									id="email"
+									value={editUser.primaryEmail || ""}
+									disabled
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="orgUnitPath">Unit Organisasi</Label>
+								<Input
+									id="orgUnitPath"
+									value={editUser.orgUnitPath || ""}
+									onChange={(e) =>
+										setEditUser({
+											...editUser,
+											orgUnitPath: e.target.value,
+										})
+									}
+								/>
+							</div>
+						</div>
+					)}
+					<DialogFooter className="flex flex-row justify-between items-center sm:justify-between">
+						<Button
+							variant="destructive"
+							size="sm"
+							onClick={handleDelete}
+							disabled={isDeleting || isSaving}
+						>
+							{isDeleting ? "Menghapus..." : "Hapus Pengguna"}
+						</Button>
+						<div className="flex gap-2">
+							<Button
+								variant="outline"
+								onClick={() => setIsDialogOpen(false)}
+								disabled={isSaving || isDeleting}
+							>
+								Batal
+							</Button>
+							<Button onClick={handleSave} disabled={isSaving || isDeleting}>
+								{isSaving ? "Menyimpan..." : "Simpan"}
+							</Button>
+						</div>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<div className="flex flex-col sm:flex-row items-center justify-center gap-4 m-4">
+				<div className="relative w-full">
+					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+					<Input
+						placeholder="Cari pengguna..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						className="pl-9 w-full"
+					/>
+				</div>
+				<Select value={filterUnit} onValueChange={setFilterUnit}>
+					<SelectItem value="all">Semua Unit</SelectItem>
+					{units.sort().map((u) => (
+						<SelectItem key={u} value={u}>
+							{u === "/" ? "Root (/)" : u}
+						</SelectItem>
+					))}
+				</Select>
+			</div>
+
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -37,7 +343,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 					{currentUsers.map((user) => (
 						<TableRow
 							key={user.id || user.primaryEmail}
-							className={user.suspended && "font-light italic opacity-50"}
+							className={user.suspended ? "font-light italic opacity-50" : ""}
 						>
 							<TableCell>
 								<Avatar className="size-8 ml-1.5">
@@ -57,7 +363,12 @@ export function UsersTableClient({ users }: { users: any[] }) {
 							<TableCell>{user.primaryEmail}</TableCell>
 							<TableCell>{user.orgUnitPath || "/"}</TableCell>
 							<TableCell className="text-right">
-								<Button variant="ghost" size="icon" aria-label="Edit">
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label="Edit"
+									onClick={() => openEdit(user)}
+								>
 									<Edit />
 								</Button>
 							</TableCell>
@@ -69,8 +380,8 @@ export function UsersTableClient({ users }: { users: any[] }) {
 			<div className="flex items-center justify-between px-4 py-4 border-t">
 				<div className="text-sm text-muted-foreground">
 					Menampilkan {startIndex + 1} -{" "}
-					{Math.min(startIndex + rowsPerPage, users.length)} dari {users.length}{" "}
-					pengguna
+					{Math.min(startIndex + rowsPerPage, filtered.length)} dari{" "}
+					{filtered.length} pengguna
 				</div>
 				<div className="flex gap-2">
 					<Button

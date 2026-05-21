@@ -15,7 +15,7 @@ import {
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, Upload, LayoutDashboard, Settings } from "lucide-react";
+import { Users, LayoutDashboard, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
