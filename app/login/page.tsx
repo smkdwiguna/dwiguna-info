@@ -2,19 +2,16 @@
 
 import { authClient } from "@/lib/auth-client";
 import Image from "next/image";
-import { useSearchParams } from "next/navigation";
+
 import { useEffect, Suspense } from "react";
 
 function LoginLogic() {
-	const searchParams = useSearchParams();
-	const isSso = searchParams.has("sso");
-
 	useEffect(() => {
 		authClient.signIn.social({
 			provider: "google",
-			callbackURL: isSso ? "/sso" : "/",
+			callbackURL: "/",
 		});
-	}, [isSso]);
+	}, []);
 
 	return (
 		<div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">

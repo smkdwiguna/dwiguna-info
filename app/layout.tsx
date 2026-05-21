@@ -7,7 +7,6 @@ const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
 	title: "Dwiguna.Info",
-	description: "Satu akun ekosistem SMK TI Dwiguna",
 	icons: {
 		icon: "/Logo.png",
 	},
