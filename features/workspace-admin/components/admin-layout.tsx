@@ -10,6 +10,9 @@ import {
 	SidebarRail,
 	SidebarTrigger,
 	SidebarInset,
+	SidebarMenuSub,
+	SidebarMenuSubItem,
+	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Users, Upload, LayoutDashboard, Settings } from "lucide-react";
@@ -84,14 +87,13 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 										<span>Pengguna</span>
 									</Link>
 								</SidebarMenuButton>
-							</SidebarMenuItem>
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Bulk Upload">
-									<Link href="/bulk-upload">
-										<Upload />
-										<span>Bulk Upload</span>
-									</Link>
-								</SidebarMenuButton>
+								<SidebarMenuSub>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/bulk-upload">Unggah Massal</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+								</SidebarMenuSub>
 							</SidebarMenuItem>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Settings">

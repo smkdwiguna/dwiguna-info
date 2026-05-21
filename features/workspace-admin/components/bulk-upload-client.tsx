@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,7 +59,7 @@ export function BulkUploadClient() {
 					return { ...b, [field]: value };
 				}
 				return b;
-			})
+			}),
 		);
 	};
 
@@ -62,7 +68,7 @@ export function BulkUploadClient() {
 			.split("\n")
 			.map((n) => n.trim())
 			.filter((n) => n.length > 0);
-		
+
 		const students = names.map((name) => ({ fullName: name }));
 		updateBlock(id, "students", students);
 	};
@@ -70,45 +76,67 @@ export function BulkUploadClient() {
 	const handleProcessBatch = async () => {
 		setIsProcessing(true);
 		try {
-			// Here we will call the Server Action with `blocks`
-			console.log("Processing batch:", blocks);
-			await new Promise((resolve) => setTimeout(resolve, 2000));
-			alert("Batch processed successfully!");
+			const { processBulkUpload } =
+				await import("../actions/bulk-upload-actions");
+			const response = await processBulkUpload(blocks);
+			if (response.success) {
+				console.log(response.results);
+				alert(
+					`Batch processed successfully! Processed ${response.results.length} students.`,
+				);
+			} else {
+				alert("Failed to process batch");
+			}
 		} catch (error) {
 			console.error(error);
-			alert("Failed to process batch");
+			alert("An error occurred while processing the batch");
 		} finally {
 			setIsProcessing(false);
 		}
 	};
 
-	const totalStudents = blocks.reduce((acc, block) => acc + block.students.length, 0);
+	const totalStudents = blocks.reduce(
+		(acc, block) => acc + block.students.length,
+		0,
+	);
 
 	return (
 		<div className="space-y-6">
 			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Bulk Upload Pengguna</h1>
-					<p className="text-muted-foreground">Tambah siswa baru dalam jumlah banyak berdasarkan kelas.</p>
+					<h1 className="text-2xl font-bold tracking-tight">
+						Unggah Massal Pengguna
+					</h1>
 				</div>
 				<div className="flex gap-2">
 					<Button onClick={addBlock} variant="outline">
 						<Plus className="mr-2 h-4 w-4" /> Tambah Kelas
 					</Button>
-					<Button onClick={handleProcessBatch} disabled={isProcessing || totalStudents === 0}>
-						<Users className="mr-2 h-4 w-4" /> Proses {totalStudents} Siswa
+					<Button
+						onClick={handleProcessBatch}
+						disabled={isProcessing || totalStudents === 0}
+					>
+						<Users className="mr-2 h-4 w-4" /> Proses {totalStudents} Pengguna
 					</Button>
 				</div>
 			</div>
 
 			<div className="grid grid-cols-1 gap-6">
-				{blocks.map((block, index) => (
+				{blocks.map((block) => (
 					<Card key={block.id}>
-						<CardHeader className="flex flex-row items-start justify-between pb-4">
-							<div className="space-y-1">
-								<CardTitle>Kelas {index + 1}</CardTitle>
+						<CardHeader className="flex flex-row items-start justify-between w-full">
+							<div className="space-y-1 w-full">
+								<CardTitle>
+									<Input
+										placeholder="contoh: /Siswa/10-PPLG-1"
+										value={block.className}
+										onChange={(e) =>
+											updateBlock(block.id, "className", e.target.value)
+										}
+									/>
+								</CardTitle>
 								<CardDescription>
-									{block.students.length} siswa akan ditambahkan ke kelas ini
+									{block.students.length} pengguna akan ditambahkan ke unit ini
 								</CardDescription>
 							</div>
 							{blocks.length > 1 && (
@@ -123,44 +151,17 @@ export function BulkUploadClient() {
 							)}
 						</CardHeader>
 						<CardContent>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-								<div className="space-y-2">
-									<Label>Tahun Masuk (Angkatan)</Label>
-									<Input
-										placeholder="e.g. 2024"
-										value={block.entryYear}
-										onChange={(e) => updateBlock(block.id, "entryYear", e.target.value)}
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label>Nama Kelas</Label>
-									<Input
-										placeholder="e.g. 10-PPLG-1"
-										value={block.className}
-										onChange={(e) => updateBlock(block.id, "className", e.target.value)}
-									/>
-								</div>
-							</div>
-
 							<div className="space-y-2">
-								<Label>Daftar Nama Siswa (Paste dari Excel)</Label>
+								<Label>Daftar Nama Pengguna (Per Baris)</Label>
 								<Textarea
 									placeholder="Paste daftar nama dari Excel di sini (satu nama per baris)"
-									className="min-h-[150px]"
-									defaultValue={block.students.map((s) => s.fullName).join("\n")}
+									className="min-h-37.5"
+									defaultValue={block.students
+										.map((s) => s.fullName)
+										.join("\n")}
 									onChange={(e) => handlePasteNames(block.id, e.target.value)}
 								/>
 							</div>
-
-							{block.students.length > 0 && (
-								<div className="mt-4 max-h-[200px] overflow-y-auto rounded-md border p-4 bg-muted/30">
-									<ul className="list-decimal list-inside space-y-1 text-sm">
-										{block.students.map((student, i) => (
-											<li key={i}>{student.fullName}</li>
-										))}
-									</ul>
-								</div>
-							)}
 						</CardContent>
 					</Card>
 				))}
