@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -19,7 +20,10 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" className={cn(figtree.variable, "font-sans")}>
-			<body className="antialiased">{children}</body>
+			<body className="antialiased">
+				{children}
+				<Toaster />
+			</body>
 		</html>
 	);
 }

@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export function UsersTableClient({ users }: { users: any[] }) {
 	const [localUsers, setLocalUsers] = useState(users);
@@ -121,9 +122,10 @@ export function UsersTableClient({ users }: { users: any[] }) {
 			const { base64, preview } = await processImageToSquareBase64(file);
 			setNewPhotoBase64(base64);
 			setNewPhotoPreview(preview);
+			toast.success("Gambar berhasil diproses.");
 		} catch (error) {
 			console.error("Failed to process image", error);
-			alert("Gagal memproses gambar.");
+			toast.error("Gagal memproses gambar.");
 		}
 	};
 
@@ -175,7 +177,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 			setIsDialogOpen(false);
 		} catch (error) {
 			console.error("Failed to update user", error);
-			alert("Gagal memperbarui pengguna.");
+			toast.error("Gagal memperbarui pengguna.");
 		} finally {
 			setIsSaving(false);
 		}
@@ -183,13 +185,6 @@ export function UsersTableClient({ users }: { users: any[] }) {
 
 	const handleDelete = async () => {
 		if (!editUser) return;
-		if (
-			!window.confirm(
-				`Apakah Anda yakin ingin menghapus pengguna ${editUser.name?.fullName}? Tindakan ini tidak dapat dibatalkan.`,
-			)
-		) {
-			return;
-		}
 
 		setIsDeleting(true);
 		try {
@@ -201,12 +196,33 @@ export function UsersTableClient({ users }: { users: any[] }) {
 				prev.filter((u) => u.primaryEmail !== editUser.primaryEmail),
 			);
 			setIsDialogOpen(false);
+			toast.success("Pengguna berhasil dihapus.");
 		} catch (error) {
 			console.error("Failed to delete user", error);
-			alert("Gagal menghapus pengguna.");
+			toast.error("Gagal menghapus pengguna.");
 		} finally {
 			setIsDeleting(false);
 		}
+	};
+
+	const promptDelete = () => {
+		if (!editUser) return;
+
+		// Tutup dialog terlebih dahulu agar toast tidak terhalang (pointer-events/focus)
+		setIsDialogOpen(false);
+
+		toast(`Hapus ${editUser.name?.fullName}?`, {
+			description: "Tindakan ini tidak dapat dibatalkan.",
+			action: {
+				label: "Hapus",
+				onClick: handleDelete,
+			},
+			duration: Infinity,
+			cancel: {
+				label: "Batal",
+				onClick: () => {},
+			},
+		});
 	};
 
 	return (
@@ -288,7 +304,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 						<Button
 							variant="destructive"
 							size="sm"
-							onClick={handleDelete}
+							onClick={promptDelete}
 							disabled={isDeleting || isSaving}
 						>
 							{isDeleting ? "Menghapus..." : "Hapus Pengguna"}

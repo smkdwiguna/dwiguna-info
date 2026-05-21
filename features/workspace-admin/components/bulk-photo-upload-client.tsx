@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FileArchive } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 import JSZip from "jszip";
 
 export function BulkPhotoUploadClient() {
@@ -35,8 +36,8 @@ export function BulkPhotoUploadClient() {
 					const startX = (img.width - size) / 2;
 					const startY = (img.height - size) / 2;
 
-					canvas.width = 256;
-					canvas.height = 256;
+					canvas.width = 2048;
+					canvas.height = 2048;
 					const ctx = canvas.getContext("2d");
 					if (ctx) {
 						// Center crop and resize
@@ -94,9 +95,10 @@ export function BulkPhotoUploadClient() {
 			}
 
 			setBulkPhotos(photos);
+			toast.success(`Ditemukan ${photos.length} foto valid.`);
 		} catch (error) {
 			console.error("Failed to parse zip", error);
-			alert("Gagal membaca file ZIP.");
+			toast.error("Gagal membaca file ZIP.");
 		}
 	};
 
@@ -115,15 +117,17 @@ export function BulkPhotoUploadClient() {
 			const results = await bulkUpdatePhotos(updates);
 
 			const successCount = results.filter((r) => r.status === "success").length;
-			alert(
+			toast.success(
 				`Berhasil memperbarui ${successCount} dari ${results.length} foto. Halaman akan dimuat ulang.`,
 			);
 
 			// Refresh page to sync photos in table and state
-			window.location.reload();
+			setTimeout(() => {
+				window.location.reload();
+			}, 1500);
 		} catch (error) {
 			console.error("Bulk upload error", error);
-			alert("Gagal mengunggah foto massal.");
+			toast.error("Gagal mengunggah foto massal.");
 		} finally {
 			setIsUploadingBulkPhotos(false);
 		}

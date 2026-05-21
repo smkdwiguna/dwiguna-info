@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Users } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export interface UserInput {
 	fullName: string;
@@ -78,15 +79,15 @@ export function BulkUploadClient() {
 			const response = await processBulkUpload(blocks);
 			if (response.success) {
 				console.log(response.results);
-				alert(
-					`Batch processed successfully! Processed ${response.results.length} students.`,
+				toast.success(
+					`Berhasil memproses batch! ${response.results.length} pengguna ditambahkan.`,
 				);
 			} else {
-				alert("Failed to process batch");
+				toast.error("Gagal memproses batch.");
 			}
 		} catch (error) {
 			console.error(error);
-			alert("An error occurred while processing the batch");
+			toast.error("Terjadi kesalahan saat memproses batch.");
 		} finally {
 			setIsProcessing(false);
 		}
