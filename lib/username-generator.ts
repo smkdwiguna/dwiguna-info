@@ -11,8 +11,9 @@ export async function fetchAllWorkspaceUsers() {
 			const res: any = await adminService.users.list({
 				customer: "my_customer",
 				pageToken: pageToken,
+				projection: "full",
 				fields:
-					"users(id,name,primaryEmail,orgUnitPath,suspended,thumbnailPhotoUrl),nextPageToken",
+					"users(id,name,primaryEmail,orgUnitPath,suspended,thumbnailPhotoUrl,customSchemas),nextPageToken",
 			});
 			if (res.data.users) {
 				allUsers = allUsers.concat(res.data.users);

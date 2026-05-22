@@ -63,6 +63,32 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		setLocalUsers(users);
 	}, [users]);
 
+	const collectCustomSchemaValues = (user: any) => {
+		const values: string[] = [];
+		const pushValue = (value: unknown) => {
+			if (typeof value === "string" && value.trim()) {
+				values.push(value);
+			}
+		};
+		const extractFields = (schema: Record<string, unknown>) => {
+			pushValue(schema.nisn);
+			pushValue(schema.nis);
+			pushValue(schema.nuptk);
+			pushValue(schema.tempatTanggalLahir);
+		};
+
+		const customSchemas = user?.customSchemas;
+		if (customSchemas && typeof customSchemas === "object") {
+			extractFields(customSchemas as Record<string, unknown>);
+			for (const schema of Object.values(customSchemas)) {
+				if (schema && typeof schema === "object") {
+					extractFields(schema as Record<string, unknown>);
+				}
+			}
+		}
+		return values;
+	};
+
 	const formatDateTime = (value?: string) => {
 		if (!value) return "-";
 		const date = new Date(value);
@@ -74,10 +100,18 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		new Set(localUsers.map((u) => u.orgUnitPath).filter(Boolean)),
 	) as string[];
 
+	const normalizedSearch = searchTerm.trim().toLowerCase();
+
 	const filtered = localUsers.filter((u) => {
 		const matchesSearch =
-			u.name?.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			u.primaryEmail?.toLowerCase().includes(searchTerm.toLowerCase());
+			normalizedSearch.length === 0 ||
+			[
+				u.name?.fullName,
+				u.primaryEmail,
+				...collectCustomSchemaValues(u),
+			].some((value) =>
+				(value ?? "").toString().toLowerCase().includes(normalizedSearch),
+			);
 		const matchesUnit =
 			!filterUnit || filterUnit === "all"
 				? true
