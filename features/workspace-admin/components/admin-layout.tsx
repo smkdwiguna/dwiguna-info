@@ -15,7 +15,7 @@ import {
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, LayoutDashboard, Settings } from "lucide-react";
+import { Users, Upload, LayoutDashboard, Settings, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
@@ -33,7 +33,7 @@ export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
 			<SidebarProvider
 				style={
 					{
-						"--sidebar-width": "13rem",
+						"--sidebar-width": "14rem",
 					} as React.CSSProperties
 				}
 			>
@@ -90,16 +90,49 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 								<SidebarMenuSub>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/bulk-upload">Unggah Massal</Link>
+											<Link href="/users">
+												<span>Daftar Pengguna</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/bulk-upload">
+												<span>Tambah Pengguna</span>
+											</Link>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>
 								</SidebarMenuSub>
 							</SidebarMenuItem>
 							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Settings">
+								<SidebarMenuButton asChild tooltip="Kehadiran (Presensi)">
+									<Link href="/presence">
+										<Clock />
+										<span>Presensi</span>
+									</Link>
+								</SidebarMenuButton>
+								<SidebarMenuSub>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/presence">
+												<span>Lembar Kehadiran</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/presence">
+												<span>Kalender</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+								</SidebarMenuSub>
+							</SidebarMenuItem>
+							<SidebarMenuItem>
+								<SidebarMenuButton asChild tooltip="Pengaturan">
 									<Link href="/settings">
 										<Settings />
-										<span>Settings</span>
+										<span>Pengaturan</span>
 									</Link>
 								</SidebarMenuButton>
 							</SidebarMenuItem>

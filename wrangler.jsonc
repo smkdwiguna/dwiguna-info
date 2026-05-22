@@ -19,6 +19,14 @@
 	"images": {
 		"binding": "IMAGES",
 	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "dwiguna-presence-db",
+			"database_id": "local-dev-db-id",
+			"migrations_dir": "drizzle",
+		},
+	],
 	"observability": {
 		"enabled": true,
 	},

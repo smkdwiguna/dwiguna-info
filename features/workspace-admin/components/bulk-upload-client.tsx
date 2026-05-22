@@ -102,19 +102,17 @@ export function BulkUploadClient() {
 		<div className="space-y-6">
 			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">
-						Unggah Massal Pengguna
-					</h1>
+					<h1 className="text-2xl font-bold tracking-tight">Tambah Pengguna</h1>
 				</div>
 				<div className="flex gap-2">
 					<Button onClick={addBlock} variant="outline">
-						<Plus className="mr-2 h-4 w-4" /> Tambah Blok Unit
+						<Plus className="h-4 w-4" /> Tambah Blok Unit
 					</Button>
 					<Button
 						onClick={handleProcessBatch}
 						disabled={isProcessing || totalStudents === 0}
 					>
-						<Users className="mr-2 h-4 w-4" /> Proses {totalStudents} Pengguna
+						<Users className="h-4 w-4" /> Proses {totalStudents} Pengguna
 					</Button>
 				</div>
 			</div>

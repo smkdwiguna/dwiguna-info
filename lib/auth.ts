@@ -2,8 +2,10 @@ import { betterAuth } from "better-auth/minimal";
 import { fetchUserOUFromWorkspace } from "./google-api";
 
 export const auth = betterAuth({
-	baseURL: process.env.BETTER_AUTH_URL,
-	trustedOrigins: [process.env.BETTER_AUTH_URL!],
+	baseURL: process.env.BETTER_AUTH_URL?.replace(/;$/, ""),
+	trustedOrigins: [
+		process.env.BETTER_AUTH_URL?.replace(/;$/, "") || "http://localhost:3000",
+	],
 	socialProviders: {
 		google: {
 			clientId: process.env.GOOGLE_CLIENT_ID!,

@@ -9,7 +9,7 @@ export function getAdminService() {
 		scopes: [
 			"https://www.googleapis.com/auth/admin.directory.user",
 			"https://www.googleapis.com/auth/admin.directory.group",
-			"https://www.googleapis.com/auth/admin.directory.orgunit"
+			"https://www.googleapis.com/auth/admin.directory.orgunit",
 		],
 		clientOptions: {
 			subject: "proktor@smkdwiguna.sch.id",
@@ -17,6 +17,22 @@ export function getAdminService() {
 	});
 
 	return admin({ version: "directory_v1", auth: googleAuth });
+}
+
+export async function fetchAllOrgUnits() {
+	try {
+		const adminService = getAdminService();
+		const response = await adminService.orgunits.list({
+			customerId: "my_customer",
+			type: "all",
+		});
+		return (response.data.organizationUnits || []).map(
+			(ou) => ou.orgUnitPath || "/",
+		);
+	} catch (error) {
+		console.error("[Google API Error - fetchAllOrgUnits]: ", error);
+		return [];
+	}
 }
 
 export async function fetchUserOUFromWorkspace(email: string) {

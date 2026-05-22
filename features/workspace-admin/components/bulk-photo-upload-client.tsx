@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FileArchive } from "lucide-react";
+import { FileArchive, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import JSZip from "jszip";
@@ -140,8 +140,8 @@ export function BulkPhotoUploadClient() {
 				className="w-full sm:w-auto mr-2"
 				onClick={() => setIsBulkPhotoOpen(true)}
 			>
-				<FileArchive className="w-4 h-4 mr-2" />
-				Upload Massal Foto
+				<Upload className="w-4 h-4" />
+				Upload Foto
 			</Button>
 
 			<Dialog open={isBulkPhotoOpen} onOpenChange={setIsBulkPhotoOpen}>

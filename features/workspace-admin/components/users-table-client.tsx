@@ -16,7 +16,13 @@ import {
 	DialogTitle,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectItem } from "@/components/ui/select";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	ChevronLeft,
 	ChevronRight,
@@ -34,7 +40,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 	const [localUsers, setLocalUsers] = useState(users);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [filterUnit, setFilterUnit] = useState("");
+	const [filterUnit, setFilterUnit] = useState("all");
 	const [editUser, setEditUser] = useState<any>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -336,12 +342,17 @@ export function UsersTableClient({ users }: { users: any[] }) {
 					/>
 				</div>
 				<Select value={filterUnit} onValueChange={setFilterUnit}>
-					<SelectItem value="all">Semua Unit</SelectItem>
-					{units.sort().map((u) => (
-						<SelectItem key={u} value={u}>
-							{u === "/" ? "Root (/)" : u}
-						</SelectItem>
-					))}
+					<SelectTrigger className="w-40">
+						<SelectValue placeholder="Pilih Unit" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectItem value="all">Semua Unit</SelectItem>
+						{units.sort().map((u) => (
+							<SelectItem key={u} value={u}>
+								{u === "/" ? "Root (/)" : u}
+							</SelectItem>
+						))}
+					</SelectContent>
 				</Select>
 			</div>
 

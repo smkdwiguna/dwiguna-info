@@ -1,11 +1,9 @@
 import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
-
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
 
 export default function UsersPage() {
@@ -19,7 +17,7 @@ export default function UsersPage() {
 					<BulkPhotoUploadClient />
 					<Button asChild>
 						<Link href="/bulk-upload">
-							<Upload className="mr-2 h-4 w-4" /> Unggah Massal Pengguna
+							<Plus className="h-4 w-4" /> Tambah Pengguna
 						</Link>
 					</Button>
 				</span>
