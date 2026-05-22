@@ -137,7 +137,7 @@ export function BulkPhotoUploadClient() {
 		<>
 			<Button
 				variant="outline"
-				className="w-full sm:w-auto mr-2"
+				className="mr-2"
 				onClick={() => setIsBulkPhotoOpen(true)}
 			>
 				<Upload className="w-4 h-4" />

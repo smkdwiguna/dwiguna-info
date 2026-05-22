@@ -105,12 +105,9 @@ export function UsersTableClient({ users }: { users: any[] }) {
 	const filtered = localUsers.filter((u) => {
 		const matchesSearch =
 			normalizedSearch.length === 0 ||
-			[
-				u.name?.fullName,
-				u.primaryEmail,
-				...collectCustomSchemaValues(u),
-			].some((value) =>
-				(value ?? "").toString().toLowerCase().includes(normalizedSearch),
+			[u.name?.fullName, u.primaryEmail, ...collectCustomSchemaValues(u)].some(
+				(value) =>
+					(value ?? "").toString().toLowerCase().includes(normalizedSearch),
 			);
 		const matchesUnit =
 			!filterUnit || filterUnit === "all"
@@ -538,16 +535,16 @@ export function UsersTableClient({ users }: { users: any[] }) {
 
 			<div className="flex flex-col sm:flex-row items-center justify-center gap-4 m-4">
 				<div className="relative w-full">
-					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+					<Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
 					<Input
-						placeholder="Cari pengguna..."
+						placeholder="Cari nama/nomor/email pengguna..."
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
 						className="pl-9 w-full"
 					/>
 				</div>
 				<Select value={filterUnit} onValueChange={setFilterUnit}>
-					<SelectTrigger className="w-40">
+					<SelectTrigger className="w-full md:w-48">
 						<SelectValue placeholder="Pilih Unit" />
 					</SelectTrigger>
 					<SelectContent>

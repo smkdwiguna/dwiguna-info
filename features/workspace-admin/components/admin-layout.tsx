@@ -41,9 +41,16 @@ export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
 				<SidebarInset>
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-5.5">
 						<SidebarTrigger className="-ml-1" />
-						<div className="w-full flex justify-end">
-							<Logout />
+						<div className="w-full flex gap-2 items-center justify-center">
+							<Image
+								src="/Logo.png"
+								alt="Logo"
+								width={40}
+								height={40}
+								className="h-8 w-8"
+							/>
 						</div>
+						<Logout />
 					</header>
 					<main className="flex flex-1 flex-col gap-4 p-4 md:p-6 bg-muted/20">
 						{children}
@@ -57,16 +64,7 @@ export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
 function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 	return (
 		<Sidebar>
-			<SidebarHeader className="p-4 flex flex-row items-center gap-3">
-				<Image
-					src="/Logo.png"
-					alt="Logo"
-					width={40}
-					height={40}
-					className="h-8 w-8"
-				/>
-				<span className="font-bold text-lg">Dwiguna.Info</span>
-			</SidebarHeader>
+			<SidebarHeader />
 			<SidebarContent>
 				<SidebarMenu>
 					<SidebarMenuItem>
@@ -90,13 +88,6 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 								<SidebarMenuSub>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/users">
-												<span>Daftar Pengguna</span>
-											</Link>
-										</SidebarMenuSubButton>
-									</SidebarMenuSubItem>
-									<SidebarMenuSubItem>
-										<SidebarMenuSubButton asChild>
 											<Link href="/bulk-upload">
 												<span>Tambah Pengguna</span>
 											</Link>
@@ -114,15 +105,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 								<SidebarMenuSub>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/presence">
+											<Link href="/presence/sheets">
 												<span>Lembar Kehadiran</span>
-											</Link>
-										</SidebarMenuSubButton>
-									</SidebarMenuSubItem>
-									<SidebarMenuSubItem>
-										<SidebarMenuSubButton asChild>
-											<Link href="/presence">
-												<span>Kalender</span>
 											</Link>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>

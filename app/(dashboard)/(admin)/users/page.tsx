@@ -12,10 +12,10 @@ export default function UsersPage() {
 	return (
 		<div className="space-y-4">
 			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-				<div>
+				<div className="w-full max-md:text-center">
 					<h1 className="text-2xl font-bold">Daftar Pengguna</h1>
 				</div>
-				<span className="flex">
+				<span className="flex max-md:w-full max-md:justify-center">
 					<BulkPhotoUploadClient />
 					<Button asChild>
 						<Link href="/bulk-upload">

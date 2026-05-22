@@ -75,10 +75,12 @@ export function SheetsListClient({ initialSheets }: { initialSheets: any[] }) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<h2 className="text-2xl font-bold">Lembar Kehadiran</h2>
+			<div className="w-full max-md:text-center max-md:space-y-4 md:flex justify-between">
+				<div className="w-full max-md:text-center">
+					<h1 className="text-2xl font-bold">Lembar Kehadiran</h1>
+				</div>
 				<Button onClick={() => setIsOpen(true)}>
-					<Plus className="w-4 h-4 mr-2" />
+					<Plus className="w-4 h-4" />
 					Buat Lembar Baru
 				</Button>
 			</div>

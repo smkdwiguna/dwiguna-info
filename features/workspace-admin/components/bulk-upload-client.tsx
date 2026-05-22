@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Users } from "lucide-react";
+import { CheckCircle, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
 	Table,
@@ -295,10 +295,7 @@ export function BulkUploadClient() {
 
 			const result = await generateUserEmailsWithPasswords(groupBlocks);
 			if (result.success && result.users) {
-				sessionStorage.setItem(
-					PREVIEW_USERS_KEY,
-					JSON.stringify(result.users),
-				);
+				sessionStorage.setItem(PREVIEW_USERS_KEY, JSON.stringify(result.users));
 				router.push("/bulk-upload/preview");
 			} else {
 				toast.error("Gagal memproses data: " + result.error);
@@ -318,12 +315,13 @@ export function BulkUploadClient() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-				<div>
+			<div className="flex flex-col md:flex-row gap-4 justify-between">
+				<div className="w-full max-md:text-center">
 					<h1 className="text-2xl font-bold tracking-tight">Tambah Pengguna</h1>
 				</div>
-				<div className="flex gap-2 flex-wrap">
+				<div className="flex gap-2 flex-wrap w-full max-md:justify-center justify-end">
 					<Button onClick={addBlock} variant="outline" size="sm">
+						<Plus className="h-4 w-4" />
 						Tambah Unit
 					</Button>
 					<Button
@@ -331,7 +329,7 @@ export function BulkUploadClient() {
 						disabled={isProcessing || totalUsers === 0}
 						size="sm"
 					>
-						<Users className="h-4 w-4" /> Proses {totalUsers} Pengguna
+						<CheckCircle className="h-4 w-4" /> Proses {totalUsers} Pengguna
 					</Button>
 				</div>
 			</div>

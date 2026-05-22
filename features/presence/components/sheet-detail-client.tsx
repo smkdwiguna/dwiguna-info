@@ -119,13 +119,13 @@ export function SheetDetailClient({
 	};
 
 	return (
-		<div className="space-y-6">
-			<div className="flex items-center justify-between">
+		<div className="space-y-4">
+			<div className="w-full max-md:text-center space-y-4">
 				<div className="flex items-center gap-2">
 					<Button
 						variant="outline"
 						size="icon"
-						onClick={() => router.push("/presence")}
+						onClick={() => router.push("/presence/sheets")}
 					>
 						<ArrowLeft className="w-4 h-4" />
 					</Button>
@@ -137,7 +137,7 @@ export function SheetDetailClient({
 					/>
 				</div>
 				<Button onClick={handleSave} disabled={isSubmitting}>
-					<Save className="w-4 h-4 mr-2" />
+					<Save className="w-4 h-4" />
 					{isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
 				</Button>
 			</div>
@@ -240,7 +240,7 @@ export function SheetDetailClient({
 								key={idx}
 								className="flex gap-2 items-center border p-4 rounded-md bg-muted/30"
 							>
-								<div className="grid grid-cols-4 gap-4 flex-1">
+								<div className="md:grid grid-cols-4 gap-4 max-md:space-y-4 flex-1">
 									<div className="space-y-1">
 										<Label className="text-xs">Nama Titik</Label>
 										<Input
@@ -293,7 +293,6 @@ export function SheetDetailClient({
 								<Button
 									variant="ghost"
 									size="icon"
-									className="mt-5"
 									onClick={() => setPoints(points.filter((_, i) => i !== idx))}
 								>
 									<Trash2 className="w-4 h-4 text-destructive" />
