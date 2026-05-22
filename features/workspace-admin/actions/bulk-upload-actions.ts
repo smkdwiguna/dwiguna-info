@@ -1,6 +1,5 @@
 "use server";
 
-import { GroupBlock } from "../components/bulk-upload-client";
 import { getAdminService } from "@/lib/google-api";
 import {
 	fetchAllWorkspaceUsers,
@@ -8,78 +7,153 @@ import {
 	generateUniqueUsername,
 } from "@/lib/username-generator";
 
-export async function processBulkUpload(blocks: GroupBlock[]) {
-	// 1. Fetch all users for username collision check and ignore list
-	const allUsers = await fetchAllWorkspaceUsers();
+interface UserInput {
+	fullName: string;
+	nisn?: string;
+	nis?: string;
+	nuptk?: string;
+	tempatTanggalLahir?: string;
+}
 
-	const allFullNames = allUsers.map((u) => {
-		return typeof u.name?.fullName === "string" ? u.name.fullName : "";
-	});
+interface UserWithPassword extends UserInput {
+	email: string;
+	password: string;
+	username: string;
+}
 
-	const ignoreList = buildIgnoreList(allFullNames);
+interface GroupBlock {
+	id: string;
+	orgUnitPath: string;
+	users: UserInput[];
+}
 
-	// Create a set of existing usernames (the part before @smkdwiguna.sch.id)
-	const existingUsernames = new Set<string>();
-	for (const u of allUsers) {
-		if (u.primaryEmail && u.primaryEmail.endsWith("@smkdwiguna.sch.id")) {
-			const username = u.primaryEmail.split("@")[0];
-			existingUsernames.add(username.toLowerCase());
-		}
+function generateRandomPassword(): string {
+	const length = 12;
+	const charset =
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+	let password = "";
+	for (let i = 0; i < length; i++) {
+		password += charset.charAt(Math.floor(Math.random() * charset.length));
 	}
+	return password;
+}
 
-	const adminService = getAdminService();
-	const results = [];
+export async function generateUserEmailsWithPasswords(
+	blocks: GroupBlock[],
+): Promise<{ success: boolean; users?: UserWithPassword[]; error?: string }> {
+	try {
+		const allUsers = await fetchAllWorkspaceUsers();
+		const allFullNames = allUsers.map((u) => {
+			return typeof u.name?.fullName === "string" ? u.name.fullName : "";
+		});
+		const ignoreList = buildIgnoreList(allFullNames);
 
-	for (const block of blocks) {
-		const orgUnitPath = block.orgUnitPath || "/";
+		const existingUsernames = new Set<string>();
+		for (const u of allUsers) {
+			if (u.primaryEmail && u.primaryEmail.endsWith("@smkdwiguna.sch.id")) {
+				const username = u.primaryEmail.split("@")[0];
+				existingUsernames.add(username.toLowerCase());
+			}
+		}
 
-		for (const user of block.users) {
-			const username = generateUniqueUsername(
-				user.fullName,
-				existingUsernames,
-				ignoreList,
-			);
-			const primaryEmail = `${username}@smkdwiguna.sch.id`;
+		const usersWithPasswords: UserWithPassword[] = [];
 
-			// Try to split name into Given and Family name for Google Workspace requirement
+		for (const block of blocks) {
+			for (const user of block.users) {
+				if (!user.fullName.trim()) continue;
+
+				const username = generateUniqueUsername(
+					user.fullName,
+					existingUsernames,
+					ignoreList,
+				);
+				const email = `${username}@smkdwiguna.sch.id`;
+				const password = generateRandomPassword();
+
+				usersWithPasswords.push({
+					...user,
+					email,
+					password,
+					username,
+				});
+
+				existingUsernames.add(username.toLowerCase());
+			}
+		}
+
+		return {
+			success: true,
+			users: usersWithPasswords,
+		};
+	} catch (error: any) {
+		console.error("Error generating emails:", error);
+		return {
+			success: false,
+			error: error.message || "Failed to generate emails",
+		};
+	}
+}
+
+export async function createUsersWithPasswords(
+	users: UserWithPassword[],
+): Promise<{ success: boolean; created?: number; error?: string }> {
+	try {
+		const adminService = getAdminService();
+		let successCount = 0;
+
+		for (const user of users) {
 			const nameParts = user.fullName.trim().split(/\s+/);
 			const familyName = nameParts.length > 1 ? nameParts.pop() : "-";
 			const givenName = nameParts.join(" ") || user.fullName;
 
 			try {
-				// 1. Create User
+				const customSchemas: any = {};
+
+				if (
+					user.nisn ||
+					user.nis ||
+					user.nuptk ||
+					user.tempatTanggalLahir
+				) {
+					customSchemas.akademik = {};
+					if (user.nisn) customSchemas.akademik.nisn = user.nisn;
+					if (user.nis) customSchemas.akademik.nis = user.nis;
+					if (user.nuptk) customSchemas.akademik.nuptk = user.nuptk;
+					if (user.tempatTanggalLahir)
+						customSchemas.akademik.tempatTanggalLahir = user.tempatTanggalLahir;
+				}
+
 				await adminService.users.insert({
 					requestBody: {
-						primaryEmail,
+						primaryEmail: user.email,
 						name: {
 							givenName,
 							familyName,
 						},
-						orgUnitPath,
-						password: "ChangeMe123!", // default password
+						password: user.password,
 						changePasswordAtNextLogin: true,
+						customSchemas:
+							Object.keys(customSchemas).length > 0
+								? customSchemas
+								: undefined,
 					},
 				});
 
-				results.push({
-					fullName: user.fullName,
-					email: primaryEmail,
-					status: "success",
-				});
+				successCount++;
 			} catch (error: any) {
-				console.error(`Failed to process ${user.fullName}:`, error);
-				results.push({
-					fullName: user.fullName,
-					email: primaryEmail,
-					status: "error",
-					message: error.message,
-				});
+				console.error(`Failed to create ${user.email}:`, error);
 			}
 		}
-	}
 
-	return {
-		success: true,
-		results,
-	};
+		return {
+			success: true,
+			created: successCount,
+		};
+	} catch (error: any) {
+		console.error("Error creating users:", error);
+		return {
+			success: false,
+			error: error.message || "Failed to create users",
+		};
+	}
 }
