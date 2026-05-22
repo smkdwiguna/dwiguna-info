@@ -9,6 +9,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SheetDetailClient } from "@/features/presence/components/sheet-detail-client";
 import { fetchAllOrgUnits } from "@/lib/google-api";
+import { PageShell } from "@/components/ui/page-header";
 
 export default async function SheetDetailPage({
 	params,
@@ -19,11 +20,11 @@ export default async function SheetDetailPage({
 	const sheetId = parseInt(resolvedParams.sheetId, 10);
 
 	return (
-		<div className="space-y-4">
+		<PageShell>
 			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
 				<SheetDetailFetcher sheetId={sheetId} />
 			</Suspense>
-		</div>
+		</PageShell>
 	);
 }
 

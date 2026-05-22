@@ -15,6 +15,13 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	PageHeader,
+	PageHeaderActions,
+	PageHeaderHeading,
+	PageHeaderTitle,
+	PageShell,
+} from "@/components/ui/page-header";
 
 export interface UserRow {
 	id: string;
@@ -314,12 +321,12 @@ export function BulkUploadClient() {
 	);
 
 	return (
-		<div className="space-y-6">
-			<div className="flex flex-col md:flex-row gap-4 justify-between">
-				<div className="w-full max-md:text-center">
-					<h1 className="text-2xl font-bold tracking-tight">Tambah Pengguna</h1>
-				</div>
-				<div className="flex gap-2 flex-wrap w-full max-md:justify-center justify-end">
+		<PageShell>
+			<PageHeader>
+				<PageHeaderHeading>
+					<PageHeaderTitle>Tambah Pengguna</PageHeaderTitle>
+				</PageHeaderHeading>
+				<PageHeaderActions>
 					<Button onClick={addBlock} variant="outline" size="sm">
 						<Plus className="h-4 w-4" />
 						Tambah Unit
@@ -331,8 +338,8 @@ export function BulkUploadClient() {
 					>
 						<CheckCircle className="h-4 w-4" /> Proses {totalUsers} Pengguna
 					</Button>
-				</div>
-			</div>
+				</PageHeaderActions>
+			</PageHeader>
 
 			<div className="grid grid-cols-1 gap-6">
 				{blocks.map((block, blockIdx) => (
@@ -567,6 +574,6 @@ export function BulkUploadClient() {
 					</Card>
 				))}
 			</div>
-		</div>
+		</PageShell>
 	);
 }

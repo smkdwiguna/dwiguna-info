@@ -5,32 +5,39 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
+import {
+	PageHeader,
+	PageHeaderActions,
+	PageHeaderHeading,
+	PageHeaderTitle,
+	PageShell,
+} from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
 export default function UsersPage() {
 	return (
-		<div className="space-y-4">
-			<div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-				<div className="w-full max-md:text-center">
-					<h1 className="text-2xl font-bold">Daftar Pengguna</h1>
-				</div>
-				<span className="flex max-md:w-full max-md:justify-center">
+		<PageShell>
+			<PageHeader>
+				<PageHeaderHeading>
+					<PageHeaderTitle>Daftar Pengguna</PageHeaderTitle>
+				</PageHeaderHeading>
+				<PageHeaderActions>
 					<BulkPhotoUploadClient />
 					<Button asChild>
 						<Link href="/bulk-upload">
 							<Plus className="h-4 w-4" /> Tambah Pengguna
 						</Link>
 					</Button>
-				</span>
-			</div>
+				</PageHeaderActions>
+			</PageHeader>
 
 			<div className="rounded-md border bg-background">
 				<Suspense fallback={<TableSkeleton />}>
 					<UsersTable />
 				</Suspense>
 			</div>
-		</div>
+		</PageShell>
 	);
 }
 

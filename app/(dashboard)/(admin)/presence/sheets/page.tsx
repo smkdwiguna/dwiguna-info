@@ -3,14 +3,15 @@ import { attendanceSheets, schedules } from "@/lib/db/schema";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SheetsListClient } from "@/features/presence/components/sheets-list-client";
+import { PageShell } from "@/components/ui/page-header";
 
 export default function PresenceSheetsPage() {
 	return (
-		<div className="space-y-4">
+		<PageShell>
 			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
 				<SheetsFetcher />
 			</Suspense>
-		</div>
+		</PageShell>
 	);
 }
 

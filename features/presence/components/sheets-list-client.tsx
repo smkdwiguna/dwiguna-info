@@ -26,6 +26,13 @@ import {
 	createAttendanceSheet,
 	deleteAttendanceSheet,
 } from "../actions/sheets";
+import {
+	PageHeader,
+	PageHeaderActions,
+	PageHeaderHeading,
+	PageHeaderTitle,
+	PageShell,
+} from "@/components/ui/page-header";
 
 export function SheetsListClient({ initialSheets }: { initialSheets: any[] }) {
 	const [sheets, setSheets] = useState(initialSheets);
@@ -74,16 +81,18 @@ export function SheetsListClient({ initialSheets }: { initialSheets: any[] }) {
 	};
 
 	return (
-		<div className="space-y-4">
-			<div className="w-full max-md:text-center max-md:space-y-4 md:flex justify-between">
-				<div className="w-full max-md:text-center">
-					<h1 className="text-2xl font-bold">Lembar Kehadiran</h1>
-				</div>
-				<Button onClick={() => setIsOpen(true)}>
-					<Plus className="w-4 h-4" />
-					Buat Lembar Baru
-				</Button>
-			</div>
+		<PageShell>
+			<PageHeader>
+				<PageHeaderHeading>
+					<PageHeaderTitle>Lembar Kehadiran</PageHeaderTitle>
+				</PageHeaderHeading>
+				<PageHeaderActions>
+					<Button onClick={() => setIsOpen(true)}>
+						<Plus className="w-4 h-4" />
+						Buat Lembar Baru
+					</Button>
+				</PageHeaderActions>
+			</PageHeader>
 
 			<div className="rounded-md border bg-background">
 				<Table>
@@ -154,6 +163,6 @@ export function SheetsListClient({ initialSheets }: { initialSheets: any[] }) {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		</div>
+		</PageShell>
 	);
 }
