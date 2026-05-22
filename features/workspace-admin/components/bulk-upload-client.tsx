@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,28 +43,47 @@ function validateDateFormat(dateStr: string): boolean {
 }
 
 const PREVIEW_USERS_KEY = "bulk-upload-preview-users";
+const BULK_UPLOAD_DRAFT_KEY = "bulk-upload-draft";
+
+const createEmptyBlock = (): GroupBlock => ({
+	id: crypto.randomUUID(),
+	orgUnitPath: "",
+	users: [{ id: crypto.randomUUID(), fullName: "" }],
+});
 
 export function BulkUploadClient() {
-	const [blocks, setBlocks] = useState<GroupBlock[]>([
-		{
-			id: crypto.randomUUID(),
-			orgUnitPath: "",
-			users: [{ id: crypto.randomUUID(), fullName: "" }],
-		},
-	]);
+	const [blocks, setBlocks] = useState<GroupBlock[]>([createEmptyBlock()]);
+	const [isDraftReady, setIsDraftReady] = useState(false);
 	const [isProcessing, setIsProcessing] = useState(false);
 	const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map());
 	const router = useRouter();
 
+	useEffect(() => {
+		if (typeof window === "undefined") return;
+		const storedDraft = sessionStorage.getItem(BULK_UPLOAD_DRAFT_KEY);
+		if (storedDraft) {
+			try {
+				const parsed = JSON.parse(storedDraft);
+				if (Array.isArray(parsed) && parsed.length > 0) {
+					setBlocks(parsed);
+				} else {
+					sessionStorage.removeItem(BULK_UPLOAD_DRAFT_KEY);
+				}
+			} catch (error) {
+				console.error("Failed to parse bulk upload draft", error);
+				sessionStorage.removeItem(BULK_UPLOAD_DRAFT_KEY);
+			}
+		}
+		setIsDraftReady(true);
+	}, []);
+
+	useEffect(() => {
+		if (!isDraftReady || typeof window === "undefined") return;
+		sessionStorage.setItem(BULK_UPLOAD_DRAFT_KEY, JSON.stringify(blocks));
+	}, [blocks, isDraftReady]);
+
 	const addBlock = () => {
-		setBlocks([
-			...blocks,
-			{
-				id: crypto.randomUUID(),
-				orgUnitPath: "",
-				users: [{ id: crypto.randomUUID(), fullName: "" }],
-			},
-		]);
+		setBlocks([...blocks, createEmptyBlock()]);
 	};
 
 	const removeBlock = (blockId: string) => {

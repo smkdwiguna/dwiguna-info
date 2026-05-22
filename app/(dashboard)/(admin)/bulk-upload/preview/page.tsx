@@ -27,6 +27,7 @@ interface UserWithPassword {
 }
 
 const PREVIEW_USERS_KEY = "bulk-upload-preview-users";
+const BULK_UPLOAD_DRAFT_KEY = "bulk-upload-draft";
 
 function parseUsersJson(raw: string): UserWithPassword[] {
 	const parsed = JSON.parse(raw) as UserWithPassword[];
@@ -123,8 +124,9 @@ export default function PreviewPage() {
 
 			if (response.success) {
 				sessionStorage.removeItem(PREVIEW_USERS_KEY);
-				toast.success(`Berhasil membuat ${response.created} pengguna!`);
-				setTimeout(() => router.push("/bulk-upload"), 1000);
+				sessionStorage.removeItem(BULK_UPLOAD_DRAFT_KEY);
+				toast.success(`Berhasil membuat ${response.created || 1} pengguna!`);
+				setTimeout(() => router.push("/users"), 1000);
 			} else {
 				toast.error("Gagal membuat pengguna: " + response.error);
 			}

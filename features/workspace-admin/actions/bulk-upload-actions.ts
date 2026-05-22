@@ -6,6 +6,7 @@ import {
 	buildIgnoreList,
 	generateUniqueUsername,
 } from "@/lib/username-generator";
+import { generateRandomPassword } from "@/lib/passwords";
 
 interface UserInput {
 	fullName: string;
@@ -27,15 +28,46 @@ interface GroupBlock {
 	users: UserInput[];
 }
 
-function generateRandomPassword(): string {
-	const length = 12;
-	const charset =
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
-	let password = "";
-	for (let i = 0; i < length; i++) {
-		password += charset.charAt(Math.floor(Math.random() * charset.length));
+const CUSTOM_SCHEMA_FIELDS = [
+	"nisn",
+	"nis",
+	"nuptk",
+	"tempatTanggalLahir",
+] as const;
+
+async function resolveCustomSchemaName(adminService: ReturnType<typeof getAdminService>) {
+	const configuredSchema = process.env.GOOGLE_CUSTOM_SCHEMA_NAME;
+	if (configuredSchema) return configuredSchema;
+
+	try {
+		const response = await adminService.schemas.list({
+			customerId: "my_customer",
+		});
+		const schemas = response.data.schemas || [];
+
+		let bestMatch: { name: string; matchCount: number } | null = null;
+
+		for (const schema of schemas) {
+			const schemaName = schema.schemaName;
+			const fieldNames = (schema.fields || [])
+				.map((field) => field.fieldName)
+				.filter(Boolean) as string[];
+			const matchCount = fieldNames.filter((field) =>
+				CUSTOM_SCHEMA_FIELDS.includes(field as (typeof CUSTOM_SCHEMA_FIELDS)[number]),
+			).length;
+
+			if (schemaName && matchCount > 0) {
+				if (!bestMatch || matchCount > bestMatch.matchCount) {
+					bestMatch = { name: schemaName, matchCount };
+				}
+			}
+		}
+
+		return bestMatch?.name || null;
+	} catch (error) {
+		console.error("[resolveCustomSchemaName] error fetching schemas", error);
+		return null;
 	}
-	return password;
 }
 
 export async function generateUserEmailsWithPasswords(
@@ -100,6 +132,19 @@ export async function createUsersWithPasswords(
 	try {
 		const adminService = getAdminService();
 		let successCount = 0;
+		const hasCustomData = users.some(
+			(user) =>
+				user.nisn || user.nis || user.nuptk || user.tempatTanggalLahir,
+		);
+		const customSchemaName = hasCustomData
+			? await resolveCustomSchemaName(adminService)
+			: null;
+
+		if (hasCustomData && !customSchemaName) {
+			throw new Error(
+				"Custom schema untuk NIS/NISN/NUPTK/TTL tidak ditemukan. Set GOOGLE_CUSTOM_SCHEMA_NAME atau buat schema di Admin Console.",
+			);
+		}
 
 		for (const user of users) {
 			const nameParts = user.fullName.trim().split(/\s+/);
@@ -107,21 +152,16 @@ export async function createUsersWithPasswords(
 			const givenName = nameParts.join(" ") || user.fullName;
 
 			try {
-				const customSchemas: any = {};
-
-				if (
-					user.nisn ||
-					user.nis ||
-					user.nuptk ||
-					user.tempatTanggalLahir
-				) {
-					customSchemas.akademik = {};
-					if (user.nisn) customSchemas.akademik.nisn = user.nisn;
-					if (user.nis) customSchemas.akademik.nis = user.nis;
-					if (user.nuptk) customSchemas.akademik.nuptk = user.nuptk;
-					if (user.tempatTanggalLahir)
-						customSchemas.akademik.tempatTanggalLahir = user.tempatTanggalLahir;
-				}
+				const customFields: Record<string, string> = {};
+				if (user.nisn) customFields.nisn = user.nisn;
+				if (user.nis) customFields.nis = user.nis;
+				if (user.nuptk) customFields.nuptk = user.nuptk;
+				if (user.tempatTanggalLahir)
+					customFields.tempatTanggalLahir = user.tempatTanggalLahir;
+				const customSchemas =
+					customSchemaName && Object.keys(customFields).length > 0
+						? { [customSchemaName]: customFields }
+						: undefined;
 
 				await adminService.users.insert({
 					requestBody: {
@@ -132,10 +172,7 @@ export async function createUsersWithPasswords(
 						},
 						password: user.password,
 						changePasswordAtNextLogin: true,
-						customSchemas:
-							Object.keys(customSchemas).length > 0
-								? customSchemas
-								: undefined,
+						customSchemas,
 					},
 				});
 

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
 
+export const dynamic = "force-dynamic";
+
 export default function UsersPage() {
 	return (
 		<div className="space-y-4">

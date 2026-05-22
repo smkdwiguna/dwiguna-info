@@ -27,6 +27,8 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	Edit,
+	Info,
+	KeyRound,
 	Search,
 	ImagePlus,
 } from "lucide-react";
@@ -45,6 +47,11 @@ export function UsersTableClient({ users }: { users: any[] }) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [infoUser, setInfoUser] = useState<any>(null);
+	const [isInfoOpen, setIsInfoOpen] = useState(false);
+	const [isInfoLoading, setIsInfoLoading] = useState(false);
+	const [isResetting, setIsResetting] = useState(false);
+	const [resetPassword, setResetPassword] = useState<string | null>(null);
 
 	// Single Photo Upload state
 	const [newPhotoBase64, setNewPhotoBase64] = useState<string | null>(null);
@@ -55,6 +62,13 @@ export function UsersTableClient({ users }: { users: any[] }) {
 	useEffect(() => {
 		setLocalUsers(users);
 	}, [users]);
+
+	const formatDateTime = (value?: string) => {
+		if (!value) return "-";
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return value;
+		return date.toLocaleString("id-ID");
+	};
 
 	const units = Array.from(
 		new Set(localUsers.map((u) => u.orgUnitPath).filter(Boolean)),
@@ -81,6 +95,40 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		setNewPhotoBase64(null);
 		setNewPhotoPreview(null);
 		setIsDialogOpen(true);
+	};
+
+	const openInfo = async (user: any) => {
+		setInfoUser(user);
+		setResetPassword(null);
+		setIsInfoOpen(true);
+		setIsInfoLoading(true);
+		try {
+			const { getUserDetails } = await import("../actions/get-user-details");
+			const detail = await getUserDetails(user.primaryEmail);
+			setInfoUser(detail);
+		} catch (error) {
+			console.error("Failed to load user info", error);
+			toast.error("Gagal memuat informasi pengguna.");
+		} finally {
+			setIsInfoLoading(false);
+		}
+	};
+
+	const handleResetPassword = async () => {
+		if (!infoUser?.primaryEmail) return;
+		setIsResetting(true);
+		try {
+			const { resetUserPassword } =
+				await import("../actions/reset-user-password");
+			const result = await resetUserPassword(infoUser.primaryEmail);
+			setResetPassword(result.password);
+			toast.success("Password berhasil direset.");
+		} catch (error) {
+			console.error("Failed to reset password", error);
+			toast.error("Gagal mereset password.");
+		} finally {
+			setIsResetting(false);
+		}
 	};
 
 	const processImageToSquareBase64 = (
@@ -231,8 +279,131 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		});
 	};
 
+	const customSchemaValues =
+		infoUser?.customSchemas && typeof infoUser.customSchemas === "object"
+			? Object.values(infoUser.customSchemas)
+			: [];
+	const akademik =
+		customSchemaValues.find(
+			(schema: any) =>
+				schema &&
+				typeof schema === "object" &&
+				("nisn" in schema ||
+					"nis" in schema ||
+					"nuptk" in schema ||
+					"tempatTanggalLahir" in schema),
+		) || {};
+
 	return (
 		<div>
+			<Dialog
+				open={isInfoOpen}
+				onOpenChange={(open) => {
+					setIsInfoOpen(open);
+					if (!open) {
+						setTimeout(() => {
+							setInfoUser(null);
+							setIsInfoLoading(false);
+							setIsResetting(false);
+							setResetPassword(null);
+						}, 500);
+					}
+				}}
+			>
+				<DialogContent className="sm:max-w-lg">
+					<DialogHeader>
+						<DialogTitle>Info Pengguna</DialogTitle>
+					</DialogHeader>
+					{isInfoLoading ? (
+						<div className="py-4 text-sm text-muted-foreground">
+							Memuat data...
+						</div>
+					) : infoUser ? (
+						<div className="space-y-4 py-4">
+							<div className="space-y-2">
+								<Label>Nama Lengkap</Label>
+								<Input value={infoUser.name?.fullName || "-"} readOnly />
+							</div>
+							<div className="space-y-2">
+								<Label>Email</Label>
+								<Input value={infoUser.primaryEmail || "-"} readOnly />
+							</div>
+							<div className="space-y-2">
+								<Label>ID</Label>
+								<Input value={infoUser.id || "-"} readOnly />
+							</div>
+							<div className="space-y-2">
+								<Label>Unit Organisasi</Label>
+								<Input value={infoUser.orgUnitPath || "/"} readOnly />
+							</div>
+							<div className="space-y-2">
+								<Label>Terakhir Login</Label>
+								<Input
+									value={formatDateTime(infoUser.lastLoginTime)}
+									readOnly
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label>Dibuat</Label>
+								<Input value={formatDateTime(infoUser.creationTime)} readOnly />
+							</div>
+							{akademik.nisn && (
+								<div className="space-y-2">
+									<Label>NISN</Label>
+									<Input value={akademik.nisn || "-"} readOnly />
+								</div>
+							)}
+							{akademik.nis && (
+								<div className="space-y-2">
+									<Label>NIS</Label>
+									<Input value={akademik.nis || "-"} readOnly />
+								</div>
+							)}
+							{akademik.nuptk && (
+								<div className="space-y-2">
+									<Label>NUPTK</Label>
+									<Input value={akademik.nuptk || "-"} readOnly />
+								</div>
+							)}
+							{akademik.tempatTanggalLahir && (
+								<div className="space-y-2">
+									<Label>Tempat, Tanggal Lahir</Label>
+									<Input value={akademik.tempatTanggalLahir || "-"} readOnly />
+								</div>
+							)}
+							{resetPassword && (
+								<div className="space-y-2">
+									<Label>Password Baru</Label>
+									<Input value={resetPassword} readOnly />
+									<p className="text-xs text-muted-foreground">
+										Pengguna diminta ganti password saat login berikutnya.
+									</p>
+								</div>
+							)}
+						</div>
+					) : (
+						<div className="py-4 text-sm text-muted-foreground">
+							Data pengguna tidak tersedia.
+						</div>
+					)}
+					<DialogFooter className="flex flex-row justify-between items-center sm:justify-between">
+						<Button
+							variant="outline"
+							onClick={() => setIsInfoOpen(false)}
+							disabled={isResetting}
+						>
+							Tutup
+						</Button>
+						<Button
+							onClick={handleResetPassword}
+							disabled={isResetting || isInfoLoading || !infoUser?.primaryEmail}
+						>
+							<KeyRound className="h-4 w-4" />
+							{isResetting ? "Mereset..." : "Reset Password"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
@@ -390,14 +561,24 @@ export function UsersTableClient({ users }: { users: any[] }) {
 							<TableCell>{user.primaryEmail}</TableCell>
 							<TableCell>{user.orgUnitPath || "/"}</TableCell>
 							<TableCell className="text-right">
-								<Button
-									variant="ghost"
-									size="icon"
-									aria-label="Edit"
-									onClick={() => openEdit(user)}
-								>
-									<Edit />
-								</Button>
+								<div className="flex justify-end gap-2">
+									<Button
+										variant="ghost"
+										size="icon"
+										aria-label="Info"
+										onClick={() => openInfo(user)}
+									>
+										<Info />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										aria-label="Edit"
+										onClick={() => openEdit(user)}
+									>
+										<Edit />
+									</Button>
+								</div>
 							</TableCell>
 						</TableRow>
 					))}

@@ -10,6 +10,7 @@ export function getAdminService() {
 			"https://www.googleapis.com/auth/admin.directory.user",
 			"https://www.googleapis.com/auth/admin.directory.group",
 			"https://www.googleapis.com/auth/admin.directory.orgunit",
+			"https://www.googleapis.com/auth/admin.directory.userschema",
 		],
 		clientOptions: {
 			subject: "proktor@smkdwiguna.sch.id",
