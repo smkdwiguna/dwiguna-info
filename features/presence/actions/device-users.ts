@@ -11,3 +11,19 @@ export async function deleteDeviceUser(id: number) {
 	revalidatePath("/presence/device-users");
 	return { success: true };
 }
+
+export async function enrollFingerprint(fid: number, terminalId: string) {
+	const db = await getDb();
+	const { terminals } = await import("@/lib/db/schema");
+	const terminal = await db.select().from(terminals).where(eq(terminals.id, terminalId)).get();
+	if (!terminal) throw new Error("Perangkat tidak ditemukan");
+
+	await db
+		.update(terminals)
+		.set({ 
+			status: "2",
+			metadata: String(fid) 
+		})
+		.where(eq(terminals.id, terminalId));
+	return { success: true };
+}

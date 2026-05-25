@@ -63,7 +63,7 @@ export function PageHeaderActions({
 	return (
 		<div
 			className={cn(
-				"flex items-center w-full justify-center sm:w-auto sm:justify-end",
+				"flex items-center gap-2 w-full justify-center sm:w-auto sm:justify-end",
 				className,
 			)}
 			{...props}

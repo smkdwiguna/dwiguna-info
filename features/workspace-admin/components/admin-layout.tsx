@@ -73,7 +73,7 @@ export function AdminLayout({
 			>
 				<AppSidebar isSuperUser={superUser} permissions={livePermissions} />
 				<SidebarInset>
-					<header className="flex h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
+					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<div className="w-full flex gap-3 items-center justify-start">
 							<SidebarTrigger />
 							<Image
@@ -170,14 +170,14 @@ function AppSidebar({
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
 											<Link href="/presence/terminals">
-												<span>Perangkat / Terminal</span>
+												<span>Terminal</span>
 											</Link>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
 											<Link href="/presence/device-users">
-												<span>ID Pengguna</span>
+												<span>Sidik Jari</span>
 											</Link>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>

@@ -64,12 +64,7 @@ export async function updateUser(
 			const updatedSchema = { ...currentSchema };
 			for (const [field, value] of Object.entries(customFields)) {
 				if (!allowedFields.has(field)) continue;
-				const trimmed = value?.trim() || "";
-				if (trimmed) {
-					updatedSchema[field] = trimmed;
-				} else {
-					delete updatedSchema[field];
-				}
+				updatedSchema[field] = value?.trim() || "";
 			}
 
 			requestBody = {

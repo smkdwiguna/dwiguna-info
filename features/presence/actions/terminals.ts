@@ -10,7 +10,7 @@ export async function createTerminal(payload: { id: string; name: string }) {
 	await db.insert(terminals).values({
 		id: payload.id,
 		name: payload.name,
-		status: "INHERIT",
+		status: "0",
 	});
 	revalidatePath("/presence/terminals");
 	return { success: true };
@@ -32,4 +32,27 @@ export async function deleteTerminal(id: string) {
 	await db.delete(terminals).where(eq(terminals.id, id));
 	revalidatePath("/presence/terminals");
 	return { success: true };
+}
+
+export async function syncAllFingerprints(terminalId: string) {
+	const db = await getDb();
+	const { deviceUsers } = await import("@/lib/db/schema");
+	const users = await db.select().from(deviceUsers).all();
+
+	const fidsWithFingerprints = users.filter((u) => !!u.fingerprint).map((u) => u.id);
+
+	const terminal = await db
+		.select()
+		.from(terminals)
+		.where(eq(terminals.id, terminalId))
+		.get();
+	if (!terminal) throw new Error("Terminal tidak ditemukan");
+
+	await db
+		.update(terminals)
+		.set({ syncQueue: JSON.stringify(fidsWithFingerprints) })
+		.where(eq(terminals.id, terminalId));
+
+	revalidatePath("/presence/terminals");
+	return { success: true, count: fidsWithFingerprints.length };
 }

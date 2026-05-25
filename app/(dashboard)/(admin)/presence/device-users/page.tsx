@@ -1,8 +1,9 @@
 import { getDb } from "@/lib/db";
-import { deviceUsers } from "@/lib/db/schema";
+import { deviceUsers, terminals } from "@/lib/db/schema";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAllOrgUnits } from "@/lib/google-api";
+import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
 import { DeviceUsersClient } from "@/features/presence/components/device-users-client";
 import { PageShell } from "@/components/ui/page-header";
 
@@ -20,9 +21,27 @@ async function DeviceUsersFetcher() {
 	try {
 		const db = await getDb();
 		const allUsers = await db.select().from(deviceUsers).all();
+		const allTerminals = await db.select().from(terminals).all();
 		const orgUnits = await fetchAllOrgUnits();
+		const workspaceUsers = await fetchAllWorkspaceUsers();
 
-		return <DeviceUsersClient initialUsers={allUsers} orgUnits={orgUnits} />;
+		const usersMap = new Map();
+		for (const u of workspaceUsers) {
+			if (u.primaryEmail) {
+				usersMap.set(u.primaryEmail, {
+					name: u.name?.fullName || "-",
+					orgUnit: u.orgUnitPath || "-",
+				});
+			}
+		}
+
+		const enrichedUsers = allUsers.map(u => ({
+			...u,
+			name: usersMap.get(u.email)?.name || "-",
+			orgUnit: usersMap.get(u.email)?.orgUnit || "-",
+		}));
+
+		return <DeviceUsersClient initialUsers={enrichedUsers} orgUnits={orgUnits} terminals={allTerminals} />;
 	} catch (error: any) {
 		return (
 			<div className="p-6 border border-destructive/50 bg-destructive/10 rounded-lg text-center mt-4">

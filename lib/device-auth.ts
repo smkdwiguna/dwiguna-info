@@ -4,22 +4,7 @@ import { eq } from "drizzle-orm";
 
 const SIGNATURE_ALGORITHM = "HMAC-SHA256";
 const MAX_TIME_SKEW_SECONDS = 5 * 60;
-const NONCE_TTL_SECONDS = 5 * 60;
 
-type TerminalMetadata = {
-	recentNonces?: Record<string, number>;
-	lastSeenAt?: number;
-};
-
-function parseMetadata(raw?: string | null): TerminalMetadata {
-	if (!raw) return {};
-	try {
-		return JSON.parse(raw) as TerminalMetadata;
-	} catch (error) {
-		console.error("[device-auth] failed to parse terminal metadata", error);
-		return {};
-	}
-}
 
 function toHex(buffer: ArrayBuffer) {
 	return Array.from(new Uint8Array(buffer))
@@ -27,11 +12,11 @@ function toHex(buffer: ArrayBuffer) {
 		.join("");
 }
 
-async function hmacSha256Hex(secret: string, payload: string) {
+async function hmacSha256Hex(password: string, payload: string) {
 	const encoder = new TextEncoder();
 	const key = await crypto.subtle.importKey(
 		"raw",
-		encoder.encode(secret),
+		encoder.encode(password),
 		{ name: "HMAC", hash: "SHA-256" },
 		false,
 		["sign"],
@@ -53,10 +38,7 @@ function isSignatureValid(expected: string, actual: string) {
 	return mismatch === 0;
 }
 
-export async function verifyDeviceRequest(
-	request: Request,
-	deviceId: string,
-) {
+export async function verifyDeviceRequest(request: Request, deviceId: string) {
 	const timestampHeader = request.headers.get("x-timestamp");
 	const nonce = request.headers.get("x-nonce");
 	const signature = request.headers.get("x-signature");
@@ -90,10 +72,8 @@ export async function verifyDeviceRequest(
 	}
 
 	const bodyText = request.method === "GET" ? "" : await request.text();
-	const url = new URL(request.url);
 	const signaturePayload = [
-		request.method.toUpperCase(),
-		url.pathname,
+		deviceId,
 		timestampHeader,
 		nonce,
 		bodyText,
@@ -108,32 +88,10 @@ export async function verifyDeviceRequest(
 		return { ok: false, status: 401, message: "Signature mismatch." };
 	}
 
-	const metadata = parseMetadata(terminal.metadata);
-	const recentNonces = metadata.recentNonces ?? {};
-	for (const [value, seenAt] of Object.entries(recentNonces)) {
-		if (now - seenAt > NONCE_TTL_SECONDS) {
-			delete recentNonces[value];
-		}
-	}
-
-	if (recentNonces[nonce]) {
-		return { ok: false, status: 401, message: "Nonce already used." };
-	}
-
-	recentNonces[nonce] = now;
-	metadata.recentNonces = recentNonces;
-	metadata.lastSeenAt = now;
-
-	await db
-		.update(terminals)
-		.set({ metadata: JSON.stringify(metadata) })
-		.where(eq(terminals.id, deviceId));
-
 	return { ok: true, terminal, bodyText };
 }
 
 export const deviceAuthConfig = {
 	signatureAlgorithm: SIGNATURE_ALGORITHM,
 	maxTimeSkewSeconds: MAX_TIME_SKEW_SECONDS,
-	nonceTtlSeconds: NONCE_TTL_SECONDS,
 };

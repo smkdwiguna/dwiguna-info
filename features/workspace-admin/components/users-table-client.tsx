@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { normalizeAccessList } from "@/lib/access";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 interface WorkspaceUserName {
 	fullName?: string;
@@ -310,8 +311,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 								name: { ...u.name, ...payload.name },
 								orgUnitPath: payload.orgUnitPath,
 								thumbnailPhotoUrl: finalPhotoUrl,
-								customSchemas:
-									updatedUser?.customSchemas ?? u.customSchemas,
+								customSchemas: updatedUser?.customSchemas ?? u.customSchemas,
 							}
 						: u,
 				),
@@ -721,25 +721,25 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 							</TableCell>
 							<TableCell>{user.primaryEmail}</TableCell>
 							<TableCell>{user.orgUnitPath || "/"}</TableCell>
-							<TableCell className="text-right">
-								<div className="flex justify-end gap-2">
+							<TableCell className="flex justify-end">
+								<ButtonGroup>
 									<Button
-										variant="ghost"
 										size="icon"
+										variant="outline"
 										aria-label="Info"
 										onClick={() => openInfo(user)}
 									>
 										<Info />
 									</Button>
 									<Button
-										variant="ghost"
 										size="icon"
+										variant="outline"
 										aria-label="Edit"
 										onClick={() => openEdit(user)}
 									>
 										<Edit />
 									</Button>
-								</div>
+								</ButtonGroup>
 							</TableCell>
 						</TableRow>
 					))}

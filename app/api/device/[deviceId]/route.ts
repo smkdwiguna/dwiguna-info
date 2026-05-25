@@ -4,62 +4,11 @@ import { getAdminService } from "@/lib/google-api";
 import { verifyDeviceRequest } from "@/lib/device-auth";
 import { eq } from "drizzle-orm";
 
-type PendingCommand = {
-	id: string;
-	code: number;
-	fid?: number;
-	templateHex?: string;
-	name?: string;
-	photoHex?: string;
-};
-
-type TerminalMetadata = {
-	pendingCommand?: PendingCommand;
-	pendingCommandAt?: number;
-	recentNonces?: Record<string, number>;
-	lastSeenAt?: number;
-};
-
 const LINE_BREAK_REGEX = /\r?\n/;
-
-function parseMetadata(raw?: string | null): TerminalMetadata {
-	if (!raw) return {};
-	try {
-		return JSON.parse(raw) as TerminalMetadata;
-	} catch (error) {
-		console.error("[device-route] failed to parse terminal metadata", error);
-		return {};
-	}
-}
 
 function sanitizeField(value?: string) {
 	if (!value) return "";
 	return value.replace(/[;\r\n]/g, " ").trim();
-}
-
-function formatCommandPayload(command: PendingCommand) {
-	const fid = command.fid !== undefined ? String(command.fid) : "";
-
-	switch (command.code) {
-		case 0:
-			return "0;";
-		case 1:
-			return "1;";
-		case 2:
-			return `2;${fid}`;
-		case 3:
-			return `3;${fid};${command.templateHex ?? ""}`;
-		case 4:
-			return `4;${fid}`;
-		case 5:
-			return `5;${fid}`;
-		case 6:
-			return "6";
-		case 7:
-			return `7;${sanitizeField(command.name)};${command.photoHex ?? ""}`;
-		default:
-			return "0;";
-	}
 }
 
 async function resolveUserPresentation(deviceUserId: number) {
@@ -99,6 +48,15 @@ async function resolveUserPresentation(deviceUserId: number) {
 	return { name: sanitizeField(name), photoHex };
 }
 
+function parseSyncQueue(raw?: string | null): number[] {
+	if (!raw) return [];
+	try {
+		const parsed = JSON.parse(raw);
+		if (Array.isArray(parsed)) return parsed;
+	} catch (e) {}
+	return [];
+}
+
 export async function POST(
 	request: Request,
 	{ params }: { params: { deviceId: string } },
@@ -118,7 +76,7 @@ export async function POST(
 		.filter(Boolean);
 
 	const db = await getDb();
-	let ackId: string | null = null;
+	let hasAck = false;
 	let searchedId: number | null = null;
 	let enrolledTemplate: { fid: number; templateHex: string } | null = null;
 
@@ -127,7 +85,7 @@ export async function POST(
 		if (!type) continue;
 
 		if (type === "A") {
-			ackId = sanitizeField(parts[0]);
+			hasAck = true;
 			continue;
 		}
 
@@ -149,28 +107,28 @@ export async function POST(
 		}
 	}
 
-	if (ackId) {
-		const metadata = parseMetadata(auth.terminal.metadata);
-		if (metadata.pendingCommand?.id === ackId) {
-			delete metadata.pendingCommand;
-			delete metadata.pendingCommandAt;
-			await db
-				.update(terminals)
-				.set({ metadata: JSON.stringify(metadata) })
-				.where(eq(terminals.id, auth.terminal.id));
+	const now = Math.floor(Date.now() / 1000);
+	let currentStatus = auth.terminal.status || "0";
+	let currentMetadata = auth.terminal.metadata || null;
+	let syncQueue = parseSyncQueue(auth.terminal.syncQueue);
+
+	// Update lastSeenAt in timeout column
+	await db
+		.update(terminals)
+		.set({ timeout: now })
+		.where(eq(terminals.id, auth.terminal.id));
+
+	// Handle ACK: clear the current command
+	if (hasAck && currentStatus !== "0") {
+		// Check if the current command was part of a sync
+		if (currentStatus === "3" && syncQueue.length > 0) {
+			syncQueue.shift();
 		}
-	} else if (lines.some((line) => line === "A" || line === "A;")) {
-		const metadata = parseMetadata(auth.terminal.metadata);
-		if (metadata.pendingCommand) {
-			delete metadata.pendingCommand;
-			delete metadata.pendingCommandAt;
-			await db
-				.update(terminals)
-				.set({ metadata: JSON.stringify(metadata) })
-				.where(eq(terminals.id, auth.terminal.id));
-		}
+		currentStatus = "0";
+		currentMetadata = null;
 	}
 
+	// Handle enrolled template from device
 	if (enrolledTemplate) {
 		await db
 			.update(deviceUsers)
@@ -178,33 +136,55 @@ export async function POST(
 			.where(eq(deviceUsers.id, enrolledTemplate.fid));
 	}
 
+	// Handle user search from device (code 8 → respond with code 7)
 	if (searchedId !== null) {
-		const metadata = parseMetadata(auth.terminal.metadata);
 		const presentation = await resolveUserPresentation(searchedId);
-		metadata.pendingCommand = {
-			id: `cmd-${Date.now()}`,
-			code: 7,
-			fid: searchedId,
-			name: presentation.name,
-			photoHex: presentation.photoHex,
-		};
-		metadata.pendingCommandAt = Math.floor(Date.now() / 1000);
-		await db
-			.update(terminals)
-			.set({ metadata: JSON.stringify(metadata) })
-			.where(eq(terminals.id, auth.terminal.id));
+		currentStatus = "7";
+		currentMetadata = `${presentation.name};${presentation.photoHex}`;
 	}
 
-	// Read the latest terminal metadata and return the current pending command in the POST response
-	const [updatedTerminal] = await db
-		.select()
-		.from(terminals)
+	// Process syncQueue: if no current command and queue has items, pop next
+	if ((currentStatus === "0" || currentStatus === "INHERIT") && syncQueue.length > 0) {
+		while (syncQueue.length > 0) {
+			const nextFid = syncQueue[0];
+			const [userToSync] = await db
+				.select()
+				.from(deviceUsers)
+				.where(eq(deviceUsers.id, nextFid));
+			if (userToSync && userToSync.fingerprint) {
+				// Set a copy command (code 3)
+				currentStatus = "3";
+				currentMetadata = `${nextFid};${userToSync.fingerprint}`;
+				break;
+			} else {
+				// No fingerprint data, skip this user
+				syncQueue.shift();
+			}
+		}
+	}
+
+	// Ensure status is initialized nicely if it was INHERIT
+	if (currentStatus === "INHERIT") {
+		currentStatus = "0";
+	}
+
+	// Persist metadata, status, and syncQueue changes
+	await db
+		.update(terminals)
+		.set({
+			status: currentStatus,
+			metadata: currentMetadata,
+			syncQueue: syncQueue.length > 0 ? JSON.stringify(syncQueue) : null,
+		})
 		.where(eq(terminals.id, auth.terminal.id));
-	const updatedMetadata = parseMetadata(updatedTerminal?.metadata);
-	const command = updatedMetadata.pendingCommand ?? null;
-	const payload = command ? formatCommandPayload(command) : "0;";
+
+	// Format payload
+	let payload = "0;";
+	if (currentStatus !== "0") {
+		payload = currentMetadata ? `${currentStatus};${currentMetadata}` : `${currentStatus};`;
+	}
 
 	return new Response(payload, {
 		headers: { "content-type": "text/plain; charset=utf-8" },
 	});
-	}
+}

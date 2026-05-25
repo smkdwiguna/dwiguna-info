@@ -12,11 +12,14 @@ export const deviceUsers = sqliteTable('device_users', {
 export const terminals = sqliteTable('terminals', {
 	id: text('id').primaryKey(), // MAC Address or UUID
 	name: text('name').notNull(),
-	status: text('status').notNull().default('INHERIT'), // WAIT_ENROLL, WAIT_FETCH, etc.
+	status: text('status').notNull().default('0'), // 0 = Idle, 2 = Enroll, 3 = Copy, etc.
 	password: text('password'),
+	// Used to store the last seen epoch timestamp for online/offline detection
 	timeout: integer('timeout').default(0),
-	// JSON field for dynamic state (like whose ID is being enrolled right now)
+	// Strictly holds the exact raw plain text command (e.g., "9;12;A1B2...")
 	metadata: text('metadata'),
+	// Holds an array of user IDs to be synced to the device
+	syncQueue: text('sync_queue'),
 });
 
 export const attendanceSheets = sqliteTable('attendance_sheets', {
