@@ -76,16 +76,8 @@ export async function fetchUserAccessFromWorkspace(email: string) {
 		const customSchemas = response.data.customSchemas;
 		if (!customSchemas || typeof customSchemas !== "object") return "";
 
-		const candidateSchemaNames = new Set([
-			process.env.GOOGLE_ACCESS_SCHEMA_NAME?.trim(),
-			"access",
-			"accessManagement",
-			"access-management",
-			"dwiguna",
-		]);
-
 		for (const [schemaName, schemaValue] of Object.entries(customSchemas)) {
-			if (!candidateSchemaNames.has(schemaName)) continue;
+			if (schemaName != process.env.GOOGLE_CUSTOM_SCHEMA_NAME) continue;
 			if (!schemaValue || typeof schemaValue !== "object") continue;
 
 			const fields = schemaValue as Record<string, unknown>;

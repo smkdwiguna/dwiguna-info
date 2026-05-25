@@ -14,18 +14,80 @@ export async function updateUser(
 	userId: string,
 	updates: Record<string, unknown>,
 ) {
-  await requireUsersAccess();
-  // Initialize the Admin SDK client with proper scopes.
-  const adminService = getAdminService();
+	await requireUsersAccess();
+	const adminService = getAdminService();
 
-  try {
-    const response = await adminService.users.update({
-      userKey: userId,
-      requestBody: updates,
-    });
-    return response.data;
-  } catch (error) {
-    console.error("[updateUser] error updating user", userId, error);
-    throw error;
-  }
+	const { customFields, ...rest } = updates as {
+		customFields?: Record<string, string | undefined>;
+	};
+
+	try {
+		let requestBody: Record<string, unknown> = { ...rest };
+
+		if (customFields) {
+			const schemaName = process.env.GOOGLE_CUSTOM_SCHEMA_NAME?.trim();
+			if (!schemaName) {
+				throw new Error(
+					"GOOGLE_CUSTOM_SCHEMA_NAME wajib diisi untuk menyimpan custom field.",
+				);
+			}
+
+			const schemaList = await adminService.schemas.list({
+				customerId: "my_customer",
+			});
+			const schemas = schemaList.data.schemas || [];
+			const schemaInfo = schemas.find(
+				(schema) => schema.schemaName === schemaName,
+			);
+
+			if (!schemaInfo) {
+				throw new Error(
+					`Custom schema '${schemaName}' tidak ditemukan. Buat schema di Admin Console atau periksa GOOGLE_CUSTOM_SCHEMA_NAME.`,
+				);
+			}
+
+			const allowedFields = new Set(
+				(schemaInfo.fields || [])
+					.map((field) => field.fieldName)
+					.filter(Boolean) as string[],
+			);
+
+			const current = await adminService.users.get({
+				userKey: userId,
+				projection: "full",
+				fields: "customSchemas",
+			});
+			const existingSchemas = current.data.customSchemas || {};
+			const currentSchema =
+				(existingSchemas[schemaName] as Record<string, unknown>) ?? {};
+
+			const updatedSchema = { ...currentSchema };
+			for (const [field, value] of Object.entries(customFields)) {
+				if (!allowedFields.has(field)) continue;
+				const trimmed = value?.trim() || "";
+				if (trimmed) {
+					updatedSchema[field] = trimmed;
+				} else {
+					delete updatedSchema[field];
+				}
+			}
+
+			requestBody = {
+				...requestBody,
+				customSchemas: {
+					...existingSchemas,
+					[schemaName]: updatedSchema,
+				},
+			};
+		}
+
+		const response = await adminService.users.update({
+			userKey: userId,
+			requestBody,
+		});
+		return response.data;
+	} catch (error) {
+		console.error("[updateUser] error updating user", userId, error);
+		throw error;
+	}
 }

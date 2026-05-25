@@ -69,6 +69,12 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const [isInfoLoading, setIsInfoLoading] = useState(false);
 	const [isResetting, setIsResetting] = useState(false);
 	const [resetPassword, setResetPassword] = useState<string | null>(null);
+	const [editCustomFields, setEditCustomFields] = useState({
+		nisn: "",
+		nis: "",
+		nuptk: "",
+		tempatTanggalLahir: "",
+	});
 
 	// Single Photo Upload state
 	const [newPhotoBase64, setNewPhotoBase64] = useState<string | null>(null);
@@ -108,6 +114,21 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 		return values;
 	};
 
+	const getCustomFieldValue = (
+		customSchemas: Record<string, unknown> | null | undefined,
+		field: string,
+	) => {
+		if (!customSchemas || typeof customSchemas !== "object") return "";
+		for (const schema of Object.values(customSchemas)) {
+			if (!schema || typeof schema !== "object") continue;
+			const record = schema as Record<string, unknown>;
+			if (typeof record[field] === "string") {
+				return record[field] as string;
+			}
+		}
+		return "";
+	};
+
 	const formatDateTime = (value?: string) => {
 		if (!value) return "-";
 		const date = new Date(value);
@@ -142,6 +163,15 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const openEdit = (user: WorkspaceUser) => {
 		// Create a deep copy so we can cleanly handle changes and fallback
 		setEditUser(JSON.parse(JSON.stringify(user)));
+		setEditCustomFields({
+			nisn: getCustomFieldValue(user.customSchemas, "nisn"),
+			nis: getCustomFieldValue(user.customSchemas, "nis"),
+			nuptk: getCustomFieldValue(user.customSchemas, "nuptk"),
+			tempatTanggalLahir: getCustomFieldValue(
+				user.customSchemas,
+				"tempatTanggalLahir",
+			),
+		});
 		setNewPhotoBase64(null);
 		setNewPhotoPreview(null);
 		setIsDialogOpen(true);
@@ -252,9 +282,15 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 					fullName,
 				},
 				orgUnitPath: editUser.orgUnitPath,
+				customFields: {
+					nisn: editCustomFields.nisn,
+					nis: editCustomFields.nis,
+					nuptk: editCustomFields.nuptk,
+					tempatTanggalLahir: editCustomFields.tempatTanggalLahir,
+				},
 			};
 
-			await updateUser(editUser.primaryEmail, payload);
+			const updatedUser = await updateUser(editUser.primaryEmail, payload);
 
 			// If new photo was selected, upload it
 			let finalPhotoUrl = editUser.thumbnailPhotoUrl;
@@ -274,6 +310,8 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 								name: { ...u.name, ...payload.name },
 								orgUnitPath: payload.orgUnitPath,
 								thumbnailPhotoUrl: finalPhotoUrl,
+								customSchemas:
+									updatedUser?.customSchemas ?? u.customSchemas,
 							}
 						: u,
 				),
@@ -541,6 +579,60 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 											...editUser,
 											orgUnitPath: e.target.value,
 										})
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="nisn">NISN</Label>
+								<Input
+									id="nisn"
+									value={editCustomFields.nisn}
+									onChange={(e) =>
+										setEditCustomFields((prev) => ({
+											...prev,
+											nisn: e.target.value,
+										}))
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="nis">NIS</Label>
+								<Input
+									id="nis"
+									value={editCustomFields.nis}
+									onChange={(e) =>
+										setEditCustomFields((prev) => ({
+											...prev,
+											nis: e.target.value,
+										}))
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="nuptk">NUPTK</Label>
+								<Input
+									id="nuptk"
+									value={editCustomFields.nuptk}
+									onChange={(e) =>
+										setEditCustomFields((prev) => ({
+											...prev,
+											nuptk: e.target.value,
+										}))
+									}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="tempatTanggalLahir">
+									Tempat, Tanggal Lahir
+								</Label>
+								<Input
+									id="tempatTanggalLahir"
+									value={editCustomFields.tempatTanggalLahir}
+									onChange={(e) =>
+										setEditCustomFields((prev) => ({
+											...prev,
+											tempatTanggalLahir: e.target.value,
+										}))
 									}
 								/>
 							</div>

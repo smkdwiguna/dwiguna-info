@@ -15,7 +15,7 @@ import {
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, LayoutDashboard, Settings, Clock } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Clock, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
@@ -112,6 +112,14 @@ function AppSidebar({
 
 					{isSuperUser && (
 						<>
+							<SidebarMenuItem>
+								<SidebarMenuButton asChild tooltip="Akses">
+									<Link href="/access">
+										<Shield />
+										<span>Akses</span>
+									</Link>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Kehadiran (Presensi)">
 									<Link href="/presence">

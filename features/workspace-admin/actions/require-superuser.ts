@@ -1,11 +1,10 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { hasPermission, isSuperUser } from "@/lib/access";
-import { fetchUserAccessFromWorkspace } from "@/lib/google-api";
+import { isSuperUser } from "@/lib/access";
 import { cookies, headers } from "next/headers";
 
-export async function requireUsersAccess() {
+export async function requireSuperUser() {
 	const headerStore = await headers();
 	const cookieStore = await cookies();
 	const requestHeaders = new Headers(headerStore);
@@ -22,12 +21,7 @@ export async function requireUsersAccess() {
 		throw new Error("UNAUTHORIZED");
 	}
 
-	if (isSuperUser(session.user.email)) {
-		return session;
-	}
-
-	const liveAccess = await fetchUserAccessFromWorkspace(session.user.email);
-	if (!hasPermission(liveAccess, "users")) {
+	if (!isSuperUser(session.user.email)) {
 		throw new Error("FORBIDDEN");
 	}
 
