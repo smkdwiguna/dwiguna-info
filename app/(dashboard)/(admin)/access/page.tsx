@@ -12,7 +12,8 @@ import { AccessManagementClient } from "@/features/workspace-admin/components/ac
 export const dynamic = "force-dynamic";
 
 export default async function AccessPage() {
-	const { getAccessList } = await import("@/features/workspace-admin/actions/get-access-list");
+	const { getAccessList } =
+		await import("@/features/workspace-admin/actions/get-access-list");
 	const users = await getAccessList();
 
 	return (
@@ -24,13 +25,10 @@ export default async function AccessPage() {
 				<PageHeaderActions />
 			</PageHeader>
 
-			<div className="rounded-md border bg-background">
-				<Suspense>
-					{/* client component */}
-					{/* @ts-ignore */}
-					<AccessManagementClient users={users} />
-				</Suspense>
-			</div>
+			<Suspense>
+				{/* client component */}
+				<AccessManagementClient users={users} />
+			</Suspense>
 		</PageShell>
 	);
 }

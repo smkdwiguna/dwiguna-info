@@ -1,3 +1,5 @@
+"use client";
+
 import {
 	Sidebar,
 	SidebarContent,
@@ -19,17 +21,45 @@ import { Users, LayoutDashboard, Settings, Clock, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
-import { hasPermission, isSuperUser } from "@/lib/access";
+import { isSuperUser } from "@/lib/access";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/spinner";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
 	userEmail?: string;
-	userAccess?: string;
+	permissions?: string[];
 }
 
-export function AdminLayout({ children, userEmail, userAccess }: AdminLayoutProps) {
+export function AdminLayout({
+	children,
+	userEmail,
+	permissions,
+}: AdminLayoutProps) {
 	const superUser = isSuperUser(userEmail);
-	const canManageUsers = superUser || hasPermission(userAccess, "users");
+	const [livePermissions, setLivePermissions] = useState<string[]>(["loading"]);
+
+	useEffect(() => {
+		if (!userEmail) return;
+		let active = true;
+		(async () => {
+			try {
+				const { getLivePermissions } =
+					await import("@/features/workspace-admin/actions/require-permission");
+				const result = await getLivePermissions();
+				if (active && !result.isSuperUser) {
+					setLivePermissions(result.permissions);
+				}
+			} catch {
+				if (active) {
+					setLivePermissions(permissions ?? []);
+				}
+			}
+		})();
+		return () => {
+			active = false;
+		};
+	}, [userEmail, permissions]);
 
 	return (
 		<TooltipProvider>
@@ -40,20 +70,18 @@ export function AdminLayout({ children, userEmail, userAccess }: AdminLayoutProp
 					} as React.CSSProperties
 				}
 			>
-				<AppSidebar
-					isSuperUser={superUser}
-					canManageUsers={canManageUsers}
-				/>
+				<AppSidebar isSuperUser={superUser} permissions={livePermissions} />
 				<SidebarInset>
-					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-5.5">
+					<header className="flex h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<SidebarTrigger className="-ml-1" />
 						<div className="w-full flex gap-2 items-center justify-center">
 							<Image
-								src="/Logo.png"
-								alt="Logo"
-								width={40}
+								src="/SMK-TI-Dwiguna.png"
+								loading="eager"
+								alt="Logo SMK TI Dwiguna"
+								width={250}
 								height={40}
-								className="h-8 w-8"
+								className="h-8 w-50"
 							/>
 						</div>
 						<Logout />
@@ -69,10 +97,10 @@ export function AdminLayout({ children, userEmail, userAccess }: AdminLayoutProp
 
 function AppSidebar({
 	isSuperUser,
-	canManageUsers,
+	permissions,
 }: {
 	isSuperUser: boolean;
-	canManageUsers: boolean;
+	permissions: string[];
 }) {
 	return (
 		<Sidebar>
@@ -87,27 +115,29 @@ function AppSidebar({
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
-
-					{canManageUsers && (
-						<>
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Pengguna">
-									<Link href="/users">
-										<Users />
-										<span>Pengguna</span>
-									</Link>
-								</SidebarMenuButton>
-								<SidebarMenuSub>
-									<SidebarMenuSubItem>
-										<SidebarMenuSubButton asChild>
-											<Link href="/bulk-upload">
-												<span>Tambah Pengguna</span>
-											</Link>
-										</SidebarMenuSubButton>
-									</SidebarMenuSubItem>
-								</SidebarMenuSub>
-							</SidebarMenuItem>
-						</>
+					{!isSuperUser && permissions.includes("loading") && (
+						<div className="text-center pt-2">
+							<Spinner variant="muted" />
+						</div>
+					)}
+					{(isSuperUser || permissions.includes("users")) && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Pengguna">
+								<Link href="/users">
+									<Users />
+									<span>Pengguna</span>
+								</Link>
+							</SidebarMenuButton>
+							<SidebarMenuSub>
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild>
+										<Link href="/bulk-upload">
+											<span>Tambah Pengguna</span>
+										</Link>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+							</SidebarMenuSub>
+						</SidebarMenuItem>
 					)}
 
 					{isSuperUser && (

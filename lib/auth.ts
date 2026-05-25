@@ -51,6 +51,11 @@ export const auth = betterAuth({
 	account: {
 		storeAccountCookie: true,
 	},
+	advanced: {
+		defaultCookieAttributes: {
+			path: "/",
+		},
+	},
 	telemetry: {
 		enabled: false,
 	},

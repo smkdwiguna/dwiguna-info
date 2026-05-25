@@ -1,35 +1,8 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { hasPermission, isSuperUser } from "@/lib/access";
-import { fetchUserAccessFromWorkspace } from "@/lib/google-api";
-import { cookies, headers } from "next/headers";
+import { requirePermission } from "./require-permission";
 
 export async function requireUsersAccess() {
-	const headerStore = await headers();
-	const cookieStore = await cookies();
-	const requestHeaders = new Headers(headerStore);
-	const cookieHeader = cookieStore
-		.getAll()
-		.map((cookie) => `${cookie.name}=${cookie.value}`)
-		.join("; ");
-	if (cookieHeader) {
-		requestHeaders.set("cookie", cookieHeader);
-	}
-	const session = await auth.api.getSession({ headers: requestHeaders });
-
-	if (!session?.user) {
-		throw new Error("UNAUTHORIZED");
-	}
-
-	if (isSuperUser(session.user.email)) {
-		return session;
-	}
-
-	const liveAccess = await fetchUserAccessFromWorkspace(session.user.email);
-	if (!hasPermission(liveAccess, "users")) {
-		throw new Error("FORBIDDEN");
-	}
-
+	const { session } = await requirePermission("users");
 	return session;
 }

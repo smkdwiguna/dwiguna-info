@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -9,12 +8,21 @@ import {
 	DialogHeader,
 	DialogTitle,
 	DialogFooter,
+	DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { CircleMinus, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { normalizeAccessList, SUPERUSER_EMAIL } from "@/lib/access";
+import {
+	Field,
+	FieldContent,
+	FieldDescription,
+	FieldLabel,
+	FieldTitle,
+} from "@/components/ui/field";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface WorkspaceUser {
 	id?: string;
@@ -227,10 +235,10 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 	}, [accessMap, localUsers, searchTerm, selectedPermission]);
 
 	return (
-		<div className="p-4 space-y-4">
+		<div className="space-y-16">
 			{FEATURE_SETS.map((feature) => (
-				<article key={feature.key} className="mb-8 space-y-2">
-					<h2 className="font-bold text-2xl">{feature.title}</h2>
+				<article key={feature.key} className="space-y-2">
+					<h2 className="font-bold text-xl">{feature.title}</h2>
 					{feature.permissions.map((perm) => {
 						const list = usersWithPermission(perm.key);
 						return (
@@ -254,7 +262,7 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 								<Table>
 									<TableBody>
 										{list.length === 0 ? (
-											<TableRow>
+											<TableRow className="bg-background">
 												<TableCell colSpan={3} className="text-center">
 													Belum ada pengguna.
 												</TableCell>
@@ -263,7 +271,10 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 											list.map((u) => {
 												const disabled = isSaving;
 												return (
-													<TableRow key={u.primaryEmail}>
+													<TableRow
+														key={u.primaryEmail}
+														className="bg-background"
+													>
 														<TableCell className="font-bold pl-4">
 															{u.fullName || "-"}
 														</TableCell>
@@ -319,44 +330,36 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 								</div>
 							) : (
 								filteredCandidates.map((u) => (
-									<div
-										key={u.primaryEmail}
-										className="flex items-center justify-between gap-3 rounded border px-3 py-2"
-									>
-										<label className="flex items-center gap-3 w-full">
-											<input
-												type="checkbox"
+									<FieldLabel key={u.primaryEmail}>
+										<Field orientation="horizontal">
+											<Checkbox
 												checked={selectedEmails.includes(u.primaryEmail || "")}
-												onChange={() => toggleCandidate(u.primaryEmail || "")}
+												onCheckedChange={() =>
+													toggleCandidate(u.primaryEmail || "")
+												}
 											/>
-											<div>
-												<div className="text-sm font-medium">
-													{u.fullName || "-"}
-												</div>
-												<div className="text-xs text-muted-foreground">
-													{u.primaryEmail}
-												</div>
-											</div>
-										</label>
-									</div>
+											<FieldContent>
+												<FieldTitle>{u.fullName}</FieldTitle>
+												<FieldDescription>{u.primaryEmail}</FieldDescription>
+											</FieldContent>
+										</Field>
+									</FieldLabel>
 								))
 							)}
 						</div>
 					</div>
 					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="outline" disabled={isSaving}>
+								Tutup
+							</Button>
+						</DialogClose>
 						<Button
 							onClick={handleBulkGrant}
 							disabled={isSaving || selectedEmails.length === 0}
 						>
 							<Plus className="h-4 w-4" />
 							Berikan Izin
-						</Button>
-						<Button
-							variant="outline"
-							onClick={() => setIsDialogOpen(false)}
-							disabled={isSaving}
-						>
-							Tutup
 						</Button>
 					</DialogFooter>
 				</DialogContent>

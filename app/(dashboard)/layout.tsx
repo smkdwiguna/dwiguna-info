@@ -17,11 +17,12 @@ export default function DashboardLayout({
 		return (
 			<div className="mx-auto flex min-h-svh max-w-3xl flex-col items-center justify-center gap-4">
 				<Image
-					src="/SMK-TI-Dwiguna.png"
+					src="/Logo.png"
 					alt="Logo SMK TI Dwiguna"
-					width={1219}
+					loading="eager"
+					width={195}
 					height={195}
-					className="h-12 w-auto"
+					className="h-12 w-12"
 				/>
 				<Spinner variant="muted" />
 			</div>
@@ -32,12 +33,5 @@ export default function DashboardLayout({
 		return <Login />;
 	}
 
-	return (
-		<AdminLayout
-			userEmail={session.user.email}
-			userAccess={session.user.access}
-		>
-			{children}
-		</AdminLayout>
-	);
+	return <AdminLayout userEmail={session.user.email}>{children}</AdminLayout>;
 }
