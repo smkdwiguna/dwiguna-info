@@ -21,6 +21,7 @@ import { Users, LayoutDashboard, Settings, Clock, Shield } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { isSuperUser } from "@/lib/access";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/spinner";
@@ -73,8 +74,8 @@ export function AdminLayout({
 				<AppSidebar isSuperUser={superUser} permissions={livePermissions} />
 				<SidebarInset>
 					<header className="flex h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
-						<SidebarTrigger className="-ml-1" />
-						<div className="w-full flex gap-2 items-center justify-center">
+						<div className="w-full flex gap-3 items-center justify-start">
+							<SidebarTrigger />
 							<Image
 								src="/SMK-TI-Dwiguna.png"
 								loading="eager"
@@ -84,6 +85,7 @@ export function AdminLayout({
 								className="h-8 w-50"
 							/>
 						</div>
+						<ThemeToggle />
 						<Logout />
 					</header>
 					<main className="flex flex-1 flex-col gap-4 p-4 md:p-6 bg-muted/20">
@@ -162,6 +164,20 @@ function AppSidebar({
 										<SidebarMenuSubButton asChild>
 											<Link href="/presence/sheets">
 												<span>Lembar Kehadiran</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/presence/terminals">
+												<span>Perangkat / Terminal</span>
+											</Link>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<Link href="/presence/device-users">
+												<span>ID Pengguna</span>
 											</Link>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>

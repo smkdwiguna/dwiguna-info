@@ -3,6 +3,8 @@ import {
 	attendanceSheets,
 	sheetTargets,
 	presencePoints,
+	schedules,
+	terminals,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Suspense } from "react";
@@ -48,6 +50,12 @@ async function SheetDetailFetcher({ sheetId }: { sheetId: number }) {
 		.select()
 		.from(presencePoints)
 		.where(eq(presencePoints.sheetId, sheetId));
+	const sheetSchedules = await db
+		.select()
+		.from(schedules)
+		.where(eq(schedules.sheetId, sheetId));
+
+	const allTerminals = await db.select().from(terminals).all();
 
 	const orgUnits = await fetchAllOrgUnits();
 
@@ -56,6 +64,8 @@ async function SheetDetailFetcher({ sheetId }: { sheetId: number }) {
 			sheet={sheet}
 			targets={targets}
 			points={points}
+			schedules={sheetSchedules}
+			terminals={allTerminals}
 			orgUnits={orgUnits}
 		/>
 	);

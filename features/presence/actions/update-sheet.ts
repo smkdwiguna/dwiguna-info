@@ -5,6 +5,7 @@ import {
 	attendanceSheets,
 	sheetTargets,
 	presencePoints,
+	schedules,
 } from "@/lib/db/schema";
 import { assignMissingDeviceIds } from "./assign-device-ids";
 import { eq, inArray } from "drizzle-orm";
@@ -19,6 +20,11 @@ interface UpdateSheetPayload {
 		startTime: number;
 		thresholdTime: number;
 		endTime: number;
+	}[];
+	schedules: {
+		id?: number;
+		terminalId: string;
+		date: string;
 	}[];
 }
 
@@ -92,6 +98,19 @@ export async function updateAttendanceSheet(payload: UpdateSheetPayload) {
 					endTime: point.endTime,
 				});
 			}
+		}
+
+		// -- SCHEDULES (Safe to delete and recreate) --
+		await db
+			.delete(schedules)
+			.where(eq(schedules.sheetId, payload.sheetId));
+
+		for (const schedule of payload.schedules) {
+			await db.insert(schedules).values({
+				sheetId: payload.sheetId,
+				terminalId: schedule.terminalId,
+				date: schedule.date,
+			});
 		}
 
 		return { success: true };

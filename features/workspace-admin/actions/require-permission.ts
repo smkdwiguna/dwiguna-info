@@ -5,7 +5,11 @@ import { fetchUserAccessFromWorkspace } from "@/lib/google-api";
 import { getServerSession } from "@/lib/server-session";
 
 export async function getLivePermissions() {
-	const session = await getServerSession();
+	const session: {
+		user?: {
+			email: string;
+		};
+	} | null = await getServerSession();
 
 	if (!session?.user) {
 		throw new Error("UNAUTHORIZED");

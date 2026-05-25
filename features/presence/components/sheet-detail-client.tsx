@@ -35,6 +35,17 @@ interface Point {
 	endTime: number | string;
 }
 
+interface Schedule {
+	id?: number;
+	terminalId: string;
+	date: string;
+}
+
+interface Terminal {
+	id: string;
+	name: string;
+}
+
 export function SheetDetailClient({
 	sheet,
 	targets: initialTargets,
@@ -44,6 +55,8 @@ export function SheetDetailClient({
 	sheet: Sheet;
 	targets: Target[];
 	points: Point[];
+	schedules: Schedule[];
+	terminals: Terminal[];
 	orgUnits: string[];
 }) {
 	const router = useRouter();
@@ -88,6 +101,8 @@ export function SheetDetailClient({
 				],
 	);
 
+	const [schedulesList, setSchedulesList] = useState<Schedule[]>(schedules);
+
 	const handleSave = async () => {
 		if (!name) return toast.error("Nama lembar harus diisi");
 
@@ -106,6 +121,7 @@ export function SheetDetailClient({
 						thresholdTime: timeToMinutes(p.thresholdTime as string),
 						endTime: timeToMinutes(p.endTime as string),
 					})),
+				schedules: schedulesList.filter(s => s.terminalId && s.date),
 			};
 
 			await updateAttendanceSheet(payload);
@@ -302,6 +318,73 @@ export function SheetDetailClient({
 						{points.length === 0 && (
 							<div className="p-4 text-center border border-dashed rounded-md text-muted-foreground text-sm">
 								Belum ada titik kehadiran.
+							</div>
+						)}
+					</div>
+				</div>
+
+				{/* SCHEDULES */}
+				<div className="space-y-4">
+					<div className="flex items-center justify-between">
+						<div>
+							<Label className="text-lg font-semibold">Jadwal Perangkat</Label>
+						</div>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								setSchedulesList([...schedulesList, { terminalId: "", date: "" }])
+							}
+						>
+							<Plus className="w-4 h-4 mr-2" /> Tambah Jadwal
+						</Button>
+					</div>
+					<div className="space-y-2">
+						{schedulesList.map((s, idx) => (
+							<div key={idx} className="flex gap-2 items-center">
+								<Select
+									value={s.terminalId}
+									onValueChange={(value) => {
+										const newS = [...schedulesList];
+										newS[idx].terminalId = value;
+										setSchedulesList(newS);
+									}}
+								>
+									<SelectTrigger className="flex-1">
+										<SelectValue placeholder="Pilih Perangkat..." />
+									</SelectTrigger>
+									<SelectContent>
+										{terminals.map((t) => (
+											<SelectItem key={t.id} value={t.id}>
+												{t.name}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+								<Input
+									type="date"
+									value={s.date}
+									onChange={(e) => {
+										const newS = [...schedulesList];
+										newS[idx].date = e.target.value;
+										setSchedulesList(newS);
+									}}
+									className="flex-1"
+								/>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={() =>
+										setSchedulesList(schedulesList.filter((_, i) => i !== idx))
+									}
+								>
+									<Trash2 className="w-4 h-4 text-destructive" />
+								</Button>
+							</div>
+						))}
+						{schedulesList.length === 0 && (
+							<div className="p-4 text-center border border-dashed rounded-md text-muted-foreground text-sm">
+								Belum ada jadwal perangkat.
 							</div>
 						)}
 					</div>
