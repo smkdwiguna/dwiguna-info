@@ -59,12 +59,13 @@ function parseSyncQueue(raw?: string | null): number[] {
 
 export async function POST(
 	request: Request,
-	{ params }: { params: { deviceId: string } },
+	{ params }: { params: Promise<{ deviceId: string }> },
 ) {
-	const auth = await verifyDeviceRequest(request, params.deviceId);
-	if (!auth.ok) {
-		return new Response(`ERR;${sanitizeField(auth.message)}`, {
-			status: auth.status,
+	const resolvedParams = await params;
+	const auth = await verifyDeviceRequest(request, resolvedParams.deviceId);
+	if (!auth.ok || !auth.terminal) {
+		return new Response(`ERR;${sanitizeField(auth.message || "Unauthorized")}`, {
+			status: auth.status || 401,
 			headers: { "content-type": "text/plain; charset=utf-8" },
 		});
 	}

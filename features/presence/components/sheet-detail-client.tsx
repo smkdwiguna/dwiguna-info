@@ -50,6 +50,8 @@ export function SheetDetailClient({
 	sheet,
 	targets: initialTargets,
 	points: initialPoints,
+	schedules,
+	terminals,
 	orgUnits,
 }: {
 	sheet: Sheet;

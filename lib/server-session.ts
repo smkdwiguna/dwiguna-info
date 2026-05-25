@@ -3,7 +3,13 @@
 import { auth } from "@/lib/auth";
 import { cookies, headers } from "next/headers";
 
-export async function getServerSession() {
+type ServerSession = {
+	user?: {
+		email: string;
+	};
+} | null;
+
+export async function getServerSession(): Promise<ServerSession> {
 	const headerStore = await headers();
 	const cookieStore = await cookies();
 	const requestHeaders = new Headers(headerStore);
@@ -27,10 +33,10 @@ export async function getServerSession() {
 	}
 
 	const query = { disableCookieCache: true };
-	const session = await auth.api.getSession({
+	const session = (await auth.api.getSession({
 		headers: requestHeaders,
 		query,
-	});
+	})) as ServerSession;
 	if (session?.user) return session;
 
 	try {
@@ -42,7 +48,7 @@ export async function getServerSession() {
 			cache: "no-store",
 		});
 		if (response.ok) {
-			const json = await response.json();
+			const json = (await response.json()) as ServerSession;
 			if (json?.user) return json;
 		}
 	} catch (error) {

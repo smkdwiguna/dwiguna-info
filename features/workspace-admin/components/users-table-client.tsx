@@ -41,19 +41,19 @@ import { normalizeAccessList } from "@/lib/access";
 import { ButtonGroup } from "@/components/ui/button-group";
 
 interface WorkspaceUserName {
-	fullName?: string;
+	fullName?: string | null;
 }
 
 interface WorkspaceUser {
-	id?: string;
-	primaryEmail?: string;
+	id?: string | null;
+	primaryEmail?: string | null;
 	name?: WorkspaceUserName;
-	orgUnitPath?: string;
-	suspended?: boolean;
+	orgUnitPath?: string | null;
+	suspended?: boolean | null;
 	thumbnailPhotoUrl?: string | null;
-	customSchemas?: Record<string, unknown>;
-	lastLoginTime?: string;
-	creationTime?: string;
+	customSchemas?: Record<string, unknown> | null;
+	lastLoginTime?: string | null;
+	creationTime?: string | null;
 }
 
 export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
@@ -115,6 +115,10 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 		return values;
 	};
 
+	const isSchemaRecord = (value: unknown): value is Record<string, unknown> => {
+		return !!value && typeof value === "object";
+	};
+
 	const getCustomFieldValue = (
 		customSchemas: Record<string, unknown> | null | undefined,
 		field: string,
@@ -130,7 +134,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 		return "";
 	};
 
-	const formatDateTime = (value?: string) => {
+	const formatDateTime = (value?: string | null) => {
 		if (!value) return "-";
 		const date = new Date(value);
 		if (Number.isNaN(date.getTime())) return value;
@@ -185,6 +189,9 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 		setIsInfoLoading(true);
 		try {
 			const { getUserDetails } = await import("../actions/get-user-details");
+			if (!user.primaryEmail) {
+				throw new Error("Pengguna tidak memiliki email utama");
+			}
 			const detail = await getUserDetails(user.primaryEmail);
 			setInfoUser(detail);
 		} catch (error) {
@@ -265,7 +272,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	};
 
 	const handleSave = async () => {
-		if (!editUser) return;
+		if (!editUser || !editUser.primaryEmail) return;
 		setIsSaving(true);
 		try {
 			const { updateUser } = await import("../actions/update-user");
@@ -326,7 +333,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	};
 
 	const handleDelete = async () => {
-		if (!editUser) return;
+		if (!editUser || !editUser.primaryEmail) return;
 
 		setIsDeleting(true);
 		try {
@@ -372,15 +379,14 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 			? Object.values(infoUser.customSchemas)
 			: [];
 	const akademik =
-		customSchemaValues.find(
-			(schema: Record<string, unknown>) =>
-				schema &&
-				typeof schema === "object" &&
+		(customSchemaValues.find(
+			(schema) =>
+				isSchemaRecord(schema) &&
 				("nisn" in schema ||
 					"nis" in schema ||
 					"nuptk" in schema ||
 					"tempatTanggalLahir" in schema),
-		) || {};
+		) as Record<string, string>) || ({} as Record<string, string>);
 	const accessValues = infoUser?.customSchemas
 		? normalizeAccessList(
 				Object.values(infoUser.customSchemas as Record<string, unknown>)
