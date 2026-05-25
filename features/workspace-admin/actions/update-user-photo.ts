@@ -1,6 +1,7 @@
 "use server";
 
 import { getAdminService } from "@/lib/google-api";
+import { requireUsersAccess } from "./require-users-access";
 
 /**
  * Update a Google Workspace user's profile photo.
@@ -9,6 +10,7 @@ import { getAdminService } from "@/lib/google-api";
  * @param base64Photo - The image data in web-safe Base64 format.
  */
 export async function updateUserPhoto(userId: string, base64Photo: string) {
+  await requireUsersAccess();
   const adminService = getAdminService();
 
   try {

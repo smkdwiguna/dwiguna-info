@@ -37,17 +37,34 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { normalizeAccessList } from "@/lib/access";
 
-export function UsersTableClient({ users }: { users: any[] }) {
+interface WorkspaceUserName {
+	fullName?: string;
+}
+
+interface WorkspaceUser {
+	id?: string;
+	primaryEmail?: string;
+	name?: WorkspaceUserName;
+	orgUnitPath?: string;
+	suspended?: boolean;
+	thumbnailPhotoUrl?: string | null;
+	customSchemas?: Record<string, unknown>;
+	lastLoginTime?: string;
+	creationTime?: string;
+}
+
+export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const [localUsers, setLocalUsers] = useState(users);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [filterUnit, setFilterUnit] = useState("all");
-	const [editUser, setEditUser] = useState<any>(null);
+	const [editUser, setEditUser] = useState<WorkspaceUser | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
-	const [infoUser, setInfoUser] = useState<any>(null);
+	const [infoUser, setInfoUser] = useState<WorkspaceUser | null>(null);
 	const [isInfoOpen, setIsInfoOpen] = useState(false);
 	const [isInfoLoading, setIsInfoLoading] = useState(false);
 	const [isResetting, setIsResetting] = useState(false);
@@ -63,7 +80,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		setLocalUsers(users);
 	}, [users]);
 
-	const collectCustomSchemaValues = (user: any) => {
+	const collectCustomSchemaValues = (user: WorkspaceUser) => {
 		const values: string[] = [];
 		const pushValue = (value: unknown) => {
 			if (typeof value === "string" && value.trim()) {
@@ -75,6 +92,8 @@ export function UsersTableClient({ users }: { users: any[] }) {
 			pushValue(schema.nis);
 			pushValue(schema.nuptk);
 			pushValue(schema.tempatTanggalLahir);
+			pushValue(schema.access);
+			pushValue(schema.permissions);
 		};
 
 		const customSchemas = user?.customSchemas;
@@ -120,7 +139,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 	const startIndex = (currentPage - 1) * rowsPerPage;
 	const currentUsers = filtered.slice(startIndex, startIndex + rowsPerPage);
 
-	const openEdit = (user: any) => {
+	const openEdit = (user: WorkspaceUser) => {
 		// Create a deep copy so we can cleanly handle changes and fallback
 		setEditUser(JSON.parse(JSON.stringify(user)));
 		setNewPhotoBase64(null);
@@ -128,7 +147,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 		setIsDialogOpen(true);
 	};
 
-	const openInfo = async (user: any) => {
+	const openInfo = async (user: WorkspaceUser) => {
 		setInfoUser(user);
 		setResetPassword(null);
 		setIsInfoOpen(true);
@@ -316,7 +335,7 @@ export function UsersTableClient({ users }: { users: any[] }) {
 			: [];
 	const akademik =
 		customSchemaValues.find(
-			(schema: any) =>
+			(schema: Record<string, unknown>) =>
 				schema &&
 				typeof schema === "object" &&
 				("nisn" in schema ||
@@ -324,6 +343,19 @@ export function UsersTableClient({ users }: { users: any[] }) {
 					"nuptk" in schema ||
 					"tempatTanggalLahir" in schema),
 		) || {};
+	const accessValues = infoUser?.customSchemas
+		? normalizeAccessList(
+				Object.values(infoUser.customSchemas as Record<string, unknown>)
+					.flatMap((schema) => {
+						if (!schema || typeof schema !== "object") return [];
+						const fields = schema as Record<string, unknown>;
+						return [fields.access, fields.permissions]
+							.filter((value): value is string => typeof value === "string")
+							.filter(Boolean);
+					})
+					.join(","),
+			)
+		: [];
 
 	return (
 		<div>
@@ -400,6 +432,12 @@ export function UsersTableClient({ users }: { users: any[] }) {
 								<div className="space-y-2">
 									<Label>Tempat, Tanggal Lahir</Label>
 									<Input value={akademik.tempatTanggalLahir || "-"} readOnly />
+								</div>
+							)}
+							{accessValues.length > 0 && (
+								<div className="space-y-2">
+									<Label>Akses</Label>
+									<Input value={accessValues.join(", ")} readOnly />
 								</div>
 							)}
 							{resetPassword && (

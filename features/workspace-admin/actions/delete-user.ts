@@ -4,6 +4,7 @@ import { getAdminService } from "@/lib/google-api";
 import { getDb } from "@/lib/db";
 import { deviceUsers } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { requireUsersAccess } from "./require-users-access";
 
 /**
  * Delete a Google Workspace user and remove them from local devices db.
@@ -11,6 +12,7 @@ import { eq } from "drizzle-orm";
  * @param userId - The user's primary email or unique id.
  */
 export async function deleteUser(userId: string) {
+	await requireUsersAccess();
 	const adminService = getAdminService();
 
 	try {

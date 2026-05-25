@@ -1,6 +1,7 @@
 "use server";
 
 import { getAdminService } from "@/lib/google-api";
+import { requireUsersAccess } from "./require-users-access";
 
 interface PhotoUpdate {
   userId: string;
@@ -8,6 +9,7 @@ interface PhotoUpdate {
 }
 
 export async function bulkUpdatePhotos(updates: PhotoUpdate[]) {
+  await requireUsersAccess();
   const adminService = getAdminService();
   const results: { userId: string; status: "success" | "error"; message?: string }[] = [];
 
@@ -21,9 +23,13 @@ export async function bulkUpdatePhotos(updates: PhotoUpdate[]) {
         },
       });
       results.push({ userId: update.userId, status: "success" });
-    } catch (error: any) {
-      console.error(`[bulkUpdatePhotos] error updating photo for ${update.userId}:`, error.message);
-      results.push({ userId: update.userId, status: "error", message: error.message });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      console.error(
+        `[bulkUpdatePhotos] error updating photo for ${update.userId}:`,
+        message,
+      );
+      results.push({ userId: update.userId, status: "error", message });
     }
   }
 

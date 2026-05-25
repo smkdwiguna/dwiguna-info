@@ -2,8 +2,10 @@
 
 import { getAdminService } from "@/lib/google-api";
 import { generateRandomPassword } from "@/lib/passwords";
+import { requireUsersAccess } from "./require-users-access";
 
 export async function resetUserPassword(userId: string) {
+	await requireUsersAccess();
 	const adminService = getAdminService();
 	const password = generateRandomPassword();
 

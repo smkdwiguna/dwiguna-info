@@ -7,9 +7,13 @@ import { useEffect, Suspense } from "react";
 
 function LoginLogic() {
 	useEffect(() => {
-		authClient.signIn.social({
+	authClient.signIn
+		.social({
 			provider: "google",
 			callbackURL: "/",
+		})
+		.catch((error) => {
+			console.error("Failed to start Google login", error);
 		});
 	}, []);
 

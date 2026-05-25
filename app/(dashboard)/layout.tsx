@@ -32,5 +32,12 @@ export default function DashboardLayout({
 		return <Login />;
 	}
 
-	return <AdminLayout userEmail={session.user.email}>{children}</AdminLayout>;
+	return (
+		<AdminLayout
+			userEmail={session.user.email}
+			userAccess={session.user.access}
+		>
+			{children}
+		</AdminLayout>
+	);
 }

@@ -15,18 +15,21 @@ import {
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, Upload, LayoutDashboard, Settings, Clock } from "lucide-react";
+import { Users, LayoutDashboard, Settings, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
+import { hasPermission, isSuperUser } from "@/lib/access";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
 	userEmail?: string;
+	userAccess?: string;
 }
 
-export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
-	const isAdmin = userEmail === "proktor@smkdwiguna.sch.id";
+export function AdminLayout({ children, userEmail, userAccess }: AdminLayoutProps) {
+	const superUser = isSuperUser(userEmail);
+	const canManageUsers = superUser || hasPermission(userAccess, "users");
 
 	return (
 		<TooltipProvider>
@@ -37,7 +40,10 @@ export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
 					} as React.CSSProperties
 				}
 			>
-				<AppSidebar isAdmin={isAdmin} />
+				<AppSidebar
+					isSuperUser={superUser}
+					canManageUsers={canManageUsers}
+				/>
 				<SidebarInset>
 					<header className="flex h-16 shrink-0 items-center gap-2 border-b px-5.5">
 						<SidebarTrigger className="-ml-1" />
@@ -61,7 +67,13 @@ export function AdminLayout({ children, userEmail }: AdminLayoutProps) {
 	);
 }
 
-function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
+function AppSidebar({
+	isSuperUser,
+	canManageUsers,
+}: {
+	isSuperUser: boolean;
+	canManageUsers: boolean;
+}) {
 	return (
 		<Sidebar>
 			<SidebarHeader />
@@ -76,7 +88,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 
-					{isAdmin && (
+					{canManageUsers && (
 						<>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Pengguna">
@@ -95,6 +107,11 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 									</SidebarMenuSubItem>
 								</SidebarMenuSub>
 							</SidebarMenuItem>
+						</>
+					)}
+
+					{isSuperUser && (
+						<>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Kehadiran (Presensi)">
 									<Link href="/presence">

@@ -7,6 +7,7 @@ import {
 	generateUniqueUsername,
 } from "@/lib/username-generator";
 import { generateRandomPassword } from "@/lib/passwords";
+import { requireUsersAccess } from "./require-users-access";
 
 interface UserInput {
 	fullName: string;
@@ -34,6 +35,10 @@ const CUSTOM_SCHEMA_FIELDS = [
 	"nuptk",
 	"tempatTanggalLahir",
 ] as const;
+
+function getErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : "Unknown error";
+}
 
 async function resolveCustomSchemaName(adminService: ReturnType<typeof getAdminService>) {
 	const configuredSchema = process.env.GOOGLE_CUSTOM_SCHEMA_NAME;
@@ -74,6 +79,7 @@ export async function generateUserEmailsWithPasswords(
 	blocks: GroupBlock[],
 ): Promise<{ success: boolean; users?: UserWithPassword[]; error?: string }> {
 	try {
+		await requireUsersAccess();
 		const allUsers = await fetchAllWorkspaceUsers();
 		const allFullNames = allUsers.map((u) => {
 			return typeof u.name?.fullName === "string" ? u.name.fullName : "";
@@ -117,11 +123,11 @@ export async function generateUserEmailsWithPasswords(
 			success: true,
 			users: usersWithPasswords,
 		};
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("Error generating emails:", error);
 		return {
 			success: false,
-			error: error.message || "Failed to generate emails",
+			error: getErrorMessage(error) || "Failed to generate emails",
 		};
 	}
 }
@@ -130,6 +136,7 @@ export async function createUsersWithPasswords(
 	users: UserWithPassword[],
 ): Promise<{ success: boolean; created?: number; error?: string }> {
 	try {
+		await requireUsersAccess();
 		const adminService = getAdminService();
 		let successCount = 0;
 		const hasCustomData = users.some(
@@ -177,7 +184,7 @@ export async function createUsersWithPasswords(
 				});
 
 				successCount++;
-			} catch (error: any) {
+			} catch (error: unknown) {
 				console.error(`Failed to create ${user.email}:`, error);
 			}
 		}
@@ -186,11 +193,11 @@ export async function createUsersWithPasswords(
 			success: true,
 			created: successCount,
 		};
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error("Error creating users:", error);
 		return {
 			success: false,
-			error: error.message || "Failed to create users",
+			error: getErrorMessage(error) || "Failed to create users",
 		};
 	}
 }

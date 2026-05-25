@@ -1,6 +1,7 @@
 "use server";
 
 import { getAdminService } from "@/lib/google-api";
+import { requireUsersAccess } from "./require-users-access";
 
 /**
  * Update a Google Workspace user.
@@ -9,7 +10,11 @@ import { getAdminService } from "@/lib/google-api";
  * @param updates - Partial user object containing fields to update.
  * @returns The updated user record from Google.
  */
-export async function updateUser(userId: string, updates: any) {
+export async function updateUser(
+	userId: string,
+	updates: Record<string, unknown>,
+) {
+  await requireUsersAccess();
   // Initialize the Admin SDK client with proper scopes.
   const adminService = getAdminService();
 
