@@ -20,10 +20,15 @@ export const auth = betterAuth({
 					throw new Error("Hanya akun smkdwiguna.sch.id yang bisa masuk.");
 				}
 
-				const [userOU, userAccess] = await Promise.all([
+				const [userOUResult, userAccessResult] = await Promise.allSettled([
 					fetchUserOUFromWorkspace(profile.email),
 					fetchUserAccessFromWorkspace(profile.email),
 				]);
+
+				const userOU =
+					userOUResult.status === "fulfilled" ? userOUResult.value : "/";
+				const userAccess =
+					userAccessResult.status === "fulfilled" ? userAccessResult.value : "";
 
 				return {
 					firstName: profile.given_name,

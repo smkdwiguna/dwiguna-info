@@ -1,32 +1,4 @@
-import { getAdminService } from "./google-api";
-
-// Phase 1: Fetch all existing users
-export async function fetchAllWorkspaceUsers() {
-	const adminService = getAdminService();
-	let allUsers: any[] = [];
-	let pageToken: string | undefined = undefined;
-
-	do {
-		try {
-			const res: any = await adminService.users.list({
-				customer: "my_customer",
-				pageToken: pageToken,
-				projection: "full",
-				fields:
-					"users(id,name,primaryEmail,orgUnitPath,suspended,thumbnailPhotoUrl,customSchemas),nextPageToken",
-			});
-			if (res.data.users) {
-				allUsers = allUsers.concat(res.data.users);
-			}
-			pageToken = res.data.nextPageToken || undefined;
-		} catch (error) {
-			console.error("Error fetching workspace users:", error);
-			break;
-		}
-	} while (pageToken);
-
-	return allUsers;
-}
+export { fetchAllWorkspaceUsers } from "./google-api";
 
 // Phase 2: Build Stop-word Detector (IGNORE_LIST)
 export function buildIgnoreList(userNames: string[]): Set<string> {

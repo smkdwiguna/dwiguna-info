@@ -35,21 +35,26 @@ async function DeviceUsersFetcher() {
 			}
 		}
 
-		const enrichedUsers = allUsers.map(u => ({
+		const enrichedUsers = allUsers.map((u) => ({
 			...u,
 			name: usersMap.get(u.email)?.name || "-",
 			orgUnit: usersMap.get(u.email)?.orgUnit || "-",
 		}));
 
-		return <DeviceUsersClient initialUsers={enrichedUsers} orgUnits={orgUnits} terminals={allTerminals} />;
-	} catch (error: any) {
+		return (
+			<DeviceUsersClient
+				initialUsers={enrichedUsers}
+				orgUnits={orgUnits}
+				terminals={allTerminals}
+			/>
+		);
+	} catch (error: unknown) {
+		const message = error instanceof Error ? error.message : "Unknown error";
 		return (
 			<div className="p-6 border border-destructive/50 bg-destructive/10 rounded-lg text-center mt-4">
-				<h3 className="text-lg font-bold text-destructive mb-2">
-					Error
-				</h3>
+				<h3 className="text-lg font-bold text-destructive mb-2">Error</h3>
 				<p className="text-sm text-destructive/80 max-w-lg mx-auto">
-					{error.message}
+					{message}
 				</p>
 			</div>
 		);

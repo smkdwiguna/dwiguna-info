@@ -37,9 +37,11 @@ async function resolveUserPresentation(deviceUserId: number) {
 			userKey: deviceUser.email,
 		});
 		if (photoResponse.data.photoData) {
-			photoHex = Buffer.from(photoResponse.data.photoData, "base64").toString(
-				"hex",
-			);
+			const binary = atob(photoResponse.data.photoData);
+			const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+			photoHex = Array.from(bytes)
+				.map((byte) => byte.toString(16).padStart(2, "0"))
+				.join("");
 		}
 	} catch (error) {
 		console.error("[device-route] failed to resolve user data", error);
@@ -53,7 +55,7 @@ function parseSyncQueue(raw?: string | null): number[] {
 	try {
 		const parsed = JSON.parse(raw);
 		if (Array.isArray(parsed)) return parsed;
-	} catch (e) {}
+	} catch {}
 	return [];
 }
 
@@ -64,10 +66,13 @@ export async function POST(
 	const resolvedParams = await params;
 	const auth = await verifyDeviceRequest(request, resolvedParams.deviceId);
 	if (!auth.ok || !auth.terminal) {
-		return new Response(`ERR;${sanitizeField(auth.message || "Unauthorized")}`, {
-			status: auth.status || 401,
-			headers: { "content-type": "text/plain; charset=utf-8" },
-		});
+		return new Response(
+			`ERR;${sanitizeField(auth.message || "Unauthorized")}`,
+			{
+				status: auth.status || 401,
+				headers: { "content-type": "text/plain; charset=utf-8" },
+			},
+		);
 	}
 
 	const bodyText = auth.bodyText || "";
@@ -111,7 +116,7 @@ export async function POST(
 	const now = Math.floor(Date.now() / 1000);
 	let currentStatus = auth.terminal.status || "0";
 	let currentMetadata = auth.terminal.metadata || null;
-	let syncQueue = parseSyncQueue(auth.terminal.syncQueue);
+	const syncQueue = parseSyncQueue(auth.terminal.syncQueue);
 
 	// Update lastSeenAt in timeout column
 	await db
@@ -145,7 +150,10 @@ export async function POST(
 	}
 
 	// Process syncQueue: if no current command and queue has items, pop next
-	if ((currentStatus === "0" || currentStatus === "INHERIT") && syncQueue.length > 0) {
+	if (
+		(currentStatus === "0" || currentStatus === "INHERIT") &&
+		syncQueue.length > 0
+	) {
 		while (syncQueue.length > 0) {
 			const nextFid = syncQueue[0];
 			const [userToSync] = await db
@@ -182,7 +190,9 @@ export async function POST(
 	// Format payload
 	let payload = "0;";
 	if (currentStatus !== "0") {
-		payload = currentMetadata ? `${currentStatus};${currentMetadata}` : `${currentStatus};`;
+		payload = currentMetadata
+			? `${currentStatus};${currentMetadata}`
+			: `${currentStatus};`;
 	}
 
 	return new Response(payload, {

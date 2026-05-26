@@ -30,5 +30,3 @@ Beberapa variabel environment yang dipakai:
 - `GOOGLE_CLIENT_SECRET`: Kredensial client secret OAuth dari Google Cloud
 - `GOOGLE_CLIENT_EMAIL`: Alamat email service account dari Google Cloud
 - `GOOGLE_PRIVATE_KEY`: Private key RSA service account dari Google Cloud
-- `SSO_PRIVATE_KEY`: Private key RSA dari key pair SSO buatan kita
-- `SSO_PUBLIC_KEY`: Public key RSA dari key pair SSO buatan kita
