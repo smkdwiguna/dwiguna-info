@@ -15,9 +15,13 @@ export async function getServerSession(): Promise<ServerSession> {
 	const cfRay = headerStore.get("cf-ray");
 	const requestId = cfRay || headerStore.get("x-request-id") || "unknown";
 	const requestHeaders = new Headers(headerStore);
-	const cookieCount = cookieStore.getAll().length;
-	const cookieHeader = cookieStore
-		.getAll()
+	const allCookies = cookieStore.getAll();
+	const cookieCount = allCookies.length;
+	const cookieNames = allCookies.map((cookie) => cookie.name);
+	const betterAuthCookieNames = cookieNames.filter((name) =>
+		name.toLowerCase().includes("better-auth"),
+	);
+	const cookieHeader = allCookies
 		.map((cookie) => `${cookie.name}=${cookie.value}`)
 		.join("; ");
 	if (cookieHeader) {
@@ -50,6 +54,9 @@ export async function getServerSession(): Promise<ServerSession> {
 		origin,
 		hasCookieHeader: cookieCount > 0,
 		cookieCount,
+		cookieNames,
+		betterAuthCookieNames,
+		betterAuthUrl: process.env.BETTER_AUTH_URL || null,
 	});
 
 	try {
@@ -71,10 +78,14 @@ export async function getServerSession(): Promise<ServerSession> {
 				},
 			);
 		} else {
+			const bodyPreview = (await response.text()).slice(0, 500);
 			console.warn("[auth:getServerSession] fallback session endpoint failed", {
 				requestId,
 				origin,
 				status: response.status,
+				statusText: response.statusText,
+				contentType: response.headers.get("content-type"),
+				bodyPreview,
 			});
 		}
 	} catch (error) {
