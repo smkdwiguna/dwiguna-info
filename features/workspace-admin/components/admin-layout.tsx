@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Users, LayoutDashboard, Settings, Clock, Shield } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import Logout from "@/components/logout";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { isSuperUser } from "@/lib/access";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/spinner";
+import { BrandLogo } from "@/components/brand-logo";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
@@ -76,13 +76,12 @@ export function AdminLayout({
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<div className="w-full flex gap-3 items-center justify-start">
 							<SidebarTrigger />
-							<Image
-								src="/SMK-TI-Dwiguna.png"
-								loading="eager"
-								alt="Logo SMK TI Dwiguna"
+							<BrandLogo
+								priority
+								className="h-8 w-fit"
+								imageClassName="h-8 w-auto"
 								width={250}
 								height={40}
-								className="h-8 w-50"
 							/>
 						</div>
 						<ThemeToggle />

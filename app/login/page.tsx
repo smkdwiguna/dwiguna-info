@@ -1,31 +1,30 @@
 "use client";
 
 import { authClient } from "@/lib/auth-client";
-import Image from "next/image";
+import { BrandLogo } from "@/components/brand-logo";
 
 import { useEffect, Suspense } from "react";
 
 function LoginLogic() {
 	useEffect(() => {
-	authClient.signIn
-		.social({
-			provider: "google",
-			callbackURL: "/",
-		})
-		.catch((error) => {
-			console.error("Failed to start Google login", error);
-		});
+		authClient.signIn
+			.social({
+				provider: "google",
+				callbackURL: "/",
+			})
+			.catch((error) => {
+				console.error("Failed to start Google login", error);
+			});
 	}, []);
 
 	return (
 		<div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
 			<div className="w-full max-w-xs text-center flex flex-col items-center gap-5">
-				<Image
-					src="/SMK-TI-Dwiguna.png"
-					alt="Logo SMK TI Dwiguna"
-					className="text-center h-12 w-auto mx-auto"
-					width={1219}
-					height={195}
+				<BrandLogo
+					className="mx-auto h-12 w-fit"
+					imageClassName="h-12 w-auto"
+					width={300}
+					height={48}
 				/>
 
 				<div className="flex flex-col gap-2 w-full items-center">

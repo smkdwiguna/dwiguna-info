@@ -20,8 +20,8 @@ export default function DashboardLayout({
 					src="/Logo.png"
 					alt="Logo SMK TI Dwiguna"
 					loading="eager"
-					width={195}
-					height={195}
+					width={48}
+					height={48}
 					className="h-12 w-12"
 				/>
 				<Spinner variant="muted" />
