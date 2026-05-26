@@ -12,7 +12,10 @@ type ServerSession = {
 export async function getServerSession(): Promise<ServerSession> {
 	const headerStore = await headers();
 	const cookieStore = await cookies();
+	const cfRay = headerStore.get("cf-ray");
+	const requestId = cfRay || headerStore.get("x-request-id") || "unknown";
 	const requestHeaders = new Headers(headerStore);
+	const cookieCount = cookieStore.getAll().length;
 	const cookieHeader = cookieStore
 		.getAll()
 		.map((cookie) => `${cookie.name}=${cookie.value}`)
@@ -39,6 +42,16 @@ export async function getServerSession(): Promise<ServerSession> {
 	})) as ServerSession;
 	if (session?.user) return session;
 
+	console.warn("[auth:getServerSession] no session from auth.api.getSession", {
+		requestId,
+		host: headerStore.get("host"),
+		forwardedHost,
+		forwardedProto,
+		origin,
+		hasCookieHeader: cookieCount > 0,
+		cookieCount,
+	});
+
 	try {
 		const response = await fetch(new URL("/api/auth/get-session", origin), {
 			headers: {
@@ -50,9 +63,26 @@ export async function getServerSession(): Promise<ServerSession> {
 		if (response.ok) {
 			const json = (await response.json()) as ServerSession;
 			if (json?.user) return json;
+			console.warn(
+				"[auth:getServerSession] fallback session endpoint returned no user",
+				{
+					requestId,
+					origin,
+				},
+			);
+		} else {
+			console.warn("[auth:getServerSession] fallback session endpoint failed", {
+				requestId,
+				origin,
+				status: response.status,
+			});
 		}
 	} catch (error) {
-		console.warn("[getServerSession] fallback fetch failed", error);
+		console.warn("[auth:getServerSession] fallback fetch failed", {
+			requestId,
+			origin,
+			error,
+		});
 	}
 
 	return session;

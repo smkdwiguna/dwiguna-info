@@ -3,6 +3,7 @@
 import { normalizeAccessList, isSuperUser } from "@/lib/access";
 import { fetchUserAccessFromWorkspace } from "@/lib/google-api";
 import { getServerSession } from "@/lib/server-session";
+import { headers } from "next/headers";
 
 type LivePermissionsResult = {
 	session: {
@@ -14,6 +15,17 @@ type LivePermissionsResult = {
 	isSuperUser: boolean;
 };
 
+async function getAuthDebugContext() {
+	const headerStore = await headers();
+	return {
+		requestId:
+			headerStore.get("cf-ray") || headerStore.get("x-request-id") || "unknown",
+		host: headerStore.get("host"),
+		forwardedHost: headerStore.get("x-forwarded-host"),
+		nextUrl: headerStore.get("next-url"),
+	};
+}
+
 export async function getLivePermissions(): Promise<LivePermissionsResult> {
 	const session: {
 		user?: {
@@ -22,6 +34,8 @@ export async function getLivePermissions(): Promise<LivePermissionsResult> {
 	} | null = await getServerSession();
 
 	if (!session?.user) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:getLivePermissions] session not found", debug);
 		return { session: null, permissions: [], isSuperUser: false };
 	}
 
@@ -49,6 +63,13 @@ export async function requirePermission(permission: string) {
 	}
 
 	if (!permissions.includes(permission)) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:requirePermission] forbidden", {
+			...debug,
+			email: session?.user?.email || null,
+			permission,
+			permissions,
+		});
 		throw new Error("FORBIDDEN");
 	}
 
@@ -63,13 +84,24 @@ export async function requirePermissionOrRedirect(permission: string) {
 	} = await getLivePermissions();
 
 	if (!session?.user) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:requirePermissionOrRedirect] redirect to /login", {
+			...debug,
+			permission,
+		});
 		const { redirect } = await import("next/navigation");
 		redirect("/login");
 	}
 
 	if (!superUser && !permissions.includes(permission)) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:requirePermissionOrRedirect] redirect to /", {
+			...debug,
+			email: session?.user?.email || null,
+			permission,
+			permissions,
+		});
 		const { redirect } = await import("next/navigation");
-		console.log(permissions);
 		redirect("/");
 	}
 
@@ -80,11 +112,18 @@ export async function requireSuperUserOrRedirect() {
 	const { session, isSuperUser: superUser } = await getLivePermissions();
 
 	if (!session?.user) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:requireSuperUserOrRedirect] redirect to /login", debug);
 		const { redirect } = await import("next/navigation");
 		redirect("/login");
 	}
 
 	if (!superUser) {
+		const debug = await getAuthDebugContext();
+		console.warn("[auth:requireSuperUserOrRedirect] redirect to /", {
+			...debug,
+			email: session?.user?.email || null,
+		});
 		const { redirect } = await import("next/navigation");
 		redirect("/");
 	}
