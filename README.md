@@ -14,8 +14,8 @@ Ini adalah sistem aplikasi Next.js untuk autentikasi dan portal utama SMK TI Dwi
 Jalankan server development:
 
 ```bash
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 Secara default aplikasi berjalan di `http://localhost:3000`.
