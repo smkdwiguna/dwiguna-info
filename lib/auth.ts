@@ -5,11 +5,21 @@ import {
 	fetchUserOUFromWorkspace,
 } from "./google-api";
 
+const PRODUCTION_ORIGINS = [
+	"https://dwiguna.info",
+	"https://www.dwiguna.info",
+	"http://localhost:3000",
+];
+
+const configuredBaseURL = process.env.BETTER_AUTH_URL?.replace(/;$/, "");
+
+const trustedOrigins = Array.from(
+	new Set([configuredBaseURL, ...PRODUCTION_ORIGINS].filter(Boolean)),
+);
+
 export const auth = betterAuth({
-	baseURL: process.env.BETTER_AUTH_URL?.replace(/;$/, ""),
-	trustedOrigins: [
-		process.env.BETTER_AUTH_URL?.replace(/;$/, "") || "http://localhost:3000",
-	],
+	baseURL: configuredBaseURL,
+	trustedOrigins,
 	socialProviders: {
 		google: {
 			clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -39,6 +49,15 @@ export const auth = betterAuth({
 			},
 		},
 	},
+	advanced: {
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: "dwiguna.info",
+		},
+		defaultCookieAttributes: {
+			path: "/",
+		},
+	},
 	user: {
 		additionalFields: {
 			ou: {
@@ -55,11 +74,6 @@ export const auth = betterAuth({
 	},
 	account: {
 		storeAccountCookie: true,
-	},
-	advanced: {
-		defaultCookieAttributes: {
-			path: "/",
-		},
 	},
 	telemetry: {
 		enabled: false,
