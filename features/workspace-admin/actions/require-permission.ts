@@ -4,7 +4,17 @@ import { normalizeAccessList, isSuperUser } from "@/lib/access";
 import { fetchUserAccessFromWorkspace } from "@/lib/google-api";
 import { getServerSession } from "@/lib/server-session";
 
-export async function getLivePermissions() {
+type LivePermissionsResult = {
+	session: {
+		user?: {
+			email: string;
+		};
+	} | null;
+	permissions: string[];
+	isSuperUser: boolean;
+};
+
+export async function getLivePermissions(): Promise<LivePermissionsResult> {
 	const session: {
 		user?: {
 			email: string;
@@ -12,7 +22,7 @@ export async function getLivePermissions() {
 	} | null = await getServerSession();
 
 	if (!session?.user) {
-		throw new Error("UNAUTHORIZED");
+		return { session: null, permissions: [], isSuperUser: false };
 	}
 
 	if (isSuperUser(session.user.email)) {
