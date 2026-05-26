@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { authClient } from "@/lib/auth-client";
 import { cookies, headers } from "next/headers";
 
 type ServerSession = {
@@ -31,46 +31,55 @@ export async function getServerSession(): Promise<ServerSession> {
 		(forwardedHost ? `${forwardedProto}://${forwardedHost}` : undefined) ||
 		process.env.BETTER_AUTH_URL ||
 		"http://localhost:3000";
-	const minimalCookieHeaders = cookieHeader ? new Headers({ cookie: cookieHeader }) : undefined;
+	const minimalCookieHeaders = cookieHeader
+		? new Headers({ cookie: cookieHeader })
+		: undefined;
 
-	const query = { disableCookieCache: true };
-	const session = (await auth.api.getSession({
-		headers: minimalCookieHeaders || headerStore,
-		query,
+	const session = (await authClient.getSession({
+		fetchOptions: {
+			headers: minimalCookieHeaders || headerStore,
+		},
 	})) as ServerSession;
 	if (session?.user) return session;
 
 	if (minimalCookieHeaders) {
-		const minimalSession = (await auth.api.getSession({
-			headers: minimalCookieHeaders,
-			query,
+		const minimalSession = (await authClient.getSession({
+			fetchOptions: {
+				headers: minimalCookieHeaders,
+			},
 		})) as ServerSession;
 		if (minimalSession?.user) {
-			console.warn("[auth:getServerSession] session recovered with cookie-only headers", {
-				requestId,
-				host: headerStore.get("host"),
-				forwardedHost,
-				forwardedProto,
-				origin,
-				cookieCount,
-				betterAuthCookieNames,
-			});
+			console.warn(
+				"[auth:getServerSession] session recovered with cookie-only headers",
+				{
+					requestId,
+					host: headerStore.get("host"),
+					forwardedHost,
+					forwardedProto,
+					origin,
+					cookieCount,
+					betterAuthCookieNames,
+				},
+			);
 			return minimalSession;
 		}
 	}
 
-	console.warn("[auth:getServerSession] no session from auth.api.getSession", {
-		requestId,
-		host: headerStore.get("host"),
-		forwardedHost,
-		forwardedProto,
-		origin,
-		hasCookieHeader: cookieCount > 0,
-		cookieCount,
-		cookieNames,
-		betterAuthCookieNames,
-		betterAuthUrl: process.env.BETTER_AUTH_URL || null,
-	});
+	console.warn(
+		"[auth:getServerSession] no session from authClient.getSession",
+		{
+			requestId,
+			host: headerStore.get("host"),
+			forwardedHost,
+			forwardedProto,
+			origin,
+			hasCookieHeader: cookieCount > 0,
+			cookieCount,
+			cookieNames,
+			betterAuthCookieNames,
+			betterAuthUrl: process.env.BETTER_AUTH_URL || null,
+		},
+	);
 
 	return session;
 }
