@@ -44,6 +44,7 @@ function validateDateFormat(dateStr: string): boolean {
 	if (!regex.test(dateStr)) return false;
 	const datePart = dateStr.split(",").pop()?.trim() || "";
 	const [year, month, day] = datePart.split("-").map(Number);
+	if (isNaN(year) || isNaN(month) || isNaN(day)) return false;
 	if (month < 1 || month > 12) return false;
 	if (day < 1 || day > 31) return false;
 	return true;
@@ -342,7 +343,7 @@ export function BulkUploadClient() {
 			</PageHeader>
 
 			<div className="grid grid-cols-1 gap-6">
-				{blocks.map((block, blockIdx) => (
+				{blocks.map((block) => (
 					<Card key={block.id}>
 						<CardHeader className="flex flex-row items-start justify-between w-full">
 							<div className="space-y-1 w-full">

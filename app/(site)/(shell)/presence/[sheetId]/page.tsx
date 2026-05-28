@@ -11,8 +11,8 @@ import { Suspense } from "react";
 import { SheetDetailClient } from "@/features/presence/components/sheet-detail-client";
 import { fetchAllOrgUnits } from "@/lib/google-api";
 import { PageShell } from "@/components/ui/page-header";
-import { requirePermissionOrRedirect } from "@/features/workspace-admin/actions/require-permission";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { requirePermissionOrRedirect } from "@/features/access-management/actions/require-permission";
 
 export default async function SheetDetailPage({
 	params,

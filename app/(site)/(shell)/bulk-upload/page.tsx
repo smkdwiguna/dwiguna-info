@@ -1,5 +1,5 @@
+import { requirePermissionOrRedirect } from "@/features/access-management/actions/require-permission";
 import { BulkUploadClient } from "@/features/workspace-admin/components/bulk-upload-client";
-import { requirePermissionOrRedirect } from "@/features/workspace-admin/actions/require-permission";
 
 export const dynamic = "force-dynamic";
 

@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
-import { requirePermissionOrRedirect } from "@/features/workspace-admin/actions/require-permission";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -48,6 +47,7 @@ export default async function UsersPage() {
 }
 
 import { UsersTableClient } from "@/features/workspace-admin/components/users-table-client";
+import { requirePermissionOrRedirect } from "@/features/access-management/actions/require-permission";
 
 async function UsersTable() {
 	const users = await fetchAllWorkspaceUsers();

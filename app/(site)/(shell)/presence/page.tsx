@@ -1,11 +1,9 @@
 import { getDb } from "@/lib/db";
 import {
-	attendanceSheets,
 	deviceUsers,
 	presenceLogs,
 	presencePoints,
 	schedules,
-	sheetTargets,
 } from "@/lib/db/schema";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,14 +37,6 @@ export default function PresenceDashboardPage() {
 	);
 }
 
-function formatDateRange(dates: string[]) {
-	if (dates.length === 0) return "Belum ada jadwal";
-	const sorted = [...dates].sort();
-	const first = sorted[0];
-	const last = sorted[sorted.length - 1];
-	return first === last ? first : `${first} s/d ${last}`;
-}
-
 function formatTimestamp(value: number) {
 	const normalized = value < 10_000_000_000 ? value * 1000 : value;
 	const date = new Date(normalized);
@@ -56,17 +46,8 @@ function formatTimestamp(value: number) {
 
 async function PresenceDashboard() {
 	const db = await getDb();
-	const [
-		allSheets,
-		allSchedules,
-		allTargets,
-		allPoints,
-		allLogs,
-		allDeviceUsers,
-	] = await Promise.all([
-		db.select().from(attendanceSheets).all(),
+	const [allSchedules, allPoints, allLogs, allDeviceUsers] = await Promise.all([
 		db.select().from(schedules).all(),
-		db.select().from(sheetTargets).all(),
 		db.select().from(presencePoints).all(),
 		db.select().from(presenceLogs).all(),
 		db.select().from(deviceUsers).all(),
@@ -78,27 +59,6 @@ async function PresenceDashboard() {
 		list.push(schedule.date);
 		scheduleBySheet.set(schedule.sheetId, list);
 	}
-
-	const sheetsSummary = [...allSheets]
-		.sort((a, b) => b.id - a.id)
-		.slice(0, 5)
-		.map((sheet) => {
-			const dates = scheduleBySheet.get(sheet.id) || [];
-			const targetCount = allTargets.filter(
-				(target) => target.sheetId === sheet.id,
-			).length;
-			const pointCount = allPoints.filter(
-				(point) => point.sheetId === sheet.id,
-			).length;
-			const scheduleCount = (scheduleBySheet.get(sheet.id) || []).length;
-			return {
-				...sheet,
-				dateRange: formatDateRange(dates),
-				targetCount,
-				pointCount,
-				scheduleCount,
-			};
-		});
 
 	const emailByDeviceId = new Map(
 		allDeviceUsers.map((user) => [user.id, user.email]),

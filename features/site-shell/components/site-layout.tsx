@@ -35,6 +35,7 @@ import { Spinner } from "@/components/spinner";
 import { BrandLogo } from "@/components/brand-logo";
 import { toast } from "sonner";
 import { CreditsDialog } from "@/components/credits-dialog";
+import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
 interface SiteLayoutProps {
 	children: React.ReactNode;
@@ -72,8 +73,6 @@ export function SiteLayout({
 		setIsSidebarLoading(true);
 		(async () => {
 			try {
-				const { getLivePermissions } =
-					await import("@/features/workspace-admin/actions/require-permission");
 				const result = await getLivePermissions();
 				if (active && !result.isSuperUser) {
 					setLivePermissions(result.permissions);

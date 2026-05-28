@@ -20,21 +20,8 @@ export default function PresenceTerminalsPage() {
 }
 
 async function TerminalsFetcher() {
-	try {
-		const db = await getDb();
-		const allTerminals = await db.select().from(terminals).all();
+	const db = await getDb();
+	const allTerminals = await db.select().from(terminals).all();
 
-		return <TerminalsListClient initialTerminals={allTerminals} />;
-	} catch (error: any) {
-		return (
-			<div className="p-6 border border-destructive/50 bg-destructive/10 rounded-lg text-center mt-4">
-				<h3 className="text-lg font-bold text-destructive mb-2">
-					Database Error
-				</h3>
-				<p className="text-sm text-destructive/80 max-w-lg mx-auto">
-					{error.message}
-				</p>
-			</div>
-		);
-	}
+	return <TerminalsListClient initialTerminals={allTerminals} />;
 }

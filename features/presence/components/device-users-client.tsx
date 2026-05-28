@@ -113,7 +113,10 @@ export function DeviceUsersClient({
 						setUsers(users.filter((u) => u.id !== id));
 						toast.success("Pengguna perangkat terhapus.");
 					} catch (e) {
-						toast.error("Gagal menghapus pengguna.");
+						toast.error(
+							"Gagal menghapus pengguna" +
+								(e instanceof Error ? `: ${e.message}` : "."),
+						);
 					}
 				},
 			},

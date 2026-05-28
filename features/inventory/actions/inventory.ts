@@ -14,7 +14,7 @@ import {
 } from "@/lib/db/schema";
 import { getServerSession } from "@/lib/server-session";
 import { isSuperUser } from "@/lib/access";
-import { getLivePermissions } from "@/features/workspace-admin/actions/require-permission";
+import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
 // --- HELPERS ---
 

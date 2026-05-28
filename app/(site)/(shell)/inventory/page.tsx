@@ -5,13 +5,11 @@ import {
 	assertInventoryGlobalAccess,
 } from "@/features/inventory/actions/inventory";
 import { InventoryListClient } from "./inventory-list-client";
+import { redirectToDashboardWithFlash } from "@/features/access-management/actions/require-superuser";
 import { isSuperUser } from "@/lib/access";
-import {
-	redirectToDashboardWithFlash,
-	getLivePermissions,
-} from "@/features/workspace-admin/actions/require-permission";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
+import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
 export default async function InventoryPage() {
 	const [userEmail, livePermissions, inventories] = await Promise.all([
@@ -27,7 +25,7 @@ export default async function InventoryPage() {
 
 	if (!canOpenInventory) {
 		await redirectToDashboardWithFlash(
-			"Anda tidak memiliki akses ke halaman inventaris",
+			"Anda tidak memiliki akses ke halaman inventaris.",
 		);
 	}
 

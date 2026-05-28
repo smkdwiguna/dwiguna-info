@@ -12,7 +12,7 @@ import {
 	normalizeShortLinkSlug,
 	parseShortLinkTargetUrl,
 } from "@/lib/short-links";
-import { requirePermission } from "@/features/workspace-admin/actions/require-permission";
+import { requirePermissionOrRedirect } from "@/features/access-management/actions/require-permission";
 
 export type ShortLinkRecord = {
 	id: number;
@@ -36,7 +36,7 @@ export type ShortLinkValidationResult =
 	  };
 
 async function ensureShortLinksAccess() {
-	await requirePermission("shortlink");
+	await requirePermissionOrRedirect("shortlink");
 }
 
 async function findShortLinkBySlugInternal(slug: string) {

@@ -5,7 +5,6 @@ import Link from "next/link";
 
 export default function ShortlinkRedirectClient({
 	targetUrl,
-	slug,
 }: {
 	targetUrl: string;
 	slug: string;

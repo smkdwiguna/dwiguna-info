@@ -2,9 +2,9 @@ import { Suspense } from "react";
 import { PageShell } from "@/components/ui/page-header";
 import { getInventoryDetail } from "@/features/inventory/actions/inventory";
 import { InventoryDetailClient } from "./inventory-detail-client";
-import { redirectToDashboardWithFlash } from "@/features/workspace-admin/actions/require-permission";
 import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { redirectToDashboardWithFlash } from "@/features/access-management/actions/require-superuser";
 
 interface PageProps {
 	params: Promise<{ id: string }>;

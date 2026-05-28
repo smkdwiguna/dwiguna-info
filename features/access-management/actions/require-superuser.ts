@@ -1,6 +1,6 @@
 "use server";
 
-import { getLivePermissions } from "@/features/workspace-admin/actions/require-permission";
+import { getLivePermissions } from "./require-permission";
 
 export async function requireSuperUser() {
 	const { session, isSuperUser: superUser } = await getLivePermissions();
@@ -14,4 +14,19 @@ export async function requireSuperUser() {
 	}
 
 	return session;
+}
+
+export async function requireSuperUserOrRedirect() {
+	try {
+		return await requireSuperUser();
+	} catch (error) {
+		console.error("[requireSuperUserOrRedirect] error", error);
+		redirectToDashboardWithFlash("Anda tidak diizinkan membuka halaman ini.");
+	}
+}
+
+export async function redirectToDashboardWithFlash(message: string) {
+	const searchParams = new URLSearchParams({ flash: message });
+	const url = `/dashboard?${searchParams.toString()}`;
+	window.location.href = url;
 }

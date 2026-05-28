@@ -1,12 +1,7 @@
 "use server";
 
 import { getDb } from "@/lib/db";
-import {
-	attendanceSheets,
-	sheetTargets,
-	presencePoints,
-} from "@/lib/db/schema";
-import { assignMissingDeviceIds } from "./assign-device-ids";
+import { attendanceSheets } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function createAttendanceSheet(name: string) {
