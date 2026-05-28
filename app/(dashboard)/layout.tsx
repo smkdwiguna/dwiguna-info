@@ -1,33 +1,13 @@
-"use client";
-
-import { useSession } from "@/lib/auth-client";
+import { getServerSession } from "@/lib/server-session";
 import { AdminLayout } from "@/features/workspace-admin/components/admin-layout";
-import { Spinner } from "@/components/spinner";
-import Image from "next/image";
 import Login from "@/components/login";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const { data: session, isPending } = useSession();
-
-	if (isPending) {
-		return (
-			<div className="mx-auto flex min-h-svh max-w-3xl flex-col items-center justify-center gap-4">
-				<Image
-					src="/Logo.png"
-					alt="Logo SMK TI Dwiguna"
-					loading="eager"
-					width={48}
-					height={48}
-					className="h-12 w-12"
-				/>
-				<Spinner variant="muted" />
-			</div>
-		);
-	}
+	const session = await getServerSession();
 
 	if (!session) {
 		return <Login />;

@@ -1,6 +1,4 @@
-"use client";
-
-import { useSession } from "@/lib/auth-client";
+import { getServerSession } from "@/lib/server-session";
 import {
 	Card,
 	CardDescription,
@@ -9,10 +7,10 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export default function DashboardPage() {
-	const { data: session } = useSession();
+export default async function DashboardPage() {
+	const session = await getServerSession();
 
-	if (!session) return null; // handled by layout
+	if (!session?.user) return null; // handled by layout
 
 	const { user } = session;
 
