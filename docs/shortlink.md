@@ -10,7 +10,7 @@ This feature adds a Bitly-style shortlink system under the `dwiguna.info` domain
 
 ## User-facing behavior
 
-- The admin page lives at `/shortlink`.
+- The admin page lives at `/shortlinks`.
 - The sidebar label is `Tautan`.
 - The page title is `Tautan Singkat`.
 - Each account only sees the short links it created.
@@ -27,6 +27,10 @@ This feature adds a Bitly-style shortlink system under the `dwiguna.info` domain
 - Slugs are rejected when they conflict with reserved app routes.
 - The server validates slug availability again during creation, so the UI check is not the only guard.
 
+## WARNING
+
+If you add a new top-level route, feature page, or system route in the future, update the reserved slug list in `lib/short-links.ts` inside `SHORT_LINK_RESERVED_SEGMENTS` at the same time. If you forget this, the new route can be broken by an accidental shortlink slug collision.
+
 ## Database
 
 The feature uses the `short_links` table.
@@ -42,7 +46,7 @@ Fields:
 
 ## Route handling
 
-- Visiting `/{slug}` redirects to the stored original URL.
+- Visiting `/{slug}` serves metadata from the target URL first, then auto-redirects to the stored original URL.
 - Each redirect increments `click_count`.
 - If the slug does not exist, the app shows the global 404 page.
 

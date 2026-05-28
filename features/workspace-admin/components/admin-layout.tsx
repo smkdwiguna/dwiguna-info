@@ -151,7 +151,7 @@ function AppSidebar({
 					{(isSuperUser || permissions.includes("shortlink")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Tautan">
-								<Link href="/shortlink">
+								<Link href="/shortlinks">
 									<LinkIcon />
 									<span>Tautan</span>
 								</Link>

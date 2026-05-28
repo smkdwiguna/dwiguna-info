@@ -63,7 +63,7 @@ async function assertShortLinkSlugAvailability(slugInput: string) {
 			valid: false,
 			normalizedSlug: slug,
 			message:
-				"Slug hanya boleh berisi huruf, angka, tanda hubung, dan underscore.",
+				"Slug hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.",
 		} satisfies ShortLinkValidationResult;
 	}
 
@@ -161,7 +161,7 @@ export async function createShortLink(payload: {
 			})
 			.returning();
 
-		revalidatePath("/shortlink");
+		revalidatePath("/shortlinks");
 		return createdShortLink;
 	} catch (error) {
 		console.error("[createShortLink] failed", error);
@@ -193,7 +193,7 @@ export async function deleteShortLink(shortLinkId: number) {
 	}
 
 	await db.delete(shortLinks).where(eq(shortLinks.id, shortLinkId));
-	revalidatePath("/shortlink");
+	revalidatePath("/shortlinks");
 	return { success: true };
 }
 

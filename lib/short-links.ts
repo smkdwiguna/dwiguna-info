@@ -7,7 +7,7 @@ const SHORT_LINK_RESERVED_SEGMENTS = new Set(
 		"login",
 		"presence",
 		"settings",
-		"shortlink",
+		"shortlinks",
 		"users",
 	].map((value) => value.toLowerCase()),
 );
@@ -20,7 +20,7 @@ export function normalizeShortLinkSlug(value: string) {
 }
 
 export function isValidShortLinkSlugFormat(value: string) {
-	return /^[A-Za-z0-9_-]{3,64}$/.test(value);
+	return /^[A-Za-z0-9_-]{1,64}$/.test(value);
 }
 
 export function isReservedShortLinkSlug(value: string) {

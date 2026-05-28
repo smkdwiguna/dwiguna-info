@@ -43,6 +43,10 @@ This repo uses a simple permission-string model and route-group based dashboard 
   - `api`
   - `_next`
 
+### Important maintenance note
+
+Whenever a new route, page, or feature is introduced, check whether it should be reserved for short links and update `SHORT_LINK_RESERVED_SEGMENTS` in `lib/short-links.ts` accordingly. Keep this file and `docs/shortlink.md` in sync so the reservation list does not drift from the actual route tree.
+
 ## Fallback pages
 
 - `app/not-found.tsx` customizes the global 404 screen.
@@ -53,3 +57,4 @@ This repo uses a simple permission-string model and route-group based dashboard 
 
 - Add a short note here whenever a new top-level route or permission is introduced.
 - If a route is meant to be reserved for short links, add it to both code validation and this note.
+- If you change the route tree, also update `SHORT_LINK_RESERVED_SEGMENTS` in `lib/short-links.ts` immediately so shortlink collisions cannot happen later.

@@ -364,7 +364,7 @@ export function ShortLinksClient({
 														setCustomSlug(event.target.value);
 														setIsSlugTouched(true);
 													}}
-													placeholder={suggestedSlug || "memuat-saran-slug"}
+													placeholder={suggestedSlug || ""}
 													className="border-0 px-3 pr-10 shadow-none focus-visible:ring-0"
 													aria-invalid={slugValidation.status === "invalid"}
 												/>
