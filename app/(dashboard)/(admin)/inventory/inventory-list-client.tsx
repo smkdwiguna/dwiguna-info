@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,10 @@ export function InventoryListClient({
 	const [newName, setNewName] = useState("");
 
 	const [isPending, startTransition] = useTransition();
+
+	useEffect(() => {
+		setInventories(initialInventories);
+	}, [initialInventories]);
 
 	const handleCreate = () => {
 		if (!newName.trim()) {

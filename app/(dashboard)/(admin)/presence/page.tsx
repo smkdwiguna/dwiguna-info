@@ -24,14 +24,18 @@ import {
 	PageShell,
 } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 
 export default function PresenceDashboardPage() {
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<PresenceDashboard />
 			</Suspense>
 		</PageShell>
+		</>
 	);
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -103,6 +103,10 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 	const [isSaving, setIsSaving] = useState(false);
 	const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 	const [localUsers, setLocalUsers] = useState(users);
+
+	useEffect(() => {
+		setLocalUsers(users);
+	}, [users]);
 
 	const accessMap = useMemo(() => {
 		const map: Record<string, string> = {};

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,10 @@ export function SheetsListClient({ initialSheets }: { initialSheets: any[] }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const router = useRouter();
+
+	useEffect(() => {
+		setSheets(initialSheets);
+	}, [initialSheets]);
 
 	// Form State
 	const [name, setName] = useState("");

@@ -13,12 +13,15 @@ import {
 	PageShell,
 } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
 	await requirePermissionOrRedirect("users");
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<PageHeader>
 				<PageHeaderHeading>
@@ -40,6 +43,7 @@ export default async function UsersPage() {
 				</Suspense>
 			</div>
 		</PageShell>
+		</>
 	);
 }
 

@@ -4,14 +4,18 @@ import { Suspense } from "react";
 import { TerminalsListClient } from "@/features/presence/components/terminals-list-client";
 import { PageShell } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 
 export default function PresenceTerminalsPage() {
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<TerminalsFetcher />
 			</Suspense>
 		</PageShell>
+		</>
 	);
 }
 

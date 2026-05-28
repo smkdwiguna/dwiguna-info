@@ -11,6 +11,7 @@ import {
 	getLivePermissions,
 } from "@/features/workspace-admin/actions/require-permission";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 
 export default async function InventoryPage() {
 	const [userEmail, livePermissions, inventories] = await Promise.all([
@@ -31,6 +32,8 @@ export default async function InventoryPage() {
 	}
 
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<InventoryListWrapper
@@ -40,6 +43,7 @@ export default async function InventoryPage() {
 				/>
 			</Suspense>
 		</PageShell>
+		</>
 	);
 }
 

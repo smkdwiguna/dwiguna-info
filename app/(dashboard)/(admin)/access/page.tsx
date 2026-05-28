@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -20,6 +21,8 @@ export default async function AccessPage() {
 	const users = await getAccessList();
 
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<PageHeader>
 				<PageHeaderHeading>
@@ -33,5 +36,6 @@ export default async function AccessPage() {
 				<AccessManagementClient users={users} />
 			</Suspense>
 		</PageShell>
+		</>
 	);
 }

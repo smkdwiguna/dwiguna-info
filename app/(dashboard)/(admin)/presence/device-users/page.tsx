@@ -6,14 +6,18 @@ import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
 import { DeviceUsersClient } from "@/features/presence/components/device-users-client";
 import { PageShell } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
+import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 
 export default function PresenceDeviceUsersPage() {
 	return (
+		<>
+			<RouteRefreshPoller />
 		<PageShell>
 			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<DeviceUsersFetcher />
 			</Suspense>
 		</PageShell>
+		</>
 	);
 }
 

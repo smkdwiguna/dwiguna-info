@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,10 @@ export function DeviceUsersClient({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [targetOrg, setTargetOrg] = useState("");
 	const router = useRouter();
+
+	useEffect(() => {
+		setUsers(initialUsers);
+	}, [initialUsers]);
 
 	const handleSync = async () => {
 		if (!targetOrg) return toast.error("Pilih unit organisasi terlebih dahulu");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit, Check, X, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,10 @@ export function TerminalsListClient({
 	const [terminals, setTerminals] = useState(initialTerminals);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	useEffect(() => {
+		setTerminals(initialTerminals);
+	}, [initialTerminals]);
 
 	const [id, setId] = useState("");
 	const [name, setName] = useState("");
