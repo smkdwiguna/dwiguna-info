@@ -1,6 +1,6 @@
 "use server";
 
-import { getLivePermissions } from "./require-permission";
+import { getLivePermissions } from "@/features/workspace-admin/actions/require-permission";
 
 export async function requireSuperUser() {
 	const { session, isSuperUser: superUser } = await getLivePermissions();
