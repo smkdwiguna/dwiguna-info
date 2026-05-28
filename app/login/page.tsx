@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { BrandLogo } from "@/components/brand-logo";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 function LoginLogic() {
 	const searchParams = useSearchParams();
@@ -40,11 +41,7 @@ function LoginLogic() {
 
 export default function LoginPage() {
 	return (
-		<Suspense
-			fallback={
-				<div className="flex min-h-svh items-center justify-center bg-muted/40" />
-			}
-		>
+		<Suspense fallback={<SuspenseSpinner className="min-h-svh bg-muted/40" />}>
 			<LoginLogic />
 		</Suspense>
 	);

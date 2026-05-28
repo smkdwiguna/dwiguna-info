@@ -1,6 +1,5 @@
 import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -13,6 +12,7 @@ import {
 	PageHeaderTitle,
 	PageShell,
 } from "@/components/ui/page-header";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +35,7 @@ export default async function UsersPage() {
 			</PageHeader>
 
 			<div className="rounded-md border bg-background">
-				<Suspense fallback={<TableSkeleton />}>
+				<Suspense fallback={<SuspenseSpinner className="min-h-40 p-6" />}>
 					<UsersTable />
 				</Suspense>
 			</div>
@@ -57,16 +57,4 @@ async function UsersTable() {
 	}
 
 	return <UsersTableClient users={users} />;
-}
-
-function TableSkeleton() {
-	return (
-		<div className="p-4 space-y-4">
-			<Skeleton className="h-8 w-full" />
-			<Skeleton className="h-8 w-full" />
-			<Skeleton className="h-8 w-full" />
-			<Skeleton className="h-8 w-full" />
-			<Skeleton className="h-8 w-full" />
-		</div>
-	);
 }

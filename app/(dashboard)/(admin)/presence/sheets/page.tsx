@@ -1,14 +1,14 @@
 import { getDb } from "@/lib/db";
 import { attendanceSheets, schedules } from "@/lib/db/schema";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SheetsListClient } from "@/features/presence/components/sheets-list-client";
 import { PageShell } from "@/components/ui/page-header";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export default function PresenceSheetsPage() {
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<SheetsFetcher />
 			</Suspense>
 		</PageShell>

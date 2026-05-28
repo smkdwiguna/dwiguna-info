@@ -8,7 +8,6 @@ import {
 	sheetTargets,
 } from "@/lib/db/schema";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Table,
@@ -24,11 +23,12 @@ import {
 	PageHeaderTitle,
 	PageShell,
 } from "@/components/ui/page-header";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export default function PresenceDashboardPage() {
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<PresenceDashboard />
 			</Suspense>
 		</PageShell>

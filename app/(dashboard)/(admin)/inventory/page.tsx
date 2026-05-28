@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageShell } from "@/components/ui/page-header";
 import {
 	getInventories,
@@ -11,6 +10,7 @@ import {
 	redirectToDashboardWithFlash,
 	getLivePermissions,
 } from "@/features/workspace-admin/actions/require-permission";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export default async function InventoryPage() {
 	const [userEmail, livePermissions, inventories] = await Promise.all([
@@ -32,7 +32,7 @@ export default async function InventoryPage() {
 
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<InventoryListWrapper
 					initialInventories={inventories}
 					isGlobalAdmin={isSuperUser(userEmail)}

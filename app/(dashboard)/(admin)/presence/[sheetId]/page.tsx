@@ -8,11 +8,11 @@ import {
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { SheetDetailClient } from "@/features/presence/components/sheet-detail-client";
 import { fetchAllOrgUnits } from "@/lib/google-api";
 import { PageShell } from "@/components/ui/page-header";
 import { requirePermissionOrRedirect } from "@/features/workspace-admin/actions/require-permission";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export default async function SheetDetailPage({
 	params,
@@ -24,7 +24,7 @@ export default async function SheetDetailPage({
 	await requirePermissionOrRedirect("presence");
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<SheetDetailFetcher sheetId={sheetId} />
 			</Suspense>
 		</PageShell>

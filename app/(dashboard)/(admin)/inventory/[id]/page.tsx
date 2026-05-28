@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PageShell } from "@/components/ui/page-header";
 import { getInventoryDetail } from "@/features/inventory/actions/inventory";
 import { InventoryDetailClient } from "./inventory-detail-client";
 import { redirectToDashboardWithFlash } from "@/features/workspace-admin/actions/require-permission";
 import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 interface PageProps {
 	params: Promise<{ id: string }>;
@@ -31,7 +31,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
 
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<InventoryDetailClient
 					initialData={detailData}
 					workspaceUsers={workspaceUsers}

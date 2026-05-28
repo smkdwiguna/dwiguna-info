@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -27,7 +28,7 @@ export default async function AccessPage() {
 				<PageHeaderActions />
 			</PageHeader>
 
-			<Suspense>
+			<Suspense fallback={<SuspenseSpinner className="min-h-40" />}>
 				{/* client component */}
 				<AccessManagementClient users={users} />
 			</Suspense>

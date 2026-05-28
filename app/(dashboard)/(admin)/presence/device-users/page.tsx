@@ -1,16 +1,16 @@
 import { getDb } from "@/lib/db";
 import { deviceUsers, terminals } from "@/lib/db/schema";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAllOrgUnits } from "@/lib/google-api";
 import { fetchAllWorkspaceUsers } from "@/lib/username-generator";
 import { DeviceUsersClient } from "@/features/presence/components/device-users-client";
 import { PageShell } from "@/components/ui/page-header";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 export default function PresenceDeviceUsersPage() {
 	return (
 		<PageShell>
-			<Suspense fallback={<Skeleton className="h-96 w-full" />}>
+			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
 				<DeviceUsersFetcher />
 			</Suspense>
 		</PageShell>
