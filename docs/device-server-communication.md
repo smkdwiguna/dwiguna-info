@@ -1,116 +1,118 @@
 # Device ↔ Server Communication (ESP32)
 
-This document defines the **exact** protocol used by ESP32 terminals to talk with the server. It is written to be implementable without ambiguity.
+Dokumen ini mendefinisikan protokol yang dipakai terminal ESP32 untuk berkomunikasi dengan server. Tujuannya supaya implementasi di firmware dan server sama persis.
 
-## 1. Provisioning (required)
+## Provisioning
 
-Each terminal must exist in the `terminals` table with:
+Setiap terminal harus ada di tabel `terminals` dengan:
 
-- `id`: device identifier (use MAC or UUID). The device id is provided in the request path (e.g. `/api/device/{deviceId}`).
-- `password`: shared secret for HMAC signing (stored in `terminals.password`).
+- `id`: identitas device, biasanya MAC atau UUID.
+- `password`: shared secret untuk HMAC signing.
 
-Example insert (D1):
+Contoh insert di D1:
 
 ```sql
 INSERT INTO terminals (id, name, status, password)
 VALUES ('ESP32-ROOM-1', 'Lab 1', 'INHERIT', 'super-secret-key');
 ```
 
-## 2. Authentication
+## Authentication
 
-Every device request **must** include these headers:
+Setiap request device harus membawa header berikut:
 
-- `X-Timestamp`: Unix epoch **seconds** (string, required)
-- `X-Nonce`: random string (required, unique per request)
-- `X-Signature`: HMAC-SHA256 in **hex** (lowercase hex, required)
+- `X-Timestamp`: Unix epoch dalam detik.
+- `X-Nonce`: string acak yang unik per request.
+- `X-Signature`: HMAC-SHA256 dalam hex lowercase.
 
-Note: the device id is taken from the request path (`/api/device/{deviceId}`) and should not be sent as a header.
+Device id diambil dari path request `/api/device/{deviceId}`, bukan dari header.
 
-### 2.1 Signature payload
+### Payload Tanda Tangan
 
-The **exact** payload to sign is:
+Payload yang ditandatangani harus persis seperti ini:
 
+```text
+DEVICE_ID
+TIMESTAMP
+NONCE
+BODY
 ```
-DEVICE_ID\nTIMESTAMP\nNONCE\nBODY
-```
 
-Where:
+Dengan:
 
-- `DEVICE_ID` = the terminal's own `id` (same as the path parameter)
-- `TIMESTAMP` = value of `X-Timestamp`
-- `NONCE` = value of `X-Nonce`
-- `BODY` = raw request body string (empty string if body is empty)
+- `DEVICE_ID` = id terminal yang sama dengan path parameter.
+- `TIMESTAMP` = nilai `X-Timestamp`.
+- `NONCE` = nilai `X-Nonce`.
+- `BODY` = raw request body, atau string kosong jika body kosong.
 
-### 2.2 Signature algorithm
+### Algoritma
 
-```
+```text
 signature = HMAC_SHA256(password, payload)
 ```
 
-Return **hex lowercase** string in `X-Signature`.
+Nilai signature harus dikirim sebagai hex lowercase di `X-Signature`.
 
-### 2.3 Replay protection
+### Replay Protection
 
-Server rules:
+- `X-Timestamp` harus berada dalam rentang ±300 detik dari waktu server.
 
-- `X-Timestamp` must be within **±300 seconds**.
+## Protocol
 
-## 3. Protocol (single payload)
+Semua payload device adalah plain text, bukan JSON. Setiap request dan response hanya berisi satu command string.
 
-All device payloads are **plain text** (no JSON). Each request/response contains **exactly one** command string:
-
-```
+```text
 CODE;field1;field2;...
 ```
 
-Rules:
+Aturan:
 
-- No URL encoding. **Do not include** `;` or newlines in fields.
-- Only `templateHex` may be large; all other fields are short.
+- Jangan melakukan URL encoding.
+- Jangan memasukkan `;` atau newline di field.
+- `templateHex` boleh panjang, field lain diharapkan pendek.
 
-### 3.1 Command codes
+### Command Codes
 
-| Code | Name    | Direction       | Fields               | Description                                                |
+| Code | Nama    | Arah            | Field                | Keterangan                                                 |
 | ---- | ------- | --------------- | -------------------- | ---------------------------------------------------------- |
-| `0`  | Idle    | Server → Device | —                    | No pending command.                                        |
-| `1`  | Open    | Server → Device | —                    | Set relay/gate to open state.                              |
-| `2`  | Enroll  | Server → Device | `fid`                | Start fingerprint enrollment for the given user ID.        |
-| `3`  | Copy    | Server → Device | `fid`, `templateHex` | Store a fingerprint template into device memory.           |
-| `4`  | Fetch   | Server → Device | `fid`                | Request the device to upload its stored template.          |
-| `5`  | Remove  | Server → Device | `fid`                | Delete a stored fingerprint from device memory.            |
-| `6`  | Empty   | Server → Device | —                    | Wipe all fingerprints from device memory.                  |
-| `7`  | Success | Server → Device | `name`, `photoHex`   | Display user info (name and photo) after identification.   |
-| `8`  | Search  | Device → Server | `fid`                | Device identified a fingerprint; server responds with `7`. |
-| `9`  | Upload  | Device → Server | `fid`, `templateHex` | Device uploads an enrolled template to the server.         |
-| `A`  | Ack     | Device → Server | (optional)           | Acknowledge: the current command was executed.             |
+| `0`  | Idle    | Server → Device | -                    | Tidak ada command pending.                                 |
+| `1`  | Open    | Server → Device | -                    | Buka relay atau gate.                                      |
+| `2`  | Enroll  | Server → Device | `fid`                | Mulai enrollment fingerprint untuk user tertentu.          |
+| `3`  | Copy    | Server → Device | `fid`, `templateHex` | Simpan template fingerprint ke memori device.              |
+| `4`  | Fetch   | Server → Device | `fid`                | Minta device mengirim template yang tersimpan.             |
+| `5`  | Remove  | Server → Device | `fid`                | Hapus fingerprint tertentu dari memori device.             |
+| `6`  | Empty   | Server → Device | -                    | Hapus semua fingerprint dari device.                       |
+| `7`  | Success | Server → Device | `name`, `photoHex`   | Tampilkan nama dan foto user setelah identifikasi.         |
+| `8`  | Search  | Device → Server | `fid`                | Device menemukan fingerprint; server merespons dengan `7`. |
+| `9`  | Upload  | Device → Server | `fid`, `templateHex` | Device mengirim template fingerprint hasil enrollment.     |
+| `A`  | Ack     | Device → Server | opsional             | Menandakan command terakhir sudah dieksekusi.              |
 
-## 4. Endpoint
+## Endpoint
 
 **POST** `/api/device/{deviceId}`
 
-This is the **only** endpoint. All communication happens here. Devices poll by sending a POST request. The server processes any events in the request body and returns the current pending command or appropriate response.
+Ini satu-satunya endpoint device. Device melakukan polling dengan POST, server memproses event di body request, lalu mengembalikan command yang sedang pending atau response yang sesuai.
 
-**Headers:** auth headers as described in section 2.
+### Request Body
 
-**Request body (one line per event, plain text):**
+Satu baris per event:
 
-```
+```text
 A
 8;12
 9;12;(templateHex)
 ```
 
-Rules:
+Makna event:
 
-- `A` = Acknowledge. Tells the server that the current command was executed successfully. The server clears the pending command (`metadata`). If a sync is in progress, the server advances to the next fingerprint in the queue.
-- `8;{fid}` = Search result. The device identified fingerprint `fid`. The server will respond with `7;{name};{photoHex}` for that same HTTP request.
-- `9;{fid};{templateHex}` = Upload. The device uploads an enrolled fingerprint template. The server stores it in the `device_users` table.
+- `A` = Ack. Server menghapus command yang sedang pending dan lanjut ke antrean sync berikutnya bila ada.
+- `8;{fid}` = hasil pencarian fingerprint. Server merespons dengan `7;{name};{photoHex}` untuk request itu juga.
+- `9;{fid};{templateHex}` = upload template fingerprint ke server, disimpan di tabel `device_users`.
 
-**Response 200 (plain text):**
+### Response
 
-The response body is always a single command string. Examples:
+Response selalu satu command string plain text. Contoh:
 
-```
+```text
 0;
 1;
 2;12
@@ -121,77 +123,75 @@ The response body is always a single command string. Examples:
 7;Budi Santoso;(photoHex)
 ```
 
-## 5. How to set a command (server side)
+## Server-Side Command Storage
 
-The `terminals.metadata` column **strictly** contains the raw plain text command string that is served directly to the device on its next poll. There is **no JSON** in this column.
+Kolom `terminals.metadata` menyimpan raw plain text command string untuk polling berikutnya. Tidak ada JSON di kolom ini.
 
-Examples of valid `metadata` values:
+Contoh nilai `metadata` yang valid:
 
-| Scenario                       | `metadata` value          |
-| ------------------------------ | ------------------------- |
-| No pending command             | `NULL` (empty)            |
-| Enroll fingerprint for user 23 | `23`                      |
-| Copy fingerprint to device     | `12;(templateHex)`        |
-| Remove fingerprint for user 5  | `5`                       |
-| Display user info after search | `Budi Santoso;(photoHex)` |
-| Open gate                      | `NULL` (empty)            |
+| Skenario                           | Nilai `metadata`          |
+| ---------------------------------- | ------------------------- |
+| Tidak ada command pending          | `NULL`                    |
+| Enrollment fingerprint user 23     | `23`                      |
+| Copy fingerprint ke device         | `12;(templateHex)`        |
+| Remove fingerprint user 5          | `5`                       |
+| Tampilkan user info setelah search | `Budi Santoso;(photoHex)` |
+| Open gate                          | `NULL`                    |
 
-When the device sends `A` (Ack), the server clears `metadata` to `NULL`.
+Saat device mengirim `A`, server mengosongkan `metadata` menjadi `NULL`.
 
-## 6. Additional terminal columns
+## Kolom Terminal Tambahan
 
-The `terminals` table has dedicated columns for connection status and sync features:
+### `timeout` - Last Seen Timestamp
 
-### `timeout` — Last Seen Timestamp
+- Menyimpan Unix epoch timestamp dalam detik dari polling terakhir device.
+- Diupdate otomatis setiap POST request.
+- Dashboard memakai nilai ini untuk indikator online/offline.
+- Online jika selisih dengan waktu sekarang kurang atau sama dengan 120 detik.
+- Offline jika lebih dari 120 detik atau nilainya `0`/`NULL`.
 
-Stores the Unix epoch timestamp (seconds) of the last time the device polled the server. Updated automatically on every POST request. The dashboard uses this to display an **Online** (green dot) or **Offline** (red dot) indicator:
+### `syncQueue` - Fingerprint Sync Queue
 
-- **Online**: `(now - timeout) ≤ 120 seconds` (2 minutes)
-- **Offline**: `(now - timeout) > 120 seconds` or `timeout` is `0`/`NULL`
+- Menyimpan JSON array berisi daftar `fid` yang harus disinkronkan ke device.
 
-### `syncQueue` — Fingerprint Sync Queue
-
-Stores a JSON array of user IDs (fid numbers) to be synchronized to the device. Example:
+Contoh:
 
 ```json
 [24, 25, 26, 30, 45]
 ```
 
-**Sync workflow:**
+#### Alur Sync
 
-1. Admin clicks the **sync button** (🔄) on a terminal in the dashboard.
-2. The server collects all user IDs that have fingerprint data and writes them to `syncQueue`.
-3. On the next device poll, if `metadata` is empty and `syncQueue` has items:
-   - The server pops the **first** fid from the queue.
-   - Looks up the user's fingerprint from `device_users`.
-   - Sets `metadata` to `3;{fid};{templateHex}` (Copy command).
-4. The device receives `3;{fid};{templateHex}`, stores the fingerprint, and sends `A` (Ack).
-5. On the next poll, the server sees the Ack, clears `metadata`, removes the completed fid from the queue, and repeats step 3 with the next fid.
-6. If the device **fails** or disconnects mid-sync, the command remains in `metadata` and will be retried on the next poll. The queue does not advance until the device acknowledges.
-7. Users without fingerprint data are automatically skipped.
-8. When `syncQueue` is empty, normal operation resumes.
+1. Admin menekan tombol sync pada terminal di dashboard.
+2. Server mengumpulkan semua user yang punya fingerprint dan memasukkannya ke `syncQueue`.
+3. Saat polling berikutnya, jika `metadata` kosong dan `syncQueue` masih berisi item, server mengambil `fid` pertama.
+4. Server mencari template fingerprint di `device_users` dan menulis `3;{fid};{templateHex}` ke `metadata`.
+5. Device menerima command `3`, menyimpan template, lalu mengirim `A`.
+6. Setelah `A` diterima, server menghapus command yang pending, mengeluarkan `fid` tadi dari queue, lalu lanjut ke item berikutnya.
+7. Jika device gagal atau koneksi putus, command tetap di `metadata` dan akan dicoba lagi saat polling berikutnya.
+8. User yang tidak punya fingerprint otomatis dilewati.
 
-## 7. Error responses
+## Error Response
 
-All errors are plain text:
+Semua error dikirim sebagai plain text:
 
-```
+```text
 ERR;Message
 ```
 
-Common status codes:
+Status umum:
 
-- `401` Missing/invalid auth, stale timestamp, signature mismatch.
-- `400` Invalid body or malformed events.
-- `500` Server/database error.
+- `401` auth missing, auth invalid, timestamp kedaluwarsa, atau signature salah.
+- `400` body tidak valid atau event malformed.
+- `500` error server atau database.
 
-## 8. ESP32 signing example (pseudo‑C++)
+## Contoh Signing
 
 ```cpp
 String deviceId = "ESP32-ROOM-1";
 String timestamp = String(nowEpochSeconds);
 String nonce = randomNonce();
-String body = payloadText; // exact string sent in HTTP body
+String body = payloadText;
 
 String payload = deviceId + "\n" + timestamp + "\n" + nonce + "\n" + body;
 String signature = hmac_sha256_hex(devicePassword, payload);
@@ -203,18 +203,16 @@ setHeader("X-Signature", signature);
 httpPost("https://example.com/api/device/" + deviceId, body);
 ```
 
-## 9. NTP time synchronization
+## Sinkronisasi Waktu
 
-The device clock **must** stay accurate for HMAC signature validation. Use NTP to synchronize time:
+Clock device harus akurat untuk validasi HMAC. Gunakan NTP:
 
 ```cpp
 #include <WiFi.h>
 #include <time.h>
 
-// Call once after WiFi connects
 void setupNTP() {
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  // Wait for time to sync
   struct tm timeinfo;
   while (!getLocalTime(&timeinfo)) {
     delay(500);
@@ -222,31 +220,27 @@ void setupNTP() {
 }
 ```
 
-**For long-running devices**, re-sync periodically to prevent clock drift:
+Untuk device yang hidup lama, lakukan re-sync berkala agar drift tidak menumpuk.
 
 ```cpp
-// Call this every 6-12 hours (e.g. in loop() with a millis() check)
 void resyncNTP() {
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
 }
 
 unsigned long lastNtpSync = 0;
-const unsigned long NTP_INTERVAL = 6UL * 60 * 60 * 1000; // 6 hours
+const unsigned long NTP_INTERVAL = 6UL * 60 * 60 * 1000;
 
 void loop() {
   if (millis() - lastNtpSync > NTP_INTERVAL) {
     resyncNTP();
     lastNtpSync = millis();
   }
-  // ... rest of your polling logic
 }
 ```
 
-**Important:** ESP32's internal RTC can drift ~1-2 seconds per hour. Without periodic NTP re-sync, after 24+ hours the timestamp will be rejected by the server (±300 second window). A 6-hour re-sync interval is safe.
+## Rekomendasi
 
-## 10. Notes & recommendations
-
-- **TLS** is strongly recommended. ESP32 can pin the **root CA** or the **SHA‑256 cert fingerprint**.
-- If network is unstable, retry with exponential backoff.
-- Keep device clock synced (NTP) to pass timestamp validation (see section 9).
-- Compression is **not required** (small payloads).
+- TLS sangat disarankan.
+- Jika jaringan tidak stabil, gunakan exponential backoff.
+- Tetap sinkronkan waktu device agar lolos validasi timestamp.
+- Kompresi tidak wajib.

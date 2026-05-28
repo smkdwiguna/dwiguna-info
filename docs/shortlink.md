@@ -1,58 +1,45 @@
 # Shortlink
 
-This feature adds a Bitly-style shortlink system under the `dwiguna.info` domain.
+Fitur ini menyediakan sistem shortlink ala Bitly di bawah domain `dwiguna.info`.
 
-## Runtime and storage
+## Runtime dan Storage
 
-- Short links are stored in the Cloudflare D1-backed application database named `dwiguna-info`.
-- Redirects, validation, and deletion all run through Next.js server actions or route handlers executed in the Cloudflare Worker runtime.
-- Do not treat the feature as file-based or Node-local; the database is the source of truth.
+- Short link disimpan di database aplikasi Cloudflare D1 bernama `dwiguna-info`.
+- Redirect, validasi, dan penghapusan semuanya berjalan di Next.js server action atau route handler yang dieksekusi di Cloudflare Worker runtime.
+- Database adalah sumber kebenaran, bukan filesystem lokal.
 
-## User-facing behavior
+## Perilaku Pengguna
 
-- The admin page lives at `/shortlinks`.
-- The sidebar label is `Tautan`.
-- The page title is `Tautan Singkat`.
-- Each account only sees the short links it created.
-- The create dialog accepts:
-  - the original URL
-  - an optional custom slug
-- If the slug is empty, the server generates a random URL-safe slug.
+- Halaman admin shortlink ada di `/shortlinks`.
+- Label sidebar adalah `Tautan`.
+- Judul halaman adalah `Tautan Singkat`.
+- Setiap akun hanya melihat shortlink yang dibuat sendiri.
+- Form create menerima URL asal dan slug opsional.
+- Jika slug kosong, server akan membuat slug acak yang aman dipakai di URL.
 
-## Validation rules
+## Validasi
 
-- The original URL must be a valid `http` or `https` URL.
-- Custom slugs may only contain letters, numbers, `-`, and `_`.
-- Custom slugs cannot be empty if the user wants to override the generated value.
-- Slugs are rejected when they conflict with reserved app routes.
-- The server validates slug availability again during creation, so the UI check is not the only guard.
+- URL asal harus valid dengan skema `http` atau `https`.
+- Slug kustom hanya boleh berisi huruf, angka, `-`, dan `_`.
+- Slug kustom tidak boleh kosong jika user memang ingin menimpa slug otomatis.
+- Slug ditolak bila bentrok dengan route aplikasi yang sudah dipakai.
+- Server memeriksa ketersediaan slug sekali lagi saat create, jadi validasi UI bukan satu-satunya pengaman.
 
-## WARNING
+## Route Handling
 
-If you add a new top-level route, feature page, or system route in the future, update the reserved slug list in `lib/short-links.ts` inside `SHORT_LINK_RESERVED_SEGMENTS` at the same time. If you forget this, the new route can be broken by an accidental shortlink slug collision.
+- Membuka `/{slug}` mengarah ke redirect server-side ke URL asli yang tersimpan.
+- Request `GET` menaikkan `click_count`.
+- Request `HEAD` memberi redirect yang sama tanpa menaikkan `click_count`.
+- Jika slug tidak ditemukan, aplikasi mengembalikan `404`.
 
-## Database
+## Permission Model
 
-The feature uses the `short_links` table.
+- Akses halaman shortlink dilindungi permission `shortlink`.
+- Superuser tetap bisa membuka halaman tanpa permission itu secara eksplisit.
+- Permission yang sama tersedia di halaman access management agar bisa diatur seperti permission `users`.
 
-Fields:
+## Route Safety
 
-- `id`
-- `slug`
-- `original_url`
-- `created_by_email`
-- `created_at`
-- `click_count`
-
-## Route handling
-
-- Visiting `/{slug}` returns a server-side `301` redirect to the stored original URL.
-- `GET` requests increment `click_count`.
-- `HEAD` requests return the same redirect without incrementing `click_count`.
-- If the slug does not exist, the app returns `404`.
-
-## Permission model
-
-- Access is protected by the `shortlink` permission.
-- Superusers can open the page without explicitly having that permission.
-- The same permission is exposed in the access management page so it can be assigned like the existing `users` permission.
+- Shortlink memakai route root `app/[slug]/page.tsx`.
+- Daftar slug reserved harus tetap sinkron dengan route aplikasi nyata.
+- Saat route baru ditambahkan, update `SHORT_LINK_RESERVED_SEGMENTS` di `lib/short-links.ts` dan dokumen route safety di saat yang sama.

@@ -1,23 +1,25 @@
 # Dwiguna.Info Documentation
 
-This folder collects implementation notes for the main systems and feature areas in the app.
+Folder ini berisi catatan implementasi yang mengikuti kondisi kode saat ini. Jika perilaku aplikasi berubah, dokumen di sini juga harus ikut berubah pada commit yang sama.
 
-## System docs
+## System Docs
 
-- [Device ↔ Server Communication](device-server-communication.md)
 - [Access, Routes, and Fallback Pages](access-and-routing.md)
+- [Device ↔ Server Communication](device-server-communication.md)
+- [Open Source Licenses](open-source-licenses.md)
 
-## Feature docs
+## Feature Docs
 
+- [Inventory](inventory.md)
+- [Presence](presence.md)
 - [Shortlink](shortlink.md)
 - [Workspace Admin](workspace-admin.md)
-- [Presence](presence.md)
-- [Inventory](inventory.md)
 
-## Notes
+## Maintenance Notes
 
-- Keep feature-specific behavior in feature docs.
-- Keep route and permission conventions in the access/routing notes.
-- If a new system adds a database table or server action, document the owning page and the permission gate here.
-- Note the runtime explicitly when a feature depends on Cloudflare Workers, D1, or OpenNext behavior.
-- For any new route or feature page that could conflict with short links, update `SHORT_LINK_RESERVED_SEGMENTS` in `lib/short-links.ts` and the route-safety notes in `docs/access-and-routing.md` immediately.
+- Simpan perilaku khusus fitur di dokumen fitur masing-masing.
+- Simpan konvensi route, redirect, dan permission di dokumen akses/routing.
+- Jika sebuah fitur baru menambah tabel database atau server action, tulis halaman pemiliknya dan gate aksesnya di sini.
+- Sebutkan runtime secara eksplisit bila perilaku bergantung pada Cloudflare Workers, D1, atau OpenNext.
+- Jika menambah route baru yang bisa bentrok dengan shortlink, update `SHORT_LINK_RESERVED_SEGMENTS` di `lib/short-links.ts` dan dokumen route safety pada saat yang sama.
+- Jika dependency package berubah, update [Open Source Licenses](open-source-licenses.md) dan dialog footer dashboard.

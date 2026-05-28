@@ -34,6 +34,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 import { BrandLogo } from "@/components/brand-logo";
 import { toast } from "sonner";
+import { CreditsDialog } from "@/components/credits-dialog";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
@@ -278,9 +279,9 @@ function AppSidebar({
 				)}
 			</SidebarContent>
 			<SidebarFooter className="p-4">
-				<p className="text-xs text-muted-foreground text-center">
-					&copy; 2026 SMK TI Dwiguna
-				</p>
+				<div className="flex justify-center">
+					<CreditsDialog />
+				</div>
 			</SidebarFooter>
 			<SidebarRail />
 		</Sidebar>

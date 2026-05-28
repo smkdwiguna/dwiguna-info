@@ -1,37 +1,49 @@
 # Workspace Admin
 
-This feature covers the dashboard shell, user access management, and bulk user administration flows.
+Fitur ini mencakup shell dashboard, manajemen akses user, dan alur administrasi user bulk.
 
 ## Scope
 
-- Dashboard shell and sidebar live in `features/workspace-admin/components/admin-layout.tsx`.
-- User access management lives in `features/workspace-admin/components/access-management-client.tsx`.
-- Bulk upload, photo updates, password reset, and user editing actions live under `features/workspace-admin/actions/`.
+- Shell dashboard dan sidebar ada di `features/workspace-admin/components/admin-layout.tsx`.
+- Manajemen akses user ada di `features/workspace-admin/components/access-management-client.tsx`.
+- Bulk upload, reset password, update foto, dan edit user ada di `features/workspace-admin/actions/`.
 
 ## Runtime
 
-- The feature runs in the Cloudflare Worker runtime.
-- Admin pages rely on server actions and database-backed user/session state.
-- Do not assume local filesystem persistence for any of the admin flows.
+- Fitur ini berjalan di Cloudflare Worker runtime.
+- Admin pages mengandalkan server action dan state user/session yang tersimpan di database.
+- Jangan mengasumsikan persistence filesystem lokal untuk alur admin apa pun.
 
-## Permissions
+## Permission
 
-- `users` grants access to user management.
-- `shortlink` grants access to short-link management.
-- `presence.view`, `presence.edit.sheets`, and `presence.edit.attendances` belong to the presence feature.
-- `inventory.access` and `inventory.admin` belong to the inventory feature.
-- Superusers bypass individual permission checks.
+- `users` memberi akses ke user management.
+- `shortlink` memberi akses ke manajemen shortlink.
+- `inventory` dipakai untuk create inventory dan aksi administratif inventaris.
+- `presence` tetap dikelola sebagai area superuser di shell dashboard.
+- Superuser menembus pengecekan permission individual.
 
-## Route ownership
+## Route Ownership
 
-- `/users` shows the user list.
-- `/bulk-upload` handles user creation/import.
-- `/access` manages permission assignment.
-- `/inventory` shows the multi-tenant inventory list.
-- `/inventory/[id]` displays the item/member/history tabs for a specific inventory.
-- `/settings` is part of the admin area and is exposed to superusers.
+- `/users` menampilkan daftar user.
+- `/bulk-upload` menangani import atau pembuatan user massal.
+- `/access` mengelola assignment permission.
+- `/inventory` menampilkan daftar inventaris multi-tenant.
+- `/inventory/[id]` menampilkan detail item, anggota, dan riwayat untuk satu inventaris.
+- `/settings` adalah bagian admin yang ditampilkan untuk superuser.
 
-## Notes
+## Sidebar Behavior
 
-- When adding a new admin feature, register its permission in the access management UI and wire it into the sidebar.
-- Keep the dashboard layout centralized so navigation stays consistent.
+- Sidebar dirakit di layout pusat agar navigasi konsisten di seluruh dashboard.
+- Entry Inventaris ditampilkan jika user punya permission `inventory`, punya membership inventaris, atau adalah superuser.
+- Submenu Inventaris memuat semua inventaris yang bisa diakses user aktif.
+- Loading sidebar menunggu permission dan daftar inventaris selesai dimuat agar submenu tidak muncul terlambat.
+
+## Footer Legal Notice
+
+- Footer dashboard sekarang berupa tombol yang membuka dialog lisensi sumber terbuka.
+- Dialog itu menampilkan repositori GitHub, nama pengembang lead, dan daftar lisensi dependency langsung.
+
+## Catatan
+
+- Saat menambah fitur admin baru, daftarkan permission-nya di access management UI dan sambungkan ke sidebar.
+- Pertahankan dashboard layout sebagai satu sumber kebenaran untuk navigasi.

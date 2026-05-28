@@ -1,42 +1,46 @@
 # Access, Routes, and Fallback Pages
 
-This repo uses a simple permission-string model and route-group based dashboard pages.
+Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page saling bekerja di aplikasi ini.
 
 ## Runtime
 
-- The app runs on Cloudflare Workers through OpenNext.
-- Persistent application data is stored in Cloudflare D1.
-- Server actions and route handlers should be written with the Worker runtime in mind, not a Node-only filesystem or local SQLite assumption.
+- Aplikasi berjalan di Cloudflare Workers melalui OpenNext.
+- Data aplikasi disimpan di Cloudflare D1.
+- Server action dan route handler harus ditulis dengan asumsi Worker runtime, bukan filesystem lokal atau SQLite lokal.
 
-## Database Strategy
+## Strategi Database
 
-- Prefer one D1 database for the whole app.
-- Separate features by tables and migrations, not by creating a new database for every feature.
-- The Cloudflare D1 database name is `dwiguna-info`.
-- The Cloudflare runtime binding should use a camelCase name such as `dwigunaInfo`.
+- Gunakan satu database D1 untuk seluruh aplikasi.
+- Pisahkan fitur dengan tabel dan migrasi, bukan dengan membuat database baru per fitur.
+- Nama database Cloudflare D1 adalah `dwiguna-info`.
+- Binding runtime Cloudflare memakai nama camelCase seperti `dwigunaInfo`.
 
-## Permission model
+## Model Permission
 
-- Permissions are stored as comma-separated strings in the Google Workspace custom schema.
-- `normalizeAccessList()` is used to compare permissions consistently.
-- `requirePermissionOrRedirect()` is a route guard used for pages that require a specific global permission string.
-  - Note: some features (like Inventory) allow users to access specific resources based on membership rather than a single global permission string. The `inventory` permission string is intended for global inventory administration (creating inventories, global admin actions), while access to view specific inventories is determined by per-inventory membership stored in the database.
-- Inventory records no longer have a description field. The database schema stores only the inventory name and creation timestamp.
-- Inventory transfer is a stock movement between two inventories. The source inventory records an `OUT`, the destination inventory records an `IN`, and the destination item is created automatically when it does not already exist.
-- Superusers bypass individual permission checks.
+- Permission disimpan sebagai string yang dipisahkan koma di Google Workspace custom schema.
+- `normalizeAccessList()` dipakai untuk membaca permission secara konsisten.
+- `requirePermissionOrRedirect()` dipakai untuk halaman yang butuh permission global tertentu.
+- `requireSuperUserOrRedirect()` dipakai untuk halaman yang hanya boleh dibuka superuser.
+- `inventory` dipakai untuk akses administratif inventaris, terutama membuat inventaris baru dan aksi global inventaris.
+- Akses melihat inventaris tertentu tetap berbasis membership baris-per-barang di database, bukan permission global tunggal.
+- Pengguna yang tidak punya membership inventaris dan juga tidak punya permission `inventory` akan ditolak saat membuka `/inventory` dan diarahkan ke dashboard dengan flash message.
+- Inventory tidak lagi menyimpan deskripsi level inventaris. Yang tersisa di entitas inventaris hanyalah nama dan timestamp pembuatan.
+- Transfer inventaris adalah mutasi stok antar dua inventaris. Sumber mencatat `OUT`, tujuan mencatat `IN`, dan item tujuan dibuat otomatis jika belum ada.
+- Superuser selalu menembus pengecekan permission individual.
 
-## Dashboard pages
+## Dashboard Shell
 
-- The dashboard shell is powered by `features/workspace-admin/components/admin-layout.tsx`.
-  - The sidebar is assembled there. For some features (for example Inventory), visibility can be driven by per-resource membership checks (the sidebar will show Inventaris if the user has membership in any inventory) rather than a single global permission string.
-  - The Inventory menu should include a submenu of all inventories the current user can access.
-  - New feature pages should add their sidebar entries there and, if appropriate, implement membership-based visibility instead of a single permission string.
+- Shell dashboard dikelola oleh `features/workspace-admin/components/admin-layout.tsx`.
+- Sidebar dirakit di sana, termasuk visibilitas menu berdasarkan permission dan membership.
+- Menu Inventaris muncul jika user adalah superuser, punya permission `inventory`, atau punya membership pada setidaknya satu inventaris.
+- Submenu Inventaris berisi daftar semua inventaris yang bisa diakses user aktif.
+- Loading sidebar memakai satu state gabungan agar izin dan daftar inventaris tampil serempak setelah semua data siap.
 
-## Short-link route safety
+## Route Safety untuk Shortlink
 
-- The short-link system uses a root route `app/[slug]/page.tsx`.
-- Reserved slugs are blocked in server-side validation to avoid conflicts with existing app routes.
-- The current reserved set includes:
+- Sistem shortlink memakai route root `app/[slug]/page.tsx`.
+- Slug yang bentrok dengan route aplikasi diblokir di validasi server.
+- Set slug yang saat ini harus dianggap reserved meliputi:
   - `login`
   - `users`
   - `access`
@@ -48,18 +52,18 @@ This repo uses a simple permission-string model and route-group based dashboard 
   - `api`
   - `_next`
 
-### Important maintenance note
+### Catatan Pemeliharaan
 
-Whenever a new route, page, or feature is introduced, check whether it should be reserved for short links and update `SHORT_LINK_RESERVED_SEGMENTS` in `lib/short-links.ts` accordingly. Keep this file and `docs/shortlink.md` in sync so the reservation list does not drift from the actual route tree.
+Kalau menambah route atau halaman baru, cek apakah slug-nya harus masuk daftar reserved. Update `SHORT_LINK_RESERVED_SEGMENTS` di `lib/short-links.ts` dan dokumen shortlink pada saat yang sama agar daftar reserved tidak drift dari route tree aktual.
 
-## Fallback pages
+## Fallback Pages
 
-- `app/not-found.tsx` customizes the global 404 screen.
-- `app/error.tsx` customizes the global error boundary.
-- `app/loading.tsx` customizes the top-level loading state.
+- `app/not-found.tsx` menyesuaikan global 404 screen.
+- `app/error.tsx` menyesuaikan global error boundary.
+- `app/loading.tsx` menyesuaikan top-level loading state.
 
-## Keeping docs current
+## Kebiasaan Dokumentasi
 
-- Add a short note here whenever a new top-level route or permission is introduced.
-- If a route is meant to be reserved for short links, add it to both code validation and this note.
-- If you change the route tree, also update `SHORT_LINK_RESERVED_SEGMENTS` in `lib/short-links.ts` immediately so shortlink collisions cannot happen later.
+- Tambahkan catatan singkat di dokumen ini jika menambah top-level route atau permission baru.
+- Jika route harus dilindungi dari shortlink, pastikan route safety di kode dan dokumentasi ikut diperbarui.
+- Jika route tree berubah, langsung sinkronkan daftar reserved slug dengan implementasi.

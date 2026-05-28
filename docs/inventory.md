@@ -1,33 +1,18 @@
-# Sistem Inventaris (Multi-Tenant & Multi-User)
+# Inventory
 
-Fitur Inventaris ini didesain khusus agar dapat menampung banyak daftar inventaris (multi-tenant) di dalam satu aplikasi, serta mendukung pembagian hak akses (multi-user) yang spesifik untuk setiap ruang inventaris.
+Fitur inventaris bersifat multi-tenant di dalam satu aplikasi. Satu user bisa punya akses ke banyak inventaris, dan satu inventaris bisa punya banyak anggota dengan peran berbeda.
 
----
+## Prinsip Akses
 
-## 1. Arsitektur Multi-Tenant & Multi-User
+- Permission global `inventory` dipakai untuk akses administratif inventaris, terutama membuat inventaris baru dan aksi global.
+- Akses melihat inventaris spesifik tetap ditentukan oleh membership di tabel `inventory_members`.
+- Superuser melewati semua pengecekan akses inventaris.
+- User yang tidak punya membership inventaris dan tidak punya permission `inventory` tidak boleh membuka `/inventory`.
+- Menu Inventaris di sidebar hanya muncul bila user punya permission `inventory`, punya membership pada setidaknya satu inventaris, atau adalah superuser.
 
-Sistem memisahkan tanggung jawab menjadi dua tingkatan utama:
+## Struktur Data
 
-### A. Izin Global (Aplikasi)
-
-Diatur melalui Google Workspace custom schema (bisa diatur admin di menu `/access`):
-
-- `inventory`: bukan syarat untuk melihat inventaris yang dibagikan. Di repo ini, izin global ini dipakai untuk akses administratif tingkat aplikasi, sedangkan akses ke inventaris spesifik ditentukan oleh membership di tabel `inventory_members`.
-- `Superuser` (`proktor@smkdwiguna.sch.id`): Melewati (bypass) semua pengecekan izin dan bertindak sebagai administrator global untuk seluruh ruang inventaris di dalam aplikasi.
-
-### B. Peran Lokal Tenant (Per Inventaris)
-
-Diatur di dalam tabel `inventory_members` untuk masing-masing ruang inventaris:
-
-- **OWNER**: Pemilik ruang inventaris tersebut. Memiliki hak akses penuh untuk menambah/mengubah/menghapus barang, mencatat transaksi stok, serta menambah/mengubah peran/menghapus anggota akses lainnya di ruang tersebut.
-- **EDITOR**: Pengelola / Staff. Memiliki akses untuk melihat barang, menambah barang, mengubah informasi barang, serta mencatat transaksi mutasi stok masuk (IN) dan keluar (OUT).
-- **VIEWER**: Pembaca / Tamu. Hanya dapat melihat daftar barang, ketersediaan stok, dan riwayat transaksi stok tanpa bisa memodifikasinya.
-
----
-
-## 2. Struktur Tabel Database (Drizzle & D1)
-
-Sistem menggunakan empat tabel terintegrasi di SQLite Cloudflare D1:
+Inventaris memakai tabel utama berikut di D1:
 
 ```mermaid
 erDiagram
@@ -53,8 +38,8 @@ erDiagram
         integer id PK "autoIncrement"
         integer inventory_id FK "cascade"
         text name "notNull"
-        text sku "nullable (Stock Keeping Unit)"
-        text description "nullable"
+        text sku "nullable"
+        text description "nullable item description"
         integer quantity "notNull, default 0"
         text unit "notNull, default 'pcs'"
         text location "nullable"
@@ -74,46 +59,53 @@ erDiagram
     }
 ```
 
-### Keamanan Unik & Integritas:
+### Catatan Data
 
-- Tabel `inventory_members` memiliki kekangan `unique` gabungan pada pasangan `(inventory_id, email)` untuk menghindari duplikasi status keanggotaan.
-- Seluruh relasi kunci asing menggunakan opsi `onDelete: "cascade"`, sehingga jika suatu ruang inventaris dihapus oleh OWNER/Admin, semua data barang, keanggotaan, dan transaksi log yang terkait akan terhapus bersih dari database secara otomatis.
+- Kolom deskripsi pada entitas inventaris sudah dihapus. Deskripsi yang masih ada hanya milik item inventaris.
+- `inventory_members` memiliki unique constraint pada `(inventory_id, email)` agar satu email tidak punya membership ganda pada inventaris yang sama.
+- Relasi foreign key memakai cascade delete, jadi penghapusan inventaris akan membersihkan data turunan secara otomatis.
 
----
+## Rute
 
-## 3. Rute & Navigasi (Next.js App Router)
+- `/inventory` menampilkan daftar inventaris yang bisa diakses user aktif.
+- `/inventory/[id]` menampilkan halaman detail inventaris.
 
-Modul inventaris terintegrasi pada segmen route berikut:
+### Halaman Daftar
 
-- **`/inventory`** (Halaman Utama / List Dashboard): Menampilkan semua ruang inventaris yang dapat diakses oleh user aktif. Pembuatan ruang inventaris baru juga diinisiasi di sini.
-- **`/inventory/[id]`** (Halaman Detail): Memuat data inventaris yang dipilih menggunakan layout tab dinamis:
-  - **Tab Barang**: Menampilkan daftar barang, filter stok rendah, penambahan/pengubahan barang, dan fitur mutasi stok.
-  - **Tab Akses Anggota**: Mengelola pembagian hak akses ke akun email google workspace lain.
-  - **Tab Riwayat Stok**: Log transaksi audit stok barang masuk/keluar untuk keperluan audit berkala.
+- Tombol buat inventaris hanya tampil untuk user dengan permission `inventory` atau superuser.
+- Form create mengirim saat Enter ditekan.
+- Daftar inventaris bisa difilter berdasarkan nama.
+- Jika user tidak punya akses apa pun ke inventaris, halaman ini akan redirect ke dashboard dengan flash toast.
 
-> [!IMPORTANT]
-> Route `/inventory` telah didaftarkan dalam `SHORT_LINK_RESERVED_SEGMENTS` di `lib/short-links.ts` untuk mencegah bentrokan atau pembajakan route oleh tautan dinamis yang dibuat pengguna.
+### Halaman Detail
 
----
+- Judul inventaris bisa diubah langsung dari header.
+- Anggota inventaris dikelola lewat dialog multi-select berbasis checkbox dan search.
+- Riwayat stok dan item inventaris dikelola di halaman detail.
+- Transfer stok antar inventaris tersedia dan item tujuan akan dibuat otomatis jika belum ada.
+- Detail inventaris tidak menampilkan deskripsi tingkat inventaris karena field itu sudah dihapus.
 
-## 4. Server Actions Utama (`features/inventory/actions/inventory.ts`)
+## Server Actions Utama
 
-Aksi server (Server Actions) dirancang dengan proteksi otorisasi bertingkat:
+File utama: [features/inventory/actions/inventory.ts](../features/inventory/actions/inventory.ts)
 
-1. **`assertInventoryGlobalAccess()`**: Menjamin pengguna telah login.
-2. **`assertInventoryAccess(inventoryId, allowedRoles)`**: Memvalidasi apakah pengguna memiliki hak akses lokal di dalam tenant inventaris yang dituju dan perannya masuk dalam kriteria `allowedRoles`.
-3. **`getInventories()`**: Mengambil data inventaris. Admin global dapat melihat _semua_ inventaris, sedangkan pengguna biasa hanya dapat melihat daftar inventaris tempat email mereka terdaftar di `inventory_members`.
-4. **`createInventory(name)`**: Membuat grup baru dan langsung mendaftarkan pembuat sebagai `OWNER`.
-   - Aksi ini hanya mensyaratkan login workspace, bukan permission global tambahan.
-5. **`updateInventoryName(inventoryId, name)`**: Mengubah nama inventaris dari header halaman detail, untuk OWNER atau superuser.
-6. **`transferInventoryItem(sourceInventoryId, targetInventoryId, itemId, quantity)`**: Memindahkan stok antar-inventaris; stok keluar dicatat di sumber, stok masuk dicatat di tujuan, dan item tujuan dibuat otomatis bila belum ada.
-7. **`createStockTransaction(inventoryId, itemId, payload)`**: Menangani penambahan/pengurangan kuantitas stok barang, memperbarui total jumlah barang di `inventory_items`, dan menyisipkan catatan mutasi stok di `inventory_transactions` untuk tujuan penelusuran (audit trail).
+1. `assertInventoryGlobalAccess()` memastikan user sudah login.
+2. `assertInventoryAccess(inventoryId, allowedRoles)` memvalidasi membership dan peran lokal.
+3. `getInventories()` mengambil inventaris yang bisa diakses user.
+4. `createInventory(name)` membuat inventaris baru dan mendaftarkan pembuat sebagai `OWNER`.
+5. `updateInventoryName(inventoryId, name)` mengganti nama inventaris.
+6. `deleteInventory(inventoryId)` menghapus inventaris beserta data turunannya.
+7. `transferInventoryItem(sourceInventoryId, targetInventoryId, itemId, quantity)` memindahkan stok antar inventaris.
+8. `addInventoryMember(...)`, `removeInventoryMember(...)`, dan `updateInventoryMemberRole(...)` mengelola anggota inventaris.
 
----
+## Peran Lokal
 
-## 5. Pemeliharaan & Pengembangan Selanjutnya
+- `OWNER`: hak penuh untuk mengubah inventaris, item, transaksi, dan anggota.
+- `EDITOR`: bisa mengelola item dan transaksi stok.
+- `VIEWER`: hanya baca.
 
-Jika ingin mengembangkan fitur ini lebih lanjut (seperti ekspor laporan PDF/Excel atau unggah massal barang):
+## Pemeliharaan
 
-1. Selalu lakukan pengecekan otorisasi menggunakan helper `assertInventoryAccess(inventoryId, ["OWNER", "EDITOR"])` di server actions baru Anda.
-2. Pastikan file migrasi SQL baru dihasilkan secara konsisten menggunakan `npx drizzle-kit generate` dan diterapkan dengan `npx wrangler d1 migrations apply dwiguna-info --local` (tambahkan `CI=true` untuk mode non-interaktif).
+- Jika menambah aksi inventaris baru, pastikan gate aksesnya eksplisit di server action.
+- Jika menambah route inventaris baru, cek reserved slug di `lib/short-links.ts` dan dokumen route safety.
+- Jika menambah kolom inventaris di database, sinkronkan schema, migrasi, dan docs di commit yang sama.
