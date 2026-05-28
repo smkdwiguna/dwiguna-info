@@ -675,7 +675,10 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 					<Input
 						placeholder="Cari nama/nomor/email pengguna..."
 						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
+						onChange={(e) => {
+							setSearchTerm(e.target.value);
+							setCurrentPage(0);
+						}}
 						className="pl-9 w-full"
 					/>
 				</div>
