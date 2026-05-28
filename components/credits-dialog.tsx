@@ -17,6 +17,7 @@ import {
 	TiktokLogoIcon,
 	YoutubeLogoIcon,
 	FacebookLogoIcon,
+	GithubLogoIcon,
 } from "@phosphor-icons/react";
 
 interface SocialMedia {
@@ -105,7 +106,10 @@ export function CreditsDialog() {
 							target="_blank"
 							rel="noopener noreferrer"
 						>
-							<Button variant="outline">Repositori GitHub</Button>
+							<Button variant="outline">
+								Repositori
+								<GithubLogoIcon />
+							</Button>
 						</Link>
 						<Link
 							href="https://smkdwiguna.sch.id"
