@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/page-header";
 
 import { AccessManagementClient } from "@/features/access-management/components/access-management-client";
-import { requireSuperUserOrRedirect } from "@/features/workspace-admin/actions/require-permission";
+import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-permission";
 
 export const dynamic = "force-dynamic";
 

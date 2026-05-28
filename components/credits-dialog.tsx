@@ -106,24 +106,27 @@ export function CreditsDialog() {
 							</Link>
 						))}
 					</div>
-					<DialogFooter>
-						<Link
-							href="https://github.com/smkdwiguna/dwiguna-info"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							<Button variant="outline">
-								Repositori
-								<GithubLogoIcon />
-							</Button>
-						</Link>
-						<Link
-							href="https://smkdwiguna.sch.id"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							<Button variant="outline">Situs Web</Button>
-						</Link>
+					<DialogFooter className="justify-between">
+						<span>Qeis Ismail</span>
+						<span>
+							<Link
+								href="https://github.com/smkdwiguna/dwiguna-info"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<Button variant="outline">
+									Repositori
+									<GithubLogoIcon />
+								</Button>
+							</Link>
+							<Link
+								href="https://smkdwiguna.sch.id"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<Button variant="outline">Situs Web</Button>
+							</Link>
+						</span>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
