@@ -64,7 +64,7 @@ function formatDateTime(value: string) {
 	if (Number.isNaN(date.getTime())) {
 		return value;
 	}
-	return date.toLocaleString("id-ID");
+	return date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 }
 
 function isValidTargetUrl(value: string) {
@@ -246,7 +246,10 @@ export function ShortLinksClient({
 	const canSubmit =
 		isValidTargetUrl(originalUrl) &&
 		!isSubmitting &&
-		(customSlug.trim().length === 0 || slugValidation.status === "valid");
+		(customSlug.trim().length > 0
+			? slugValidation.status === "valid"
+			: suggestedSlug.length > 0);
+	const effectiveSlug = customSlug.trim() || suggestedSlug;
 
 	const resetDialog = () => {
 		setIsCreateDialogOpen(false);
@@ -270,7 +273,7 @@ export function ShortLinksClient({
 
 			const created = await createShortLink({
 				originalUrl: normalizedOriginalUrl,
-				slug: customSlug,
+				slug: effectiveSlug,
 			});
 			setShortLinks((previous) => [created, ...previous]);
 			toast.success(`Shortlink dibuat: dwiguna.info/${created.slug}`);
@@ -324,7 +327,7 @@ export function ShortLinksClient({
 						open={isCreateDialogOpen}
 						onOpenChange={setIsCreateDialogOpen}
 					>
-						<Button onClick={() => setIsCreateDialogOpen(true)}>
+						<Button type="button" onClick={() => setIsCreateDialogOpen(true)}>
 							<Plus className="h-4 w-4" /> Buat Tautan
 						</Button>
 						<DialogContent className="sm:max-w-xl">
@@ -332,7 +335,13 @@ export function ShortLinksClient({
 								<DialogTitle>Buat Tautan</DialogTitle>
 							</DialogHeader>
 
-							<div className="space-y-2 pt-2">
+							<form
+								className="space-y-2 pt-2"
+								onSubmit={(event) => {
+									event.preventDefault();
+									handleCreateShortLink();
+								}}
+							>
 								<Field>
 									<FieldContent>
 										<Input
@@ -346,6 +355,7 @@ export function ShortLinksClient({
 												)
 											}
 											placeholder="https://contoh.com/halaman"
+											autoComplete="off"
 										/>
 									</FieldContent>
 								</Field>
@@ -365,6 +375,7 @@ export function ShortLinksClient({
 														setIsSlugTouched(true);
 													}}
 													placeholder={suggestedSlug || ""}
+													autoComplete="off"
 													className="border-0 px-3 pr-10 shadow-none focus-visible:ring-0"
 													aria-invalid={slugValidation.status === "invalid"}
 												/>
@@ -385,23 +396,24 @@ export function ShortLinksClient({
 										) : null}
 									</FieldContent>
 								</Field>
-							</div>
 
 							<DialogFooter>
 								<Button
 									variant="outline"
 									onClick={resetDialog}
 									disabled={isSubmitting}
+									type="button"
 								>
 									Batal
 								</Button>
-								<Button onClick={handleCreateShortLink} disabled={!canSubmit}>
+								<Button type="submit" disabled={!canSubmit}>
 									{isSubmitting ? (
 										<Loader2 className="h-4 w-4 animate-spin" />
 									) : null}
 									Buat
 								</Button>
 							</DialogFooter>
+							</form>
 						</DialogContent>
 					</Dialog>
 				</PageHeaderActions>

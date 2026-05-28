@@ -5,6 +5,11 @@ import { getDb } from "@/lib/db";
 import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import ShortlinkRedirectClient from "@/features/short-links/components/shortlink-redirect-client";
+import {
+	isReservedShortLinkSlug,
+	isValidShortLinkSlugFormat,
+	normalizeShortLinkSlug,
+} from "@/lib/short-links";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +21,7 @@ type PreviewMetadata = {
 	title: string;
 	description: string;
 	image?: string;
+	siteName?: string;
 };
 
 type YouTubeOEmbedResponse = {
@@ -24,6 +30,15 @@ type YouTubeOEmbedResponse = {
 	author_name?: string;
 	provider_name?: string;
 };
+
+function isRenderableShortLinkSlug(value: string) {
+	const normalizedSlug = normalizeShortLinkSlug(value);
+	return (
+		normalizedSlug.length > 0 &&
+		isValidShortLinkSlugFormat(normalizedSlug) &&
+		!isReservedShortLinkSlug(normalizedSlug)
+	);
+}
 
 function resolveUrl(baseUrl: string, value?: string | null) {
 	if (!value) {
@@ -37,9 +52,115 @@ function resolveUrl(baseUrl: string, value?: string | null) {
 	}
 }
 
+function extractFirstMatch(html: string, patterns: RegExp[]) {
+	for (const pattern of patterns) {
+		const match = html.match(pattern);
+		const value = match?.[1]?.trim();
+		if (value) {
+			return value;
+		}
+	}
+
+	return "";
+}
+
 function extractMetaContent(html: string, pattern: RegExp) {
 	const match = html.match(pattern);
 	return match?.[1]?.trim() || "";
+}
+
+function discoverOEmbedEndpoint(html: string, baseUrl: string) {
+	return resolveUrl(
+		baseUrl,
+		extractFirstMatch(html, [
+			/<link[^>]+rel=["'][^"']*alternate[^"']*["'][^>]+type=["']application\/json\+oembed["'][^>]+href=["']([^"']+)["']/i,
+			/<link[^>]+type=["']application\/json\+oembed["'][^>]+href=["']([^"']+)["'][^>]+rel=["'][^"']*alternate[^"']*["']/i,
+		]),
+	);
+}
+
+function extractJsonLdValue<T>(value: unknown, keys: string[]): T | undefined {
+	if (!value || typeof value !== "object") {
+		return undefined;
+	}
+
+	if (Array.isArray(value)) {
+		for (const entry of value) {
+			const resolved = extractJsonLdValue<T>(entry, keys);
+			if (resolved !== undefined) {
+				return resolved;
+			}
+		}
+
+		return undefined;
+	}
+
+	const record = value as Record<string, unknown>;
+	for (const [key, nestedValue] of Object.entries(record)) {
+		if (keys.some((candidate) => candidate.toLowerCase() === key.toLowerCase())) {
+			if (typeof nestedValue === "string") {
+				const trimmed = nestedValue.trim();
+				if (trimmed) {
+					return trimmed as T;
+				}
+			}
+
+			if (
+				nestedValue &&
+				typeof nestedValue === "object" &&
+				"url" in nestedValue &&
+				typeof (nestedValue as Record<string, unknown>).url === "string"
+			) {
+				const trimmed = ((nestedValue as Record<string, string>).url || "").trim();
+				if (trimmed) {
+					return trimmed as T;
+				}
+			}
+		}
+
+		const resolved = extractJsonLdValue<T>(nestedValue, keys);
+		if (resolved !== undefined) {
+			return resolved;
+		}
+	}
+
+	return undefined;
+}
+
+function extractJsonLdMetadata(html: string): Partial<PreviewMetadata> {
+	const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+	for (const script of scripts) {
+		const raw = script[1]?.trim();
+		if (!raw) continue;
+
+		try {
+			const parsed = JSON.parse(raw) as unknown;
+			const title =
+				extractJsonLdValue<string>(parsed, ["headline", "name", "alternateName"]) ||
+				"";
+			const description =
+				extractJsonLdValue<string>(parsed, ["description"]) || "";
+			const image =
+				extractJsonLdValue<string>(parsed, ["image", "thumbnailUrl", "thumbnailURL"]) ||
+				"";
+			const siteName =
+				extractJsonLdValue<string>(parsed, ["siteName", "publisher", "provider"]) ||
+				"";
+
+			if (title || description || image || siteName) {
+				return {
+					title: title || undefined,
+					description: description || undefined,
+					image: image || undefined,
+					siteName: siteName || undefined,
+				};
+			}
+		} catch {
+			// Ignore malformed JSON-LD blocks.
+		}
+	}
+
+	return {};
 }
 
 function getYouTubeVideoUrl(targetUrl: string) {
@@ -74,7 +195,9 @@ function getYouTubeVideoUrl(targetUrl: string) {
 	return null;
 }
 
-async function fetchYouTubeOEmbed(targetUrl: string): Promise<PreviewMetadata | null> {
+async function fetchYouTubeOEmbed(
+	targetUrl: string,
+): Promise<PreviewMetadata | null> {
 	const normalizedUrl = getYouTubeVideoUrl(targetUrl);
 	if (!normalizedUrl) {
 		return null;
@@ -124,60 +247,80 @@ function extractPreviewMetadata(
 	html: string,
 	targetUrl: string,
 ): PreviewMetadata {
+	const structuredData = extractJsonLdMetadata(html);
+	const siteName =
+		extractFirstMatch(html, [
+			/<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i,
+			/<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']+)["']/i,
+		]) || structuredData.siteName;
+
 	const title =
-		extractMetaContent(
-			html,
+		structuredData.title ||
+		extractFirstMatch(html, [
 			/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
-		) ||
-		extractMetaContent(
-			html,
 			/<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["']/i,
-		) ||
+			/<meta[^>]+itemprop=["']name["'][^>]+content=["']([^"']+)["']/i,
+			/<meta[^>]+name=["']title["'][^>]+content=["']([^"']+)["']/i,
+		]) ||
 		extractMetaContent(html, /<title[^>]*>([^<]+)<\/title>/i) ||
+		extractFirstMatch(html, [
+			/<h1[^>]*>([^<]+)<\/h1>/i,
+			/<h1[^>]+aria-label=["']([^"']+)["'][^>]*>/i,
+		]) ||
+		siteName ||
 		new URL(targetUrl).hostname;
 
 	const description =
-		extractMetaContent(
-			html,
+		structuredData.description ||
+		extractFirstMatch(html, [
 			/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
-		) ||
-		extractMetaContent(
-			html,
 			/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
-		) ||
-		extractMetaContent(
-			html,
 			/<meta[^>]+name=["']twitter:description["'][^>]+content=["']([^"']+)["']/i,
-		) ||
+			/<meta[^>]+itemprop=["']description["'][^>]+content=["']([^"']+)["']/i,
+		]) ||
+		(siteName ? `${siteName}` : "") ||
 		`Buka ${targetUrl}`;
 
 	const imageRaw =
-		extractMetaContent(
-			html,
+		structuredData.image ||
+		extractFirstMatch(html, [
+			/<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i,
+			/<meta[^>]+property=["']og:image:url["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-		) ||
-		extractMetaContent(
-			html,
+			/<meta[^>]+name=["']twitter:image:src["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-		) ||
-		extractMetaContent(
-			html,
-			/<link[^>]+rel=["'](?:icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/i,
-		);
+			/<meta[^>]+itemprop=["']image["'][^>]+content=["']([^"']+)["']/i,
+			/<link[^>]+rel=["'](?:preload|image_src|icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/i,
+		]);
 
 	return {
 		title,
 		description,
 		image: resolveUrl(targetUrl, imageRaw),
+		siteName,
 	};
 }
 
-async function fetchHtmlPreviewMetadata(targetUrl: string) {
+type HtmlPreviewDocument = {
+	html: string;
+	finalUrl: string;
+};
+
+async function fetchHtmlPreviewDocument(
+	targetUrl: string,
+): Promise<HtmlPreviewDocument | null> {
+	let parsedTargetUrl: URL;
+	try {
+		parsedTargetUrl = new URL(targetUrl);
+	} catch {
+		return null;
+	}
+
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), 2500);
 
 	try {
-		const response = await fetch(targetUrl, {
+		const response = await fetch(parsedTargetUrl.toString(), {
 			redirect: "follow",
 			headers: {
 				accept: "text/html,application/xhtml+xml",
@@ -197,7 +340,10 @@ async function fetchHtmlPreviewMetadata(targetUrl: string) {
 		}
 
 		const html = await response.text();
-		return extractPreviewMetadata(html, response.url || targetUrl);
+		return {
+			html,
+			finalUrl: response.url || targetUrl,
+		};
 	} catch (error) {
 		console.error("[shortlink] HTML preview metadata fetch failed", error);
 		return null;
@@ -206,16 +352,85 @@ async function fetchHtmlPreviewMetadata(targetUrl: string) {
 	}
 }
 
-async function fetchTargetPreviewMetadata(targetUrl: string) {
-	const youtubePreview = await fetchYouTubeOEmbed(targetUrl);
-	const htmlPreview = await fetchHtmlPreviewMetadata(targetUrl);
+async function fetchOEmbedPreviewMetadata(
+	html: string,
+	targetUrl: string,
+): Promise<PreviewMetadata | null> {
+	const endpoint = discoverOEmbedEndpoint(html, targetUrl);
+	if (!endpoint) {
+		return null;
+	}
 
-	if (youtubePreview || htmlPreview) {
+	const oEmbedUrl = new URL(endpoint);
+	oEmbedUrl.searchParams.set("url", targetUrl);
+	oEmbedUrl.searchParams.set("format", "json");
+
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 2500);
+
+	try {
+		const response = await fetch(oEmbedUrl.toString(), {
+			redirect: "follow",
+			headers: {
+				accept: "application/json",
+				"user-agent":
+					"Mozilla/5.0 (compatible; DwigunaInfoShortlink/1.0; +https://dwiguna.info)",
+			},
+			signal: controller.signal,
+		});
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const json = (await response.json()) as YouTubeOEmbedResponse;
+		if (!json.title) {
+			return null;
+		}
+
 		return {
-			title: youtubePreview?.title || htmlPreview?.title || new URL(targetUrl).hostname,
+			title: json.title,
+			description: json.author_name || json.provider_name || `Buka ${targetUrl}`,
+			image: json.thumbnail_url,
+		};
+	} catch (error) {
+		console.error("[shortlink] oEmbed preview fetch failed", error);
+		return null;
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
+async function fetchTargetPreviewMetadata(targetUrl: string) {
+	let parsedTargetUrl: URL;
+	try {
+		parsedTargetUrl = new URL(targetUrl);
+	} catch {
+		return null;
+	}
+
+	const youtubePreview = await fetchYouTubeOEmbed(targetUrl);
+	const htmlDocument = await fetchHtmlPreviewDocument(targetUrl);
+	const htmlPreview = htmlDocument
+		? extractPreviewMetadata(htmlDocument.html, htmlDocument.finalUrl)
+		: null;
+	const oEmbedPreview = htmlDocument
+		? await fetchOEmbedPreviewMetadata(htmlDocument.html, htmlDocument.finalUrl)
+		: null;
+
+	if (youtubePreview || htmlPreview || oEmbedPreview) {
+		return {
+			title:
+				youtubePreview?.title ||
+				oEmbedPreview?.title ||
+				htmlPreview?.title ||
+				parsedTargetUrl.hostname,
 			description:
-				htmlPreview?.description || youtubePreview?.description || `Buka ${targetUrl}`,
-			image: youtubePreview?.image || htmlPreview?.image,
+				htmlPreview?.description ||
+				oEmbedPreview?.description ||
+				youtubePreview?.description ||
+				`Buka ${parsedTargetUrl.toString()}`,
+			image: youtubePreview?.image || oEmbedPreview?.image || htmlPreview?.image,
 		};
 	}
 
@@ -228,6 +443,10 @@ export async function generateMetadata({
 	params: Promise<RouteParams>;
 }): Promise<Metadata> {
 	const { slug } = await params;
+	if (!isRenderableShortLinkSlug(slug)) {
+		return {};
+	}
+
 	const shortLink = await getShortLinkBySlug(slug);
 
 	if (!shortLink) {
@@ -271,6 +490,10 @@ export default async function ShortLinkRedirectPage({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
+	if (!isRenderableShortLinkSlug(slug)) {
+		notFound();
+	}
+
 	const shortLink = await getShortLinkBySlug(slug);
 
 	if (!shortLink) {
