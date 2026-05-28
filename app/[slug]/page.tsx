@@ -52,6 +52,14 @@ function resolveUrl(baseUrl: string, value?: string | null) {
 	}
 }
 
+function getUrlHostname(value: string) {
+	try {
+		return new URL(value).hostname;
+	} catch {
+		return undefined;
+	}
+}
+
 function extractFirstMatch(html: string, patterns: RegExp[]) {
 	for (const pattern of patterns) {
 		const match = html.match(pattern);
@@ -97,7 +105,9 @@ function extractJsonLdValue<T>(value: unknown, keys: string[]): T | undefined {
 
 	const record = value as Record<string, unknown>;
 	for (const [key, nestedValue] of Object.entries(record)) {
-		if (keys.some((candidate) => candidate.toLowerCase() === key.toLowerCase())) {
+		if (
+			keys.some((candidate) => candidate.toLowerCase() === key.toLowerCase())
+		) {
 			if (typeof nestedValue === "string") {
 				const trimmed = nestedValue.trim();
 				if (trimmed) {
@@ -111,7 +121,9 @@ function extractJsonLdValue<T>(value: unknown, keys: string[]): T | undefined {
 				"url" in nestedValue &&
 				typeof (nestedValue as Record<string, unknown>).url === "string"
 			) {
-				const trimmed = ((nestedValue as Record<string, string>).url || "").trim();
+				const trimmed = (
+					(nestedValue as Record<string, string>).url || ""
+				).trim();
 				if (trimmed) {
 					return trimmed as T;
 				}
@@ -128,7 +140,11 @@ function extractJsonLdValue<T>(value: unknown, keys: string[]): T | undefined {
 }
 
 function extractJsonLdMetadata(html: string): Partial<PreviewMetadata> {
-	const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
+	const scripts = [
+		...html.matchAll(
+			/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+		),
+	];
 	for (const script of scripts) {
 		const raw = script[1]?.trim();
 		if (!raw) continue;
@@ -136,16 +152,25 @@ function extractJsonLdMetadata(html: string): Partial<PreviewMetadata> {
 		try {
 			const parsed = JSON.parse(raw) as unknown;
 			const title =
-				extractJsonLdValue<string>(parsed, ["headline", "name", "alternateName"]) ||
-				"";
+				extractJsonLdValue<string>(parsed, [
+					"headline",
+					"name",
+					"alternateName",
+				]) || "";
 			const description =
 				extractJsonLdValue<string>(parsed, ["description"]) || "";
 			const image =
-				extractJsonLdValue<string>(parsed, ["image", "thumbnailUrl", "thumbnailURL"]) ||
-				"";
+				extractJsonLdValue<string>(parsed, [
+					"image",
+					"thumbnailUrl",
+					"thumbnailURL",
+				]) || "";
 			const siteName =
-				extractJsonLdValue<string>(parsed, ["siteName", "publisher", "provider"]) ||
-				"";
+				extractJsonLdValue<string>(parsed, [
+					"siteName",
+					"publisher",
+					"provider",
+				]) || "";
 
 			if (title || description || image || siteName) {
 				return {
@@ -255,7 +280,6 @@ function extractPreviewMetadata(
 		]) || structuredData.siteName;
 
 	const title =
-		structuredData.title ||
 		extractFirstMatch(html, [
 			/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+name=["']twitter:title["'][^>]+content=["']([^"']+)["']/i,
@@ -263,6 +287,7 @@ function extractPreviewMetadata(
 			/<meta[^>]+name=["']title["'][^>]+content=["']([^"']+)["']/i,
 		]) ||
 		extractMetaContent(html, /<title[^>]*>([^<]+)<\/title>/i) ||
+		structuredData.title ||
 		extractFirstMatch(html, [
 			/<h1[^>]*>([^<]+)<\/h1>/i,
 			/<h1[^>]+aria-label=["']([^"']+)["'][^>]*>/i,
@@ -271,18 +296,17 @@ function extractPreviewMetadata(
 		new URL(targetUrl).hostname;
 
 	const description =
-		structuredData.description ||
 		extractFirstMatch(html, [
 			/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+name=["']twitter:description["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+itemprop=["']description["'][^>]+content=["']([^"']+)["']/i,
 		]) ||
+		structuredData.description ||
 		(siteName ? `${siteName}` : "") ||
 		`Buka ${targetUrl}`;
 
 	const imageRaw =
-		structuredData.image ||
 		extractFirstMatch(html, [
 			/<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+property=["']og:image:url["'][^>]+content=["']([^"']+)["']/i,
@@ -291,7 +315,7 @@ function extractPreviewMetadata(
 			/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
 			/<meta[^>]+itemprop=["']image["'][^>]+content=["']([^"']+)["']/i,
 			/<link[^>]+rel=["'](?:preload|image_src|icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/i,
-		]);
+		]) || structuredData.image;
 
 	return {
 		title,
@@ -390,7 +414,8 @@ async function fetchOEmbedPreviewMetadata(
 
 		return {
 			title: json.title,
-			description: json.author_name || json.provider_name || `Buka ${targetUrl}`,
+			description:
+				json.author_name || json.provider_name || `Buka ${targetUrl}`,
 			image: json.thumbnail_url,
 		};
 	} catch (error) {
@@ -430,7 +455,9 @@ async function fetchTargetPreviewMetadata(targetUrl: string) {
 				oEmbedPreview?.description ||
 				youtubePreview?.description ||
 				`Buka ${parsedTargetUrl.toString()}`,
-			image: youtubePreview?.image || oEmbedPreview?.image || htmlPreview?.image,
+			siteName: htmlPreview?.siteName,
+			image:
+				youtubePreview?.image || oEmbedPreview?.image || htmlPreview?.image,
 		};
 	}
 
@@ -457,14 +484,22 @@ export async function generateMetadata({
 	const title = preview?.title || shortLink.slug;
 	const description =
 		preview?.description || `Tautan pendek untuk ${shortLink.originalUrl}`;
+	const targetMetadataUrl = shortLink.originalUrl;
 
 	return {
-		title,
+		title: {
+			absolute: title,
+		},
 		description,
+		alternates: {
+			canonical: targetMetadataUrl,
+		},
 		openGraph: {
-			title,
+			title: {
+				absolute: title,
+			},
 			description,
-			url: shortLink.originalUrl,
+			url: targetMetadataUrl,
 			type: "website",
 			images: preview?.image
 				? [
@@ -477,11 +512,26 @@ export async function generateMetadata({
 		},
 		twitter: {
 			card: preview?.image ? "summary_large_image" : "summary",
-			title,
+			title: {
+				absolute: title,
+			},
 			description,
 			images: preview?.image ? [preview.image] : undefined,
 		},
 	};
+}
+
+function ShortLinkTargetMetadataTags({ targetUrl }: { targetUrl: string }) {
+	const targetDomain = getUrlHostname(targetUrl);
+
+	return (
+		<>
+			{targetDomain ? (
+				<meta property="twitter:domain" content={targetDomain} />
+			) : null}
+			<meta property="twitter:url" content={targetUrl} />
+		</>
+	);
 }
 
 export default async function ShortLinkRedirectPage({
@@ -511,6 +561,9 @@ export default async function ShortLinkRedirectPage({
 	}
 
 	return (
-		<ShortlinkRedirectClient targetUrl={shortLink.originalUrl} slug={slug} />
+		<>
+			<ShortLinkTargetMetadataTags targetUrl={shortLink.originalUrl} />
+			<ShortlinkRedirectClient targetUrl={shortLink.originalUrl} slug={slug} />
+		</>
 	);
 }

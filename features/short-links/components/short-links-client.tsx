@@ -397,22 +397,22 @@ export function ShortLinksClient({
 									</FieldContent>
 								</Field>
 
-							<DialogFooter>
-								<Button
-									variant="outline"
-									onClick={resetDialog}
-									disabled={isSubmitting}
-									type="button"
-								>
-									Batal
-								</Button>
-								<Button type="submit" disabled={!canSubmit}>
-									{isSubmitting ? (
-										<Loader2 className="h-4 w-4 animate-spin" />
-									) : null}
-									Buat
-								</Button>
-							</DialogFooter>
+								<DialogFooter>
+									<Button
+										variant="outline"
+										onClick={resetDialog}
+										disabled={isSubmitting}
+										type="button"
+									>
+										Batal
+									</Button>
+									<Button type="submit" disabled={!canSubmit}>
+										{isSubmitting ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : null}
+										Buat
+									</Button>
+								</DialogFooter>
 							</form>
 						</DialogContent>
 					</Dialog>
