@@ -635,10 +635,9 @@ export function InventoryDetailClient({
 
 	return (
 		<div className="space-y-6 animate-in fade-in-50 duration-300">
-			{/* Back Button and Basic Header */}
 			<PageHeader>
 				<PageHeaderHeading>
-					<PageHeaderBack onClick={() => router.back()} />
+					<PageHeaderBack />
 					{canManageInventory ? (
 						<form
 							id="inventory-name-form"
@@ -716,7 +715,10 @@ export function InventoryDetailClient({
 						</InputGroup>
 						{canEdit && (
 							<Button
-								onClick={() => setIsAddOpen(true)}
+								onClick={() => {
+									setIsAddOpen(true);
+									setItemName("");
+								}}
 								className="w-full sm:w-auto shadow-md"
 							>
 								<Plus className="mr-2 h-4 w-4" />
@@ -903,21 +905,7 @@ export function InventoryDetailClient({
 											<TableCell>
 												{item ? item.name : `Barang (ID: ${tx.itemId})`}
 											</TableCell>
-											<TableCell className="flex items-center justify-center gap-2 tabular-nums">
-												<span
-													className={
-														(tx.quantity > 0
-															? "text-emerald-600"
-															: tx.quantity < 0
-																? "text-rose-600"
-																: "text-muted-foreground") + " font-bold"
-													}
-												>
-													{tx.quantity > 0
-														? `${tx.quantity}`
-														: Math.abs(tx.quantity)}{" "}
-													{item?.unit || "pcs"}
-												</span>
+											<TableCell className="flex items-center justify-end gap-2 tabular-nums">
 												<Badge
 													variant="outline"
 													className={`flex items-center gap-1 ${
@@ -941,6 +929,20 @@ export function InventoryDetailClient({
 															? "Keluar"
 															: "Penyesuaian"}
 												</Badge>
+												<span
+													className={
+														(tx.quantity > 0
+															? "text-emerald-600"
+															: tx.quantity < 0
+																? "text-rose-600"
+																: "text-muted-foreground") + " font-bold"
+													}
+												>
+													{tx.quantity > 0
+														? `${tx.quantity}`
+														: Math.abs(tx.quantity)}{" "}
+													{item?.unit || "pcs"}
+												</span>
 											</TableCell>
 											<TableCell
 												className="text-muted-foreground max-w=50 truncate"

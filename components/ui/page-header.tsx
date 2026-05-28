@@ -2,14 +2,20 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "./button";
+import { useRouter } from "next/router";
 
 export function PageHeaderBack({
 	onClick,
 	...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+	const router = useRouter();
 	function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
 		if (onClick) return onClick(e);
-		if (typeof window !== "undefined") window.history.back();
+		if (typeof window !== "undefined") {
+			const pathSegments = window.location.pathname.split("/").filter(Boolean);
+			const parentPath = "/" + pathSegments.slice(0, -1).join("/");
+			router.push(parentPath);
+		}
 	}
 
 	return (

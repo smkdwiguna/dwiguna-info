@@ -150,7 +150,7 @@ export function SheetDetailClient({
 		<PageShell>
 			<PageHeader>
 				<PageHeaderHeading>
-					<PageHeaderBack onClick={() => router.back()} />
+					<PageHeaderBack />
 					<PageHeaderTitle>
 						<Input
 							placeholder="Contoh: Presensi Ganjil 2026"
