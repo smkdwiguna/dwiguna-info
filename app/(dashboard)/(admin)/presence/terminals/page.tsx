@@ -10,11 +10,11 @@ export default function PresenceTerminalsPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
-				<TerminalsFetcher />
-			</Suspense>
-		</PageShell>
+			<PageShell>
+				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+					<TerminalsFetcher />
+				</Suspense>
+			</PageShell>
 		</>
 	);
 }

@@ -12,11 +12,11 @@ export default function PresenceDeviceUsersPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
-				<DeviceUsersFetcher />
-			</Suspense>
-		</PageShell>
+			<PageShell>
+				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+					<DeviceUsersFetcher />
+				</Suspense>
+			</PageShell>
 		</>
 	);
 }

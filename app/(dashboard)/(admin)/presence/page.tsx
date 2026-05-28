@@ -30,11 +30,11 @@ export default function PresenceDashboardPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
-				<PresenceDashboard />
-			</Suspense>
-		</PageShell>
+			<PageShell>
+				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+					<PresenceDashboard />
+				</Suspense>
+			</PageShell>
 		</>
 	);
 }

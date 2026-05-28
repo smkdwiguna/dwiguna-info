@@ -22,27 +22,27 @@ export default async function UsersPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<PageHeader>
-				<PageHeaderHeading>
-					<PageHeaderTitle>Daftar Pengguna</PageHeaderTitle>
-				</PageHeaderHeading>
-				<PageHeaderActions>
-					<BulkPhotoUploadClient />
-					<Button asChild>
-						<Link href="/bulk-upload">
-							<Plus className="h-4 w-4" /> Tambah Pengguna
-						</Link>
-					</Button>
-				</PageHeaderActions>
-			</PageHeader>
+			<PageShell>
+				<PageHeader>
+					<PageHeaderHeading>
+						<PageHeaderTitle>Daftar Pengguna</PageHeaderTitle>
+					</PageHeaderHeading>
+					<PageHeaderActions>
+						<BulkPhotoUploadClient />
+						<Button asChild>
+							<Link href="/bulk-upload">
+								<Plus className="h-4 w-4" /> Tambah Pengguna
+							</Link>
+						</Button>
+					</PageHeaderActions>
+				</PageHeader>
 
-			<div className="rounded-md border bg-background">
-				<Suspense fallback={<SuspenseSpinner className="min-h-40 p-6" />}>
-					<UsersTable />
-				</Suspense>
-			</div>
-		</PageShell>
+				<div className="rounded-md border bg-background">
+					<Suspense fallback={<SuspenseSpinner className="min-h-40 p-6" />}>
+						<UsersTable />
+					</Suspense>
+				</div>
+			</PageShell>
 		</>
 	);
 }

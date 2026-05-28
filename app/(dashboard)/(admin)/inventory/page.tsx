@@ -34,15 +34,15 @@ export default async function InventoryPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
-				<InventoryListWrapper
-					initialInventories={inventories}
-					isGlobalAdmin={isSuperUser(userEmail)}
-					canCreateInventory={canCreateInventory}
-				/>
-			</Suspense>
-		</PageShell>
+			<PageShell>
+				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+					<InventoryListWrapper
+						initialInventories={inventories}
+						isGlobalAdmin={isSuperUser(userEmail)}
+						canCreateInventory={canCreateInventory}
+					/>
+				</Suspense>
+			</PageShell>
 		</>
 	);
 }

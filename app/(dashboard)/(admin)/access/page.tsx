@@ -23,19 +23,19 @@ export default async function AccessPage() {
 	return (
 		<>
 			<RouteRefreshPoller />
-		<PageShell>
-			<PageHeader>
-				<PageHeaderHeading>
-					<PageHeaderTitle>Akses</PageHeaderTitle>
-				</PageHeaderHeading>
-				<PageHeaderActions />
-			</PageHeader>
+			<PageShell>
+				<PageHeader>
+					<PageHeaderHeading>
+						<PageHeaderTitle>Akses</PageHeaderTitle>
+					</PageHeaderHeading>
+					<PageHeaderActions />
+				</PageHeader>
 
-			<Suspense fallback={<SuspenseSpinner className="min-h-40" />}>
-				{/* client component */}
-				<AccessManagementClient users={users} />
-			</Suspense>
-		</PageShell>
+				<Suspense fallback={<SuspenseSpinner className="min-h-40" />}>
+					{/* client component */}
+					<AccessManagementClient users={users} />
+				</Suspense>
+			</PageShell>
 		</>
 	);
 }
