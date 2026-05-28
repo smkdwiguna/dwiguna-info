@@ -10,7 +10,6 @@ import {
 	DialogFooter,
 	DialogClose,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { CircleMinus, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -23,6 +22,11 @@ import {
 	FieldTitle,
 } from "@/components/ui/field";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
 
 interface WorkspaceUser {
 	id?: string;
@@ -57,10 +61,7 @@ const FEATURE_SETS = [
 	{
 		key: "inventory",
 		title: "Inventaris",
-		permissions: [
-			{ key: "inventory.view", label: "Lihat Inventaris" },
-			{ key: "inventory.use", label: "Gunakan Inventaris" },
-		],
+		permissions: [{ key: "inventory", label: "Kelola Inventaris" }],
 	},
 ];
 
@@ -317,23 +318,24 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 			))}
 
 			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-				<DialogContent className="sm:max-w-2xl max-w-lg">
+				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Berikan Izin: {selectedPermission?.label}</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-3 py-2">
-						<div className="relative">
-							<Search className="absolute left-3 top- h-4 w-4 text-muted-foreground" />
-							<Input
+					<div className="space-y-4 py-4">
+						<InputGroup>
+							<InputGroupAddon>
+								<Search />
+							</InputGroupAddon>
+							<InputGroupInput
 								placeholder="Cari nama atau email..."
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}
-								className="pl-9"
 							/>
-						</div>
-						<div className="max-h-80 overflow-auto space-y-2">
+						</InputGroup>
+						<div className="space-y-2 max-h-80 overflow-y-auto">
 							{filteredCandidates.length === 0 ? (
-								<div className="text-sm text-muted-foreground text-center py-6">
+								<div className="p-4 text-sm text-muted-foreground text-center">
 									Tidak ada pengguna yang bisa ditambahkan.
 								</div>
 							) : (

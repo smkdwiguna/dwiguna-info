@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SheetDetailClient } from "@/features/presence/components/sheet-detail-client";
 import { fetchAllOrgUnits } from "@/lib/google-api";
 import { PageShell } from "@/components/ui/page-header";
+import { requirePermissionOrRedirect } from "@/features/workspace-admin/actions/require-permission";
 
 export default async function SheetDetailPage({
 	params,
@@ -20,7 +21,7 @@ export default async function SheetDetailPage({
 }) {
 	const resolvedParams = await params;
 	const sheetId = parseInt(resolvedParams.sheetId, 10);
-
+	await requirePermissionOrRedirect("presence");
 	return (
 		<PageShell>
 			<Suspense fallback={<Skeleton className="h-96 w-full" />}>

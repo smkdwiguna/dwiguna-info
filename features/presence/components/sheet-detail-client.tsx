@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,14 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { updateAttendanceSheet } from "../actions/update-sheet";
+import {
+	PageHeader,
+	PageHeaderActions,
+	PageHeaderBack,
+	PageHeaderHeading,
+	PageHeaderTitle,
+	PageShell,
+} from "@/components/ui/page-header";
 
 interface Sheet {
 	id: number;
@@ -123,43 +131,42 @@ export function SheetDetailClient({
 						thresholdTime: timeToMinutes(p.thresholdTime as string),
 						endTime: timeToMinutes(p.endTime as string),
 					})),
-				schedules: schedulesList.filter(s => s.terminalId && s.date),
+				schedules: schedulesList.filter((s) => s.terminalId && s.date),
 			};
 
 			await updateAttendanceSheet(payload);
 			toast.success("Pengaturan lembar berhasil disimpan!");
 			router.refresh();
-		} catch (error: any) {
-			toast.error(`Gagal menyimpan: ${error.message}`);
+		} catch (error) {
+			toast.error(
+				`Gagal menyimpan${error instanceof Error && ": " + error.message}.`,
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
 	return (
-		<div className="space-y-4">
-			<div className="w-full max-md:text-center space-y-4">
-				<div className="flex items-center gap-2">
-					<Button
-						variant="outline"
-						size="icon"
-						onClick={() => router.push("/presence/sheets")}
-					>
-						<ArrowLeft className="w-4 h-4" />
+		<PageShell>
+			<PageHeader>
+				<PageHeaderHeading>
+					<PageHeaderBack onClick={() => router.back()} />
+					<PageHeaderTitle>
+						<Input
+							placeholder="Contoh: Presensi Ganjil 2026"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							className="text-2xl! h-12 font-bold"
+						/>
+					</PageHeaderTitle>
+				</PageHeaderHeading>
+				<PageHeaderActions>
+					<Button onClick={handleSave} disabled={isSubmitting}>
+						<Save className="w-4 h-4" />
+						{isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
 					</Button>
-					<Input
-						placeholder="Contoh: Presensi Ganjil 2026"
-						value={name}
-						onChange={(e) => setName(e.target.value)}
-						className="text-2xl! h-12 font-bold"
-					/>
-				</div>
-				<Button onClick={handleSave} disabled={isSubmitting}>
-					<Save className="w-4 h-4" />
-					{isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
-				</Button>
-			</div>
-
+				</PageHeaderActions>
+			</PageHeader>
 			<div className="bg-background rounded-md border p-6 space-y-8">
 				{/* TARGETS */}
 				<div className="space-y-4">
@@ -335,7 +342,10 @@ export function SheetDetailClient({
 							variant="outline"
 							size="sm"
 							onClick={() =>
-								setSchedulesList([...schedulesList, { terminalId: "", date: "" }])
+								setSchedulesList([
+									...schedulesList,
+									{ terminalId: "", date: "" },
+								])
 							}
 						>
 							<Plus className="w-4 h-4 mr-2" /> Tambah Jadwal
@@ -392,6 +402,6 @@ export function SheetDetailClient({
 					</div>
 				</div>
 			</div>
-		</div>
+		</PageShell>
 	);
 }

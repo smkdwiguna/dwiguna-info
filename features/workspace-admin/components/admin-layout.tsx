@@ -20,18 +20,20 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import {
 	Users,
 	LayoutDashboard,
-	Settings,
 	Clock,
 	Shield,
 	LinkIcon,
+	ShelvingUnit,
 } from "lucide-react";
 import Link from "next/link";
 import Logout from "@/components/logout";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { isSuperUser } from "@/lib/access";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Spinner } from "@/components/spinner";
 import { BrandLogo } from "@/components/brand-logo";
+import { toast } from "sonner";
 
 interface AdminLayoutProps {
 	children: React.ReactNode;
@@ -45,11 +47,28 @@ export function AdminLayout({
 	permissions,
 }: AdminLayoutProps) {
 	const superUser = isSuperUser(userEmail);
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const [livePermissions, setLivePermissions] = useState<string[]>(["loading"]);
+	const [inventoryEntries, setInventoryEntries] = useState<
+		{ id: number; name: string }[]
+	>([]);
+	const [isSidebarLoading, setIsSidebarLoading] = useState(true);
 
 	useEffect(() => {
+		const flash = searchParams.get("flash");
+		if (flash) {
+			toast.error(flash);
+			const next = new URLSearchParams(searchParams.toString());
+			next.delete("flash");
+			const query = next.toString();
+			router.replace(query ? `${pathname}?${query}` : pathname);
+		}
+
 		if (!userEmail) return;
 		let active = true;
+		setIsSidebarLoading(true);
 		(async () => {
 			try {
 				const { getLivePermissions } =
@@ -58,16 +77,32 @@ export function AdminLayout({
 				if (active && !result.isSuperUser) {
 					setLivePermissions(result.permissions);
 				}
+
+				const invModule =
+					await import("@/features/inventory/actions/inventory");
+				if (active && typeof invModule.getInventories === "function") {
+					const inventories = await invModule.getInventories();
+					const entries = inventories.map((inv) => ({
+						id: inv.id,
+						name: inv.name,
+					}));
+					setInventoryEntries(entries);
+				}
 			} catch {
 				if (active) {
+					setInventoryEntries([]);
 					setLivePermissions(permissions ?? []);
+				}
+			} finally {
+				if (active) {
+					setIsSidebarLoading(false);
 				}
 			}
 		})();
 		return () => {
 			active = false;
 		};
-	}, [userEmail, permissions]);
+	}, [userEmail, permissions, pathname, router, searchParams]);
 
 	return (
 		<TooltipProvider>
@@ -78,7 +113,12 @@ export function AdminLayout({
 					} as React.CSSProperties
 				}
 			>
-				<AppSidebar isSuperUser={superUser} permissions={livePermissions} />
+				<AppSidebar
+					isSuperUser={superUser}
+					inventoryEntries={inventoryEntries}
+					isSidebarLoading={isSidebarLoading}
+					permissions={livePermissions}
+				/>
 				<SidebarInset>
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<div className="w-full flex gap-3 items-center justify-start">
@@ -105,11 +145,20 @@ export function AdminLayout({
 
 function AppSidebar({
 	isSuperUser,
+	inventoryEntries,
+	isSidebarLoading,
 	permissions,
 }: {
 	isSuperUser: boolean;
+	inventoryEntries: { id: number; name: string }[];
+	isSidebarLoading: boolean;
 	permissions: string[];
 }) {
+	const showInventoryMenu =
+		isSuperUser ||
+		permissions.includes("inventory") ||
+		inventoryEntries.length > 0;
+
 	return (
 		<Sidebar>
 			<SidebarHeader />
@@ -123,11 +172,6 @@ function AppSidebar({
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
-					{!isSuperUser && permissions.includes("loading") && (
-						<div className="text-center pt-2">
-							<Spinner variant="muted" />
-						</div>
-					)}
 					{(isSuperUser || permissions.includes("users")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Pengguna">
@@ -153,7 +197,7 @@ function AppSidebar({
 							<SidebarMenuButton asChild tooltip="Tautan">
 								<Link href="/shortlinks">
 									<LinkIcon />
-									<span>Tautan</span>
+									<span>Tautan Singkat</span>
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
@@ -200,17 +244,38 @@ function AppSidebar({
 									</SidebarMenuSubItem>
 								</SidebarMenuSub>
 							</SidebarMenuItem>
-							<SidebarMenuItem>
-								<SidebarMenuButton asChild tooltip="Pengaturan">
-									<Link href="/settings">
-										<Settings />
-										<span>Pengaturan</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
 						</>
 					)}
+
+					{showInventoryMenu && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Inventaris">
+								<Link href="/inventory">
+									<ShelvingUnit />
+									<span>Inventaris</span>
+								</Link>
+							</SidebarMenuButton>
+							{inventoryEntries.length > 0 && (
+								<SidebarMenuSub>
+									{inventoryEntries.map((entry) => (
+										<SidebarMenuSubItem key={entry.id}>
+											<SidebarMenuSubButton asChild>
+												<Link href={`/inventory/${entry.id}`}>
+													<span>{entry.name}</span>
+												</Link>
+											</SidebarMenuSubButton>
+										</SidebarMenuSubItem>
+									))}
+								</SidebarMenuSub>
+							)}
+						</SidebarMenuItem>
+					)}
 				</SidebarMenu>
+				{!isSuperUser && isSidebarLoading && (
+					<div className="text-center pt-2">
+						<Spinner variant="muted" />
+					</div>
+				)}
 			</SidebarContent>
 			<SidebarFooter className="p-4">
 				<p className="text-xs text-muted-foreground text-center">

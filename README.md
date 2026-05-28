@@ -5,9 +5,7 @@ Ini adalah sistem aplikasi Next.js untuk autentikasi dan portal utama SMK TI Dwi
 ## Fitur Utama
 
 - Login dengan Better Auth langsung ke Google Workspace.
-- Dukungan SSO kustom untuk aplikasi eksternal.
 - Penyimpanan dan pembacaan token sesi terenkripsi AES-GCM.
-- Endpoint contoh di `/api/example` untuk kebutuhan integrasi atau pengujian.
 
 ## Infrastruktur
 

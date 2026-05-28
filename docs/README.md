@@ -12,6 +12,7 @@ This folder collects implementation notes for the main systems and feature areas
 - [Shortlink](shortlink.md)
 - [Workspace Admin](workspace-admin.md)
 - [Presence](presence.md)
+- [Inventory](inventory.md)
 
 ## Notes
 

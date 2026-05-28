@@ -19,6 +19,7 @@ This feature covers the dashboard shell, user access management, and bulk user a
 - `users` grants access to user management.
 - `shortlink` grants access to short-link management.
 - `presence.view`, `presence.edit.sheets`, and `presence.edit.attendances` belong to the presence feature.
+- `inventory.access` and `inventory.admin` belong to the inventory feature.
 - Superusers bypass individual permission checks.
 
 ## Route ownership
@@ -26,6 +27,8 @@ This feature covers the dashboard shell, user access management, and bulk user a
 - `/users` shows the user list.
 - `/bulk-upload` handles user creation/import.
 - `/access` manages permission assignment.
+- `/inventory` shows the multi-tenant inventory list.
+- `/inventory/[id]` displays the item/member/history tabs for a specific inventory.
 - `/settings` is part of the admin area and is exposed to superusers.
 
 ## Notes

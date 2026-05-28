@@ -55,6 +55,11 @@ export async function requirePermission(permission: string) {
 	return { session, permissions, isSuperUser: false };
 }
 
+export async function redirectToDashboardWithFlash(message: string) {
+	const { redirect } = await import("next/navigation");
+	redirect(`/?flash=${encodeURIComponent(message)}`);
+}
+
 export async function requirePermissionOrRedirect(permission: string) {
 	const {
 		session,
@@ -68,9 +73,9 @@ export async function requirePermissionOrRedirect(permission: string) {
 	}
 
 	if (!superUser && !permissions.includes(permission)) {
-		const { redirect } = await import("next/navigation");
-		console.log(permissions);
-		redirect("/");
+		await redirectToDashboardWithFlash(
+			"Anda tidak diizinkan membuka halaman ini.",
+		);
 	}
 
 	return { session, permissions, isSuperUser: superUser };
@@ -85,8 +90,9 @@ export async function requireSuperUserOrRedirect() {
 	}
 
 	if (!superUser) {
-		const { redirect } = await import("next/navigation");
-		redirect("/");
+		await redirectToDashboardWithFlash(
+			"Anda tidak diizinkan membuka halaman ini.",
+		);
 	}
 
 	return { session, isSuperUser: superUser };

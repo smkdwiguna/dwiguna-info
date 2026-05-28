@@ -94,3 +94,93 @@ export const shortLinks = sqliteTable("short_links", {
 		.default(sql`CURRENT_TIMESTAMP`),
 	clickCount: integer("click_count", { mode: "number" }).notNull().default(0),
 });
+
+export const inventories = sqliteTable("inventories", {
+	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+	name: text("name").notNull(),
+	createdAt: text("created_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const inventoryMembers = sqliteTable(
+	"inventory_members",
+	{
+		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		inventoryId: integer("inventory_id")
+			.notNull()
+			.references(() => inventories.id, { onDelete: "cascade" }),
+		email: text("email").notNull(),
+		role: text("role").notNull(), // 'OWNER', 'EDITOR', 'VIEWER'
+	},
+	(t) => ({
+		unq: unique().on(t.inventoryId, t.email),
+	}),
+);
+
+export const inventoryItems = sqliteTable("inventory_items", {
+	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+	inventoryId: integer("inventory_id")
+		.notNull()
+		.references(() => inventories.id, { onDelete: "cascade" }),
+	name: text("name").notNull(),
+	sku: text("sku"),
+	description: text("description"),
+	quantity: integer("quantity").notNull().default(0),
+	unit: text("unit").notNull().default("pcs"),
+	location: text("location"),
+	createdAt: text("created_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: text("updated_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const inventoryTransactions = sqliteTable("inventory_transactions", {
+	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+	inventoryId: integer("inventory_id")
+		.notNull()
+		.references(() => inventories.id, { onDelete: "cascade" }),
+	itemId: integer("item_id")
+		.notNull()
+		.references(() => inventoryItems.id, { onDelete: "cascade" }),
+	type: text("type").notNull(), // 'IN', 'OUT', 'ADJUST'
+	quantity: integer("quantity").notNull(),
+	notes: text("notes"),
+	createdByEmail: text("created_by_email").notNull(),
+	createdAt: text("created_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const inventoryFiles = sqliteTable("inventory_files", {
+	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+	inventoryId: integer("inventory_id")
+		.notNull()
+		.references(() => inventories.id, { onDelete: "cascade" }),
+	driveFileId: text("drive_file_id").notNull(),
+	name: text("name").notNull(),
+	webViewLink: text("web_view_link"),
+	thumbnailLink: text("thumbnail_link"),
+	uploadedByEmail: text("uploaded_by_email").notNull(),
+	createdAt: text("created_at")
+		.notNull()
+		.default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const inventoryItemAttachments = sqliteTable(
+	"inventory_item_attachments",
+	{
+		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		itemId: integer("item_id")
+			.notNull()
+			.references(() => inventoryItems.id, { onDelete: "cascade" }),
+		fileId: integer("file_id")
+			.notNull()
+			.references(() => inventoryFiles.id, { onDelete: "cascade" }),
+	},
+	(t) => ({
+		unq: unique().on(t.itemId, t.fileId),
+	}),
+);

@@ -24,7 +24,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldContent, FieldError } from "@/components/ui/field";
+import { FieldError } from "@/components/ui/field";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -39,6 +39,11 @@ import {
 	validateShortLinkSlug,
 } from "../actions/short-links";
 import { ButtonGroup } from "@/components/ui/button-group";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
 
 type ShortLinkRecord = {
 	id: number;
@@ -288,7 +293,7 @@ export function ShortLinksClient({
 				slug: effectiveSlug,
 			});
 			setShortLinks((previous) => [created, ...previous]);
-			toast.success(`Shortlink dibuat: dwiguna.info/${created.slug}`);
+			toast.success(`Shortlink berhasil dibuat.`);
 			resetDialog();
 			router.refresh();
 		} catch (error) {
@@ -354,61 +359,46 @@ export function ShortLinksClient({
 									handleCreateShortLink();
 								}}
 							>
-								<Field>
-									<FieldContent>
-										<Input
-											id="original-url"
-											type="text"
-											value={originalUrl}
-											onChange={(event) => setOriginalUrl(event.target.value)}
-											onBlur={() =>
-												setOriginalUrl((previous) =>
-													normalizeTargetUrl(previous),
-												)
-											}
-											placeholder="https://contoh.com/halaman"
-											autoComplete="off"
-										/>
-									</FieldContent>
-								</Field>
-
-								<Field>
-									<FieldContent>
-										<div className="flex items-stretch overflow-hidden rounded-lg border bg-background">
-											<span className="flex items-center border-r bg-muted px-3 text-sm text-muted-foreground">
-												dwiguna.info/
-											</span>
-											<div className="relative flex-1">
-												<Input
-													id="shortlink-slug"
-													value={customSlug}
-													onChange={(event) => {
-														setCustomSlug(event.target.value);
-														setIsSlugTouched(true);
-													}}
-													placeholder={suggestedSlug || ""}
-													autoComplete="off"
-													className="border-0 px-3 pr-10 shadow-none focus-visible:ring-0"
-													aria-invalid={slugValidation.status === "invalid"}
-												/>
-												<div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted-foreground">
-													{slugValidation.status === "checking" ? (
-														<Loader2 className="h-4 w-4 animate-spin" />
-													) : slugValidation.status === "valid" &&
-													  isSlugTouched ? (
-														<CircleCheckBig className="h-4 w-4 text-emerald-600" />
-													) : slugValidation.status === "invalid" ? (
-														<CircleX className="h-4 w-4 text-destructive" />
-													) : null}
-												</div>
-											</div>
-										</div>
-										{slugValidation.status === "invalid" ? (
-											<FieldError>{slugValidation.message}</FieldError>
+								<Input
+									id="original-url"
+									type="text"
+									value={originalUrl}
+									onChange={(event) => setOriginalUrl(event.target.value)}
+									onBlur={() =>
+										setOriginalUrl((previous) => normalizeTargetUrl(previous))
+									}
+									placeholder="https://contoh.com/halaman"
+									autoComplete="off"
+								/>
+								<InputGroup>
+									<InputGroupAddon>https://dwiguna.info/</InputGroupAddon>
+									<InputGroupInput
+										id="shortlink-slug"
+										value={customSlug}
+										onChange={(event) => {
+											setCustomSlug(event.target.value);
+											setIsSlugTouched(true);
+										}}
+										placeholder={suggestedSlug || ""}
+										autoComplete="off"
+										className="border-0 px-3 pr-10 shadow-none focus-visible:ring-0"
+									/>
+									<InputGroupAddon
+										align="inline-end"
+										className="pointer-events-none text-muted-foreground"
+									>
+										{slugValidation.status === "checking" ? (
+											<Loader2 className="h-4 w-4 animate-spin" />
+										) : slugValidation.status === "valid" && isSlugTouched ? (
+											<CircleCheckBig className="h-4 w-4 text-emerald-600" />
+										) : slugValidation.status === "invalid" ? (
+											<CircleX className="h-4 w-4 text-destructive" />
 										) : null}
-									</FieldContent>
-								</Field>
-
+									</InputGroupAddon>
+								</InputGroup>
+								{slugValidation.status === "invalid" ? (
+									<FieldError>{slugValidation.message}</FieldError>
+								) : null}
 								<DialogFooter>
 									<Button
 										variant="outline"
@@ -432,17 +422,20 @@ export function ShortLinksClient({
 			</PageHeader>
 
 			<div className="rounded-xl border bg-background shadow-sm">
-				<div className="flex relative border-b p-4">
-					<Search className="pointer-events-none absolute left-6.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-					<Input
-						value={searchTerm}
-						onChange={(event) => {
-							setSearchTerm(event.target.value);
-							setCurrentPage(0);
-						}}
-						placeholder="Cari tautan..."
-						className="pl-9"
-					/>
+				<div className="border-b p-4">
+					<InputGroup>
+						<InputGroupAddon>
+							<Search />
+						</InputGroupAddon>
+						<InputGroupInput
+							value={searchTerm}
+							onChange={(event) => {
+								setSearchTerm(event.target.value);
+								setCurrentPage(0);
+							}}
+							placeholder="Cari tautan..."
+						/>
+					</InputGroup>
 				</div>
 
 				<div className="overflow-x-auto">

@@ -19,14 +19,18 @@ This repo uses a simple permission-string model and route-group based dashboard 
 
 - Permissions are stored as comma-separated strings in the Google Workspace custom schema.
 - `normalizeAccessList()` is used to compare permissions consistently.
-- `requirePermissionOrRedirect()` is the main guard for dashboard pages.
+- `requirePermissionOrRedirect()` is a route guard used for pages that require a specific global permission string.
+  - Note: some features (like Inventory) allow users to access specific resources based on membership rather than a single global permission string. The `inventory` permission string is intended for global inventory administration (creating inventories, global admin actions), while access to view specific inventories is determined by per-inventory membership stored in the database.
+- Inventory records no longer have a description field. The database schema stores only the inventory name and creation timestamp.
+- Inventory transfer is a stock movement between two inventories. The source inventory records an `OUT`, the destination inventory records an `IN`, and the destination item is created automatically when it does not already exist.
 - Superusers bypass individual permission checks.
 
 ## Dashboard pages
 
 - The dashboard shell is powered by `features/workspace-admin/components/admin-layout.tsx`.
-- The sidebar is assembled there from permission checks.
-- New feature pages should add their sidebar entries there and register their permission in the access management UI.
+  - The sidebar is assembled there. For some features (for example Inventory), visibility can be driven by per-resource membership checks (the sidebar will show Inventaris if the user has membership in any inventory) rather than a single global permission string.
+  - The Inventory menu should include a submenu of all inventories the current user can access.
+  - New feature pages should add their sidebar entries there and, if appropriate, implement membership-based visibility instead of a single permission string.
 
 ## Short-link route safety
 
@@ -37,6 +41,7 @@ This repo uses a simple permission-string model and route-group based dashboard 
   - `users`
   - `access`
   - `presence`
+  - `inventory`
   - `bulk-upload`
   - `shortlink`
   - `settings`

@@ -1,12 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 
 export default function Login() {
 	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+
+	const handleGoogleLogin = () => {
+		const searchStr = searchParams.toString();
+		const currentUrl = pathname + (searchStr ? `?${searchStr}` : "");
+		router.replace(`/login?callbackURL=${encodeURIComponent(currentUrl)}`);
+	};
+
 	return (
 		<main className="min-h-svh bg-muted/40 flex flex-col items-center justify-center p-4">
 			<div className="w-full max-w-sm space-y-6">
@@ -26,7 +35,7 @@ export default function Login() {
 							variant="outline"
 							size="lg"
 							className="w-full"
-							onClick={() => router.replace("/login")}
+							onClick={handleGoogleLogin}
 						>
 							Lanjutkan dengan akun smkdwiguna.sch.id
 						</Button>

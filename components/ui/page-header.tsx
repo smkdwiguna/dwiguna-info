@@ -1,5 +1,23 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "./button";
+
+export function PageHeaderBack({
+	onClick,
+	...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+	function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
+		if (onClick) return onClick(e);
+		if (typeof window !== "undefined") window.history.back();
+	}
+
+	return (
+		<Button size="icon" variant="outline" onClick={handleClick} {...props}>
+			<ChevronLeft className="h-4 w-4" />
+		</Button>
+	);
+}
 
 export function PageShell({
 	className,
@@ -29,7 +47,10 @@ export function PageHeaderHeading({
 }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
-			className={cn("w-full text-center sm:text-left", className)}
+			className={cn(
+				"w-full flex gap-2 items-center text-center sm:text-left",
+				className,
+			)}
 			{...props}
 		/>
 	);

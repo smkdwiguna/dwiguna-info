@@ -2,20 +2,23 @@
 
 import { authClient } from "@/lib/auth-client";
 import { BrandLogo } from "@/components/brand-logo";
-
+import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
 
 function LoginLogic() {
+	const searchParams = useSearchParams();
+	const callbackURL = searchParams.get("callbackURL") || "/";
+
 	useEffect(() => {
 		authClient.signIn
 			.social({
 				provider: "google",
-				callbackURL: "/",
+				callbackURL: callbackURL,
 			})
 			.catch((error) => {
 				console.error("Failed to start Google login", error);
 			});
-	}, []);
+	}, [callbackURL]);
 
 	return (
 		<div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">

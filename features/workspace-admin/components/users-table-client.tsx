@@ -39,6 +39,11 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { normalizeAccessList } from "@/lib/access";
 import { ButtonGroup } from "@/components/ui/button-group";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
 
 interface WorkspaceUserName {
 	fullName?: string | null;
@@ -670,9 +675,11 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 			</Dialog>
 
 			<div className="flex flex-col sm:flex-row items-center justify-center gap-4 m-4">
-				<div className="relative w-full">
-					<Search className="absolute left-2.5 top-2 h-4 w-4 text-muted-foreground" />
-					<Input
+				<InputGroup>
+					<InputGroupAddon>
+						<Search />
+					</InputGroupAddon>
+					<InputGroupInput
 						placeholder="Cari nama/nomor/email pengguna..."
 						value={searchTerm}
 						onChange={(e) => {
@@ -681,7 +688,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 						}}
 						className="pl-9 w-full"
 					/>
-				</div>
+				</InputGroup>
 				<Select value={filterUnit} onValueChange={setFilterUnit}>
 					<SelectTrigger className="w-full md:w-48">
 						<SelectValue placeholder="Pilih Unit" />
