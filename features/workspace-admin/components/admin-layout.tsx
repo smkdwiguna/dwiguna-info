@@ -17,7 +17,14 @@ import {
 	SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Users, LayoutDashboard, Settings, Clock, Shield } from "lucide-react";
+import {
+	Users,
+	LayoutDashboard,
+	Settings,
+	Clock,
+	Shield,
+	LinkIcon,
+} from "lucide-react";
 import Link from "next/link";
 import Logout from "@/components/logout";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -138,6 +145,17 @@ function AppSidebar({
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							</SidebarMenuSub>
+						</SidebarMenuItem>
+					)}
+
+					{(isSuperUser || permissions.includes("shortlink")) && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Tautan">
+								<Link href="/shortlink">
+									<LinkIcon />
+									<span>Tautan</span>
+								</Link>
+							</SidebarMenuButton>
 						</SidebarMenuItem>
 					)}
 

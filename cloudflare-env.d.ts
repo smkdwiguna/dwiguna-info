@@ -7,7 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		DB: D1Database;
-		presensi: D1Database;
+		dwigunaInfo: D1Database;
 		IMAGES: ImagesBinding;
 		ASSETS: Fetcher;
 		BETTER_AUTH_SECRET: string;

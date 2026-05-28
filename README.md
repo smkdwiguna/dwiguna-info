@@ -9,6 +9,25 @@ Ini adalah sistem aplikasi Next.js untuk autentikasi dan portal utama SMK TI Dwi
 - Penyimpanan dan pembacaan token sesi terenkripsi AES-GCM.
 - Endpoint contoh di `/api/example` untuk kebutuhan integrasi atau pengujian.
 
+## Infrastruktur
+
+- Aplikasi ini dijalankan sebagai Next.js app di atas Cloudflare Workers.
+- Database utama untuk data aplikasi memakai Cloudflare D1 dengan nama `dwiguna-info`.
+- OpenNext dipakai sebagai lapisan adaptasi build dan runtime ke Cloudflare.
+- Saat mengerjakan fitur yang menyentuh data, anggap sumber kebenaran ada di Worker runtime dan binding D1, bukan filesystem lokal.
+
+### Strategi Database
+
+- Satu database D1 untuk seluruh aplikasi adalah pilihan yang paling masuk akal.
+- Buat tabel berbeda untuk domain fitur yang berbeda, bukan database berbeda per fitur.
+- Nama database yang dipakai di Cloudflare dan dokumentasi harus konsisten: `dwiguna-info`.
+- Binding runtime Cloudflare tetap memakai nama camelCase `dwigunaInfo`.
+
+## Dokumentasi
+
+- Lihat [docs/README.md](docs/README.md) untuk indeks dokumentasi sistem dan fitur.
+- Dokumen per fitur ada di folder [docs/](docs) dan diringkas di indeks tersebut.
+
 ## Menjalankan
 
 Jalankan server development:
@@ -30,3 +49,8 @@ Beberapa variabel environment yang dipakai:
 - `GOOGLE_CLIENT_SECRET`: Kredensial client secret OAuth dari Google Cloud
 - `GOOGLE_CLIENT_EMAIL`: Alamat email service account dari Google Cloud
 - `GOOGLE_PRIVATE_KEY`: Private key RSA service account dari Google Cloud
+
+## Catatan Runtime
+
+- Untuk pengujian database lokal, gunakan alur yang kompatibel dengan Cloudflare binding D1.
+- Jika ada dokumentasi baru, jelaskan apakah fitur itu berjalan di browser, Worker, atau server action yang memakai D1.

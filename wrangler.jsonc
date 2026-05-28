@@ -3,9 +3,7 @@
 	"main": ".open-next/worker.js",
 	"name": "dwiguna-info",
 	"compatibility_date": "2026-03-13",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS",
@@ -26,11 +24,11 @@
 	},
 	"d1_databases": [
 		{
-			"binding": "presensi",
-			"database_name": "presensi",
-			"database_id": "db6e1628-c7e2-4430-9f78-ee6ba3a08750",
+			"binding": "dwigunaInfo",
+			"database_name": "dwiguna-info",
+			"database_id": "e2a4cc21-b718-4809-9fcf-94075d28d83e",
 			"migrations_dir": "drizzle",
-			"remote": true
-		}
+			"remote": true,
+		},
 	],
 }

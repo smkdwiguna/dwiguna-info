@@ -5,14 +5,7 @@ import { Plus, Trash2, Edit, Check, X, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import {
 	Dialog,
 	DialogContent,
@@ -20,7 +13,6 @@ import {
 	DialogTitle,
 	DialogFooter,
 } from "@/components/ui/dialog";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
 	createTerminal,
@@ -45,7 +37,6 @@ export function TerminalsListClient({
 	const [terminals, setTerminals] = useState(initialTerminals);
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const router = useRouter();
 
 	const [id, setId] = useState("");
 	const [name, setName] = useState("");
@@ -82,7 +73,10 @@ export function TerminalsListClient({
 						setTerminals(terminals.filter((t) => t.id !== targetId));
 						toast.success("Perangkat terhapus.");
 					} catch (e) {
-						toast.error("Gagal menghapus perangkat.");
+						toast.error(
+							"Gagal menghapus perangkat." +
+								(e instanceof Error ? `: ${e.message}` : ""),
+						);
 					}
 				},
 			},
@@ -101,14 +95,19 @@ export function TerminalsListClient({
 			setEditingId(null);
 			toast.success("Nama perangkat diperbarui");
 		} catch (e) {
-			toast.error("Gagal menghapus perangkat");
+			toast.error(
+				"Gagal memperbarui nama perangkat" +
+					(e instanceof Error ? `: ${e.message}` : ""),
+			);
 		}
 	};
 
 	const handleSync = async (terminalId: string) => {
 		try {
 			const res = await syncAllFingerprints(terminalId);
-			toast.success(`Berhasil mengantrekan sinkronisasi ${res.count} sidik jari! Perangkat akan mulai mengunduhnya perlahan.`);
+			toast.success(
+				`Berhasil mengantrekan sinkronisasi ${res.count} sidik jari! Perangkat akan mulai mengunduhnya perlahan.`,
+			);
 		} catch (e: any) {
 			toast.error("Gagal memulai sinkronisasi: " + e.message);
 		}
@@ -127,21 +126,35 @@ export function TerminalsListClient({
 			if (Array.isArray(queue) && queue.length > 0) {
 				return `Menyinkronkan... (${queue.length} tersisa)`;
 			}
-		} catch (e) {}
+		} catch (e) {
+			toast.error(
+				"Gagal memuat status sinkronisasi" +
+					(e instanceof Error ? `: ${e.message}` : ""),
+			);
+		}
 		return null;
 	};
 
 	const formatStatus = (status: string) => {
 		switch (status) {
-			case "1": return "Membuka Gerbang";
-			case "2": return "Mendaftarkan Sidik Jari";
-			case "3": return "Menyalin Sidik Jari";
-			case "4": return "Mengambil Sidik Jari";
-			case "5": return "Menghapus Sidik Jari";
-			case "6": return "Mereset Perangkat";
-			case "7": return "Menampilkan Info";
-			case "0": return "Standby";
-			default: return status === "INHERIT" ? "Standby" : status;
+			case "1":
+				return "Membuka Gerbang";
+			case "2":
+				return "Mendaftarkan Sidik Jari";
+			case "3":
+				return "Menyalin Sidik Jari";
+			case "4":
+				return "Mengambil Sidik Jari";
+			case "5":
+				return "Menghapus Sidik Jari";
+			case "6":
+				return "Mereset Perangkat";
+			case "7":
+				return "Menampilkan Info";
+			case "0":
+				return "Standby";
+			default:
+				return status === "INHERIT" ? "Standby" : status;
 		}
 	};
 
@@ -228,9 +241,15 @@ export function TerminalsListClient({
 															? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.7)]"
 															: "bg-red-500 opacity-80"
 													}`}
-													title={isTerminalOnline(terminal.timeout) ? "Online" : "Offline"}
+													title={
+														isTerminalOnline(terminal.timeout)
+															? "Online"
+															: "Offline"
+													}
 												/>
-												<span className="font-medium">{formatStatus(terminal.status)}</span>
+												<span className="font-medium">
+													{formatStatus(terminal.status)}
+												</span>
 											</div>
 											{getSyncStatus(terminal.syncQueue) && (
 												<span className="text-xs text-muted-foreground italic mt-1">
@@ -242,9 +261,9 @@ export function TerminalsListClient({
 
 									<TableCell className="flex justify-end">
 										<ButtonGroup>
-											<Button 
-												variant="outline" 
-												size="icon" 
+											<Button
+												variant="outline"
+												size="icon"
 												onClick={() => handleSync(terminal.id)}
 												title="Sinkronisasi Seluruh Sidik Jari"
 											>

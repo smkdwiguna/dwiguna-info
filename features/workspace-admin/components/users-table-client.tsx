@@ -761,7 +761,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 				<div className="flex gap-2">
 					<Button
 						variant="outline"
-						size="sm"
+						size="icon"
 						onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 						disabled={currentPage === 1}
 					>
@@ -769,7 +769,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 					</Button>
 					<Button
 						variant="outline"
-						size="sm"
+						size="icon"
 						onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 						disabled={currentPage === totalPages}
 					>

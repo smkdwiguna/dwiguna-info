@@ -41,6 +41,11 @@ const FEATURE_SETS = [
 		permissions: [{ key: "users", label: "Kelola Pengguna" }],
 	},
 	{
+		key: "shortlink",
+		title: "Tautan",
+		permissions: [{ key: "shortlink", label: "Kelola Tautan" }],
+	},
+	{
 		key: "presence",
 		title: "Presensi",
 		permissions: [
@@ -122,7 +127,7 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 		setIsDialogOpen(true);
 	};
 
-	const updateLocalUser = (email: string, updated: any) => {
+	const updateLocalUser = (email: string, updated: WorkspaceUser) => {
 		setLocalUsers((prev) =>
 			prev.map((u) =>
 				u.primaryEmail === email
@@ -242,7 +247,10 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 					{feature.permissions.map((perm) => {
 						const list = usersWithPermission(perm.key);
 						return (
-							<div key={perm.key} className="rounded-lg border bg-muted/30">
+							<div
+								key={perm.key}
+								className="rounded-lg overflow-hidden border bg-muted/30"
+							>
 								<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b px-4 py-3">
 									<div>
 										<div className="text-sm font-medium">{perm.label}</div>
@@ -315,7 +323,7 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 					</DialogHeader>
 					<div className="space-y-3 py-2">
 						<div className="relative">
-							<Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+							<Search className="absolute left-3 top- h-4 w-4 text-muted-foreground" />
 							<Input
 								placeholder="Cari nama atau email..."
 								value={searchTerm}
