@@ -41,7 +41,7 @@ export function PageHeader({
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-4 md:flex-row md:items-center md:justify-between",
+				"flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between",
 				className,
 			)}
 			{...props}
@@ -56,7 +56,7 @@ export function PageHeaderHeading({
 	return (
 		<div
 			className={cn(
-				"w-full flex gap-2 items-center text-center md:text-left",
+				"w-full flex gap-2 items-center text-center xl:text-left",
 				className,
 			)}
 			{...props}
@@ -92,7 +92,7 @@ export function PageHeaderActions({
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-2 w-full justify-center md:w-auto md:justify-end",
+				"flex items-center gap-2 w-full justify-center xl:w-auto xl:justify-end",
 				className,
 			)}
 			{...props}
