@@ -8,10 +8,11 @@ export default async function DashboardLayout({
 	children: React.ReactNode;
 }) {
 	const session = await getServerSession();
+	const userEmail = session?.user?.email;
 
-	if (!session) {
+	if (!userEmail) {
 		return <Login />;
 	}
 
-	return <AdminLayout userEmail={session.user.email}>{children}</AdminLayout>;
+	return <AdminLayout userEmail={userEmail}>{children}</AdminLayout>;
 }

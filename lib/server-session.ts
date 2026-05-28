@@ -6,6 +6,8 @@ import { cookies, headers } from "next/headers";
 type ServerSession = {
 	user?: {
 		email: string;
+		name?: string | null;
+		image?: string | null;
 	};
 } | null;
 

@@ -18,6 +18,13 @@ type PreviewMetadata = {
 	image?: string;
 };
 
+type YouTubeOEmbedResponse = {
+	title?: string;
+	thumbnail_url?: string;
+	author_name?: string;
+	provider_name?: string;
+};
+
 function resolveUrl(baseUrl: string, value?: string | null) {
 	if (!value) {
 		return undefined;
@@ -33,6 +40,84 @@ function resolveUrl(baseUrl: string, value?: string | null) {
 function extractMetaContent(html: string, pattern: RegExp) {
 	const match = html.match(pattern);
 	return match?.[1]?.trim() || "";
+}
+
+function getYouTubeVideoUrl(targetUrl: string) {
+	try {
+		const parsed = new URL(targetUrl);
+		const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+		if (host === "youtu.be") {
+			const videoId = parsed.pathname.replace(/^\//, "").split("/")[0];
+			return videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
+		}
+
+		if (host.endsWith("youtube.com")) {
+			const videoId = parsed.searchParams.get("v");
+			if (videoId) {
+				return `https://www.youtube.com/watch?v=${videoId}`;
+			}
+
+			const pathParts = parsed.pathname.split("/").filter(Boolean);
+			if (pathParts[0] === "shorts" && pathParts[1]) {
+				return `https://www.youtube.com/watch?v=${pathParts[1]}`;
+			}
+
+			if (pathParts[0] === "embed" && pathParts[1]) {
+				return `https://www.youtube.com/watch?v=${pathParts[1]}`;
+			}
+		}
+	} catch {
+		return null;
+	}
+
+	return null;
+}
+
+async function fetchYouTubeOEmbed(targetUrl: string): Promise<PreviewMetadata | null> {
+	const normalizedUrl = getYouTubeVideoUrl(targetUrl);
+	if (!normalizedUrl) {
+		return null;
+	}
+
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 2500);
+
+	try {
+		const endpoint = new URL("https://www.youtube.com/oembed");
+		endpoint.searchParams.set("url", normalizedUrl);
+		endpoint.searchParams.set("format", "json");
+
+		const response = await fetch(endpoint.toString(), {
+			redirect: "follow",
+			headers: {
+				accept: "application/json",
+				"user-agent":
+					"Mozilla/5.0 (compatible; DwigunaInfoShortlink/1.0; +https://dwiguna.info)",
+			},
+			signal: controller.signal,
+		});
+
+		if (!response.ok) {
+			return null;
+		}
+
+		const json = (await response.json()) as YouTubeOEmbedResponse;
+		if (!json.title) {
+			return null;
+		}
+
+		return {
+			title: json.title,
+			description: json.author_name || json.provider_name || "YouTube",
+			image: json.thumbnail_url,
+		};
+	} catch (error) {
+		console.error("[shortlink] YouTube oEmbed fetch failed", error);
+		return null;
+	} finally {
+		clearTimeout(timeout);
+	}
 }
 
 function extractPreviewMetadata(
@@ -87,7 +172,7 @@ function extractPreviewMetadata(
 	};
 }
 
-async function fetchTargetPreviewMetadata(targetUrl: string) {
+async function fetchHtmlPreviewMetadata(targetUrl: string) {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), 2500);
 
@@ -114,11 +199,27 @@ async function fetchTargetPreviewMetadata(targetUrl: string) {
 		const html = await response.text();
 		return extractPreviewMetadata(html, response.url || targetUrl);
 	} catch (error) {
-		console.error("[shortlink] preview metadata fetch failed", error);
+		console.error("[shortlink] HTML preview metadata fetch failed", error);
 		return null;
 	} finally {
 		clearTimeout(timeout);
 	}
+}
+
+async function fetchTargetPreviewMetadata(targetUrl: string) {
+	const youtubePreview = await fetchYouTubeOEmbed(targetUrl);
+	const htmlPreview = await fetchHtmlPreviewMetadata(targetUrl);
+
+	if (youtubePreview || htmlPreview) {
+		return {
+			title: youtubePreview?.title || htmlPreview?.title || new URL(targetUrl).hostname,
+			description:
+				htmlPreview?.description || youtubePreview?.description || `Buka ${targetUrl}`,
+			image: youtubePreview?.image || htmlPreview?.image,
+		};
+	}
+
+	return null;
 }
 
 export async function generateMetadata({

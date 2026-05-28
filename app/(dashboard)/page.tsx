@@ -23,7 +23,7 @@ export default async function DashboardPage() {
 							<AvatarImage
 								referrerPolicy="no-referrer"
 								src={user.image ?? undefined}
-								alt={user.name}
+								alt={user.name || user.email}
 							/>
 							<AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
 								{user.name?.charAt(0).toUpperCase()}
