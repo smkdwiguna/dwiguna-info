@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "./button";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export function PageHeaderBack({
 	onClick,
