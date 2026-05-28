@@ -46,9 +46,10 @@ Fields:
 
 ## Route handling
 
-- Visiting `/{slug}` serves metadata from the target URL first, then auto-redirects to the stored original URL.
-- Each redirect increments `click_count`.
-- If the slug does not exist, the app shows the global 404 page.
+- Visiting `/{slug}` returns a server-side `301` redirect to the stored original URL.
+- `GET` requests increment `click_count`.
+- `HEAD` requests return the same redirect without incrementing `click_count`.
+- If the slug does not exist, the app returns `404`.
 
 ## Permission model
 

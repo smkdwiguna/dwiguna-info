@@ -38,7 +38,6 @@ import {
 	deleteShortLink,
 	validateShortLinkSlug,
 } from "../actions/short-links";
-import Link from "next/link";
 import { ButtonGroup } from "@/components/ui/button-group";
 
 type ShortLinkRecord = {
@@ -59,11 +58,24 @@ type ValidationState =
 const SLUG_ALPHABET =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+function parseStoredDateTime(value: string) {
+	const trimmed = value.trim();
+	const sqliteUtcTimestamp = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(
+		trimmed,
+	);
+	const normalized = sqliteUtcTimestamp
+		? `${trimmed.replace(" ", "T")}Z`
+		: trimmed;
+
+	return new Date(normalized);
+}
+
 function formatDateTime(value: string) {
-	const date = new Date(value);
+	const date = parseStoredDateTime(value);
 	if (Number.isNaN(date.getTime())) {
 		return value;
 	}
+
 	return date.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
 }
 
@@ -448,15 +460,15 @@ export function ShortLinksClient({
 								paginatedShortLinks.map((item) => (
 									<TableRow key={item.id}>
 										<TableCell className="font-bold pl-4">
-											<Link
-												href={item.slug}
+											<a
+												href={`/${item.slug}`}
 												target="_blank"
 												rel="noreferrer"
 												className="inline-flex items-center gap-1"
 											>
 												<span>{item.slug}</span>
 												<ExternalLink className="ml-1 h-3 w-3 text-muted-foreground" />
-											</Link>
+											</a>
 										</TableCell>
 										<TableCell className="max-w-md truncate">
 											<a
