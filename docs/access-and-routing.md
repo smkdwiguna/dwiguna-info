@@ -30,7 +30,8 @@ Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page salin
 
 ## Dashboard Shell
 
-- Shell dashboard dikelola oleh `features/workspace-admin/components/admin-layout.tsx`.
+- Shell dashboard dikelola oleh `features/site-shell/components/site-layout.tsx`.
+- Layout route group fisik sekarang ada di `app/(site)/layout.tsx` dan `app/(site)/(shell)/`.
 - Sidebar dirakit di sana, termasuk visibilitas menu berdasarkan permission dan membership.
 - Menu Inventaris muncul jika user adalah superuser, punya permission `inventory`, atau punya membership pada setidaknya satu inventaris.
 - Submenu Inventaris berisi daftar semua inventaris yang bisa diakses user aktif.

@@ -1,17 +1,17 @@
-# Workspace Admin
+# Site Shell and User Management
 
-Fitur ini mencakup shell dashboard, manajemen akses user, dan alur administrasi user bulk.
+Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 
 ## Scope
 
-- Shell dashboard dan sidebar ada di `features/workspace-admin/components/admin-layout.tsx`.
-- Manajemen akses user ada di `features/workspace-admin/components/access-management-client.tsx`.
+- Shell dashboard dan sidebar ada di `features/site-shell/components/site-layout.tsx`.
+- Compatibility alias lama masih tersedia di `features/workspace-admin/components/site-layout.tsx`.
 - Bulk upload, reset password, update foto, dan edit user ada di `features/workspace-admin/actions/`.
 
 ## Runtime
 
 - Fitur ini berjalan di Cloudflare Worker runtime.
-- Admin pages mengandalkan server action dan state user/session yang tersimpan di database.
+- Dashboard pages mengandalkan server action dan state user/session yang tersimpan di database.
 - Jangan mengasumsikan persistence filesystem lokal untuk alur admin apa pun.
 
 ## Permission
@@ -26,10 +26,10 @@ Fitur ini mencakup shell dashboard, manajemen akses user, dan alur administrasi 
 
 - `/users` menampilkan daftar user.
 - `/bulk-upload` menangani import atau pembuatan user massal.
-- `/access` mengelola assignment permission.
+- `/access` mengelola assignment permission dan dipisah ke feature access-management.
 - `/inventory` menampilkan daftar inventaris multi-tenant.
 - `/inventory/[id]` menampilkan detail item, anggota, dan riwayat untuk satu inventaris.
-- `/settings` adalah bagian admin yang ditampilkan untuk superuser.
+- `/settings` adalah bagian dashboard yang ditampilkan untuk superuser.
 
 ## Sidebar Behavior
 
@@ -45,5 +45,5 @@ Fitur ini mencakup shell dashboard, manajemen akses user, dan alur administrasi 
 
 ## Catatan
 
-- Saat menambah fitur admin baru, daftarkan permission-nya di access management UI dan sambungkan ke sidebar.
-- Pertahankan dashboard layout sebagai satu sumber kebenaran untuk navigasi.
+- Saat menambah fitur dashboard baru, daftarkan permission-nya di access management UI dan sambungkan ke sidebar.
+- Pertahankan site layout sebagai satu sumber kebenaran untuk navigasi.

@@ -45,6 +45,16 @@ function createPermanentRedirectResponse(targetUrl: string) {
 	});
 }
 
+function createShortlinkNotFoundRedirectResponse() {
+	return new Response(null, {
+		status: 301,
+		headers: {
+			location: "/shortlink-not-found",
+			"cache-control": "no-store, max-age=0",
+		},
+	});
+}
+
 function isPrefetchRequest(request: Request) {
 	const purpose = request.headers.get("purpose") || "";
 	const secPurpose = request.headers.get("sec-purpose") || "";
@@ -64,12 +74,12 @@ async function handleShortLinkRedirect(
 ) {
 	const { slug } = await params;
 	if (!isRenderableShortLinkSlug(slug)) {
-		return new Response("Not Found", { status: 404 });
+		return createShortlinkNotFoundRedirectResponse();
 	}
 
 	const shortLink = await getShortLinkBySlug(slug);
 	if (!shortLink) {
-		return new Response("Not Found", { status: 404 });
+		return createShortlinkNotFoundRedirectResponse();
 	}
 
 	if (options.countClick && !isPrefetchRequest(request)) {

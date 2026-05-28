@@ -905,7 +905,7 @@ export function InventoryDetailClient({
 											<TableCell>
 												{item ? item.name : `Barang (ID: ${tx.itemId})`}
 											</TableCell>
-											<TableCell className="flex items-center justify-end gap-2 tabular-nums">
+											<TableCell className="flex items-center justify-between gap-2 tabular-nums">
 												<Badge
 													variant="outline"
 													className={`flex items-center gap-1 ${

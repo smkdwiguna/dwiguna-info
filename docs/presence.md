@@ -4,13 +4,13 @@ Fitur ini mencakup dashboard kehadiran, sinkronisasi terminal, mapping device-us
 
 ## Scope
 
-- Halaman utama ada di `app/(dashboard)/(admin)/presence/page.tsx`.
-- Halaman pendukung ada di `app/(dashboard)/(admin)/presence/`.
+- Halaman utama ada di `app/(site)/(shell)/presence/page.tsx`.
+- Halaman pendukung ada di `app/(site)/(shell)/presence/`.
 - Akses data memakai schema di `lib/db/schema.ts` dan pembacaan server-side lewat `lib/db/index.ts`.
 
 ## Runtime dan Storage
 
-- Fitur ini berjalan sebagai admin pages yang dirender di Cloudflare Worker runtime.
+- Fitur ini berjalan sebagai dashboard pages yang dirender di Cloudflare Worker runtime.
 - Data dibaca dari Cloudflare D1.
 - Sinkronisasi attendance dan device harus lewat server action atau route handler, bukan local state.
 

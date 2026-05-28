@@ -1,6 +1,6 @@
 # Dwiguna.Info
 
-Dwiguna.Info adalah portal internal berbasis Next.js untuk autentikasi, navigasi admin, dan sistem kerja SMK TI Dwiguna. Aplikasi ini berjalan di Cloudflare Workers melalui OpenNext dan memakai Cloudflare D1 sebagai sumber data utama.
+Dwiguna.Info adalah portal internal berbasis Next.js untuk autentikasi, navigasi situs, dan sistem kerja SMK TI Dwiguna. Aplikasi ini berjalan di Cloudflare Workers melalui OpenNext dan memakai Cloudflare D1 sebagai sumber data utama.
 
 ## Gambaran Umum
 
@@ -19,7 +19,7 @@ Dwiguna.Info adalah portal internal berbasis Next.js untuk autentikasi, navigasi
 
 ## Navigasi dan Izin
 
-- Sidebar dashboard dirakit di `features/workspace-admin/components/admin-layout.tsx`.
+- Sidebar dashboard dirakit di `features/site-shell/components/site-layout.tsx`.
 - Permission `inventory` dipakai untuk membuat inventaris dan tindakan administratif inventaris, bukan untuk membatasi akses baca inventaris yang sudah dibagikan.
 - Pengguna yang tidak memiliki membership inventaris dan juga tidak punya permission `inventory` akan diarahkan keluar dari `/inventory`.
 - Menu Inventaris di sidebar hanya muncul jika user punya membership inventaris, permission `inventory`, atau status superuser.

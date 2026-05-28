@@ -1,5 +1,4 @@
-export { AccessManagementClient } from "@/features/access-management/components/access-management-client";
-("use client");
+"use client";
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";

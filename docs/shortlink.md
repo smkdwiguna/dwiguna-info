@@ -30,7 +30,7 @@ Fitur ini menyediakan sistem shortlink ala Bitly di bawah domain `dwiguna.info`.
 - Membuka `/{slug}` mengarah ke redirect server-side ke URL asli yang tersimpan.
 - Request `GET` menaikkan `click_count`.
 - Request `HEAD` memberi redirect yang sama tanpa menaikkan `click_count`.
-- Jika slug tidak ditemukan, aplikasi mengembalikan `404`.
+- Jika slug tidak ditemukan, aplikasi mengalihkan ke `/shortlink-not-found` dengan status `301`.
 
 ## Permission Model
 
