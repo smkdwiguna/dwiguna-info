@@ -17,6 +17,7 @@ import {
 	TiktokLogoIcon,
 	YoutubeLogoIcon,
 	FacebookLogoIcon,
+	XLogoIcon,
 	GithubLogoIcon,
 } from "@phosphor-icons/react";
 
@@ -30,27 +31,32 @@ const socialMediaList: SocialMedia[] = [
 	{
 		name: "Instagram",
 		url: "instagram.com/smktidwiguna",
-		icon: <InstagramLogoIcon />,
+		icon: <InstagramLogoIcon size={24} />,
 	},
 	{
 		name: "Facebook",
 		url: "facebook.com/smk.dwiguna",
-		icon: <FacebookLogoIcon />,
+		icon: <FacebookLogoIcon size={24} />,
 	},
 	{
 		name: "TikTok",
 		url: "tiktok.com/@smktidwiguna",
-		icon: <TiktokLogoIcon />,
+		icon: <TiktokLogoIcon size={24} />,
 	},
 	{
 		name: "LinkedIn",
-		url: "linkedin.com/school/smkdwiguna/",
-		icon: <LinkedinLogoIcon />,
+		url: "linkedin.com/school/smkdwiguna",
+		icon: <LinkedinLogoIcon size={24} />,
 	},
 	{
 		name: "YouTube",
 		url: "youtube.com/@smkdwiguna",
-		icon: <YoutubeLogoIcon />,
+		icon: <YoutubeLogoIcon size={24} />,
+	},
+	{
+		name: "X",
+		url: "x.com/smktidwiguna",
+		icon: <XLogoIcon size={24} />,
 	},
 ];
 
@@ -83,7 +89,7 @@ export function CreditsDialog() {
 						{socialMediaList.map((social) => (
 							<Link
 								key={social.name}
-								href={social.url}
+								href={`https://${social.url}`}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="block p-4 rounded-lg border border-border hover:bg-accent transition-colors"
