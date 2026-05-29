@@ -32,7 +32,6 @@ export default async function AccessPage() {
 				</PageHeader>
 
 				<Suspense fallback={<SuspenseSpinner className="min-h-40" />}>
-					{/* client component */}
 					<AccessManagementClient users={users} />
 				</Suspense>
 			</PageShell>

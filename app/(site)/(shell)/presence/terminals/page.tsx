@@ -11,7 +11,9 @@ export default function PresenceTerminalsPage() {
 		<>
 			<RouteRefreshPoller />
 			<PageShell>
-				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+				<Suspense
+					fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
+				>
 					<TerminalsFetcher />
 				</Suspense>
 			</PageShell>

@@ -29,7 +29,9 @@ export default function PresenceDashboardPage() {
 		<>
 			<RouteRefreshPoller />
 			<PageShell>
-				<Suspense fallback={<SuspenseSpinner className="h-96 w-full" />}>
+				<Suspense
+					fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
+				>
 					<PresenceDashboard />
 				</Suspense>
 			</PageShell>

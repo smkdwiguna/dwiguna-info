@@ -56,7 +56,7 @@ export function PageHeaderHeading({
 	return (
 		<div
 			className={cn(
-				"w-full flex gap-2 items-center text-center md:text-left",
+				"w-full flex gap-2 justify-center md:justify-start",
 				className,
 			)}
 			{...props}

@@ -28,5 +28,5 @@ export async function requireSuperUserOrRedirect() {
 export async function redirectToDashboardWithFlash(message: string) {
 	const searchParams = new URLSearchParams({ flash: message });
 	const url = `/dashboard?${searchParams.toString()}`;
-	window.location.href = url;
+	if (typeof window !== "undefined") window.location.href = url;
 }

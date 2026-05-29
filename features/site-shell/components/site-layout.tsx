@@ -36,6 +36,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { toast } from "sonner";
 import { CreditsDialog } from "@/components/credits-dialog";
 import { getLivePermissions } from "@/features/access-management/actions/require-permission";
+import { cn } from "@/lib/utils";
 
 interface SiteLayoutProps {
 	children: React.ReactNode;
@@ -57,6 +58,9 @@ export function SiteLayout({
 		{ id: number; name: string }[]
 	>([]);
 	const [isSidebarLoading, setIsSidebarLoading] = useState(true);
+	const [isRoutePending, setIsRoutePending] = useState(false);
+	const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
+	const isShellBusy = isSidebarLoading || isRoutePending;
 
 	useEffect(() => {
 		const flash = searchParams.get("flash");
@@ -104,6 +108,10 @@ export function SiteLayout({
 		};
 	}, [userEmail, permissions, pathname, router, searchParams]);
 
+	useEffect(() => {
+		setIsRoutePending(false);
+	}, [pathname, searchParams]);
+
 	return (
 		<TooltipProvider>
 			<SidebarProvider
@@ -117,12 +125,15 @@ export function SiteLayout({
 					isSuperUser={superUser}
 					inventoryEntries={inventoryEntries}
 					isSidebarLoading={isSidebarLoading}
+					isShellBusy={isShellBusy}
+					currentPath={currentPath}
+					onNavigate={() => setIsRoutePending(true)}
 					permissions={livePermissions}
 				/>
 				<SidebarInset>
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<div className="w-full flex gap-3 items-center justify-start">
-							<SidebarTrigger />
+							<SidebarTrigger disabled={isShellBusy} />
 							<BrandLogo
 								priority
 								className="h-8 w-fit"
@@ -134,8 +145,18 @@ export function SiteLayout({
 						<ThemeToggle />
 						<Logout />
 					</header>
-					<main className="flex flex-1 flex-col gap-4 p-4 md:p-6 bg-muted/20">
-						{children}
+					<main
+						className={cn(
+							"flex flex-1 flex-col gap-4 bg-muted/20 p-4 md:p-6",
+							isRoutePending && "items-center justify-center",
+						)}
+						aria-busy={isRoutePending}
+					>
+						{isRoutePending ? (
+							<Spinner className="h-full w-full" size={96} variant="muted" />
+						) : (
+							children
+						)}
 					</main>
 				</SidebarInset>
 			</SidebarProvider>
@@ -147,11 +168,17 @@ function AppSidebar({
 	isSuperUser,
 	inventoryEntries,
 	isSidebarLoading,
+	isShellBusy,
+	currentPath,
+	onNavigate,
 	permissions,
 }: {
 	isSuperUser: boolean;
 	inventoryEntries: { id: number; name: string }[];
 	isSidebarLoading: boolean;
+	isShellBusy: boolean;
+	currentPath: string;
+	onNavigate: () => void;
 	permissions: string[];
 }) {
 	const showInventoryMenu =
@@ -166,26 +193,41 @@ function AppSidebar({
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<SidebarMenuButton asChild tooltip="Dasbor">
-							<Link href="/">
+							<ShellNavLink
+								href="/"
+								isShellBusy={isShellBusy}
+								currentPath={currentPath}
+								onNavigate={onNavigate}
+							>
 								<LayoutDashboard />
 								<span>Dasbor</span>
-							</Link>
+							</ShellNavLink>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 					{(isSuperUser || permissions.includes("users")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Pengguna">
-								<Link href="/users">
+								<ShellNavLink
+									href="/users"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
 									<Users />
 									<span>Pengguna</span>
-								</Link>
+								</ShellNavLink>
 							</SidebarMenuButton>
 							<SidebarMenuSub>
 								<SidebarMenuSubItem>
 									<SidebarMenuSubButton asChild>
-										<Link href="/bulk-upload">
+										<ShellNavLink
+											href="/bulk-upload"
+											isShellBusy={isShellBusy}
+											currentPath={currentPath}
+											onNavigate={onNavigate}
+										>
 											<span>Tambah Pengguna</span>
-										</Link>
+										</ShellNavLink>
 									</SidebarMenuSubButton>
 								</SidebarMenuSubItem>
 							</SidebarMenuSub>
@@ -195,10 +237,15 @@ function AppSidebar({
 					{(isSuperUser || permissions.includes("shortlink")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Tautan">
-								<Link href="/shortlinks">
+								<ShellNavLink
+									href="/shortlinks"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
 									<LinkIcon />
 									<span>Tautan Singkat</span>
-								</Link>
+								</ShellNavLink>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					)}
@@ -207,39 +254,64 @@ function AppSidebar({
 						<>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Akses">
-									<Link href="/access">
+									<ShellNavLink
+										href="/access"
+										isShellBusy={isShellBusy}
+										currentPath={currentPath}
+										onNavigate={onNavigate}
+									>
 										<Shield />
 										<span>Akses</span>
-									</Link>
+									</ShellNavLink>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
 							<SidebarMenuItem>
 								<SidebarMenuButton asChild tooltip="Kehadiran (Presensi)">
-									<Link href="/presence">
+									<ShellNavLink
+										href="/presence"
+										isShellBusy={isShellBusy}
+										currentPath={currentPath}
+										onNavigate={onNavigate}
+									>
 										<Clock />
 										<span>Presensi</span>
-									</Link>
+									</ShellNavLink>
 								</SidebarMenuButton>
 								<SidebarMenuSub>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/presence/sheets">
+											<ShellNavLink
+												href="/presence/sheets"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
 												<span>Lembar Kehadiran</span>
-											</Link>
+											</ShellNavLink>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/presence/terminals">
+											<ShellNavLink
+												href="/presence/terminals"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
 												<span>Terminal</span>
-											</Link>
+											</ShellNavLink>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>
 									<SidebarMenuSubItem>
 										<SidebarMenuSubButton asChild>
-											<Link href="/presence/device-users">
+											<ShellNavLink
+												href="/presence/device-users"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
 												<span>Sidik Jari</span>
-											</Link>
+											</ShellNavLink>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>
 								</SidebarMenuSub>
@@ -250,19 +322,29 @@ function AppSidebar({
 					{showInventoryMenu && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Inventaris">
-								<Link href="/inventory">
+								<ShellNavLink
+									href="/inventory"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
 									<ShelvingUnit />
 									<span>Inventaris</span>
-								</Link>
+								</ShellNavLink>
 							</SidebarMenuButton>
 							{inventoryEntries.length > 0 && (
 								<SidebarMenuSub>
 									{inventoryEntries.map((entry) => (
 										<SidebarMenuSubItem key={entry.id}>
 											<SidebarMenuSubButton asChild>
-												<Link href={`/inventory/${entry.id}`}>
+												<ShellNavLink
+													href={`/inventory/${entry.id}`}
+													isShellBusy={isShellBusy}
+													currentPath={currentPath}
+													onNavigate={onNavigate}
+												>
 													<span>{entry.name}</span>
-												</Link>
+												</ShellNavLink>
 											</SidebarMenuSubButton>
 										</SidebarMenuSubItem>
 									))}
@@ -282,7 +364,54 @@ function AppSidebar({
 					<CreditsDialog />
 				</div>
 			</SidebarFooter>
-			<SidebarRail />
+			<SidebarRail disabled={isShellBusy} />
 		</Sidebar>
+	);
+}
+
+function ShellNavLink({
+	href,
+	isShellBusy,
+	currentPath,
+	onNavigate,
+	className,
+	onClick,
+	...props
+}: React.ComponentProps<typeof Link> & {
+	isShellBusy: boolean;
+	currentPath: string;
+	onNavigate: () => void;
+}) {
+	const targetPath = typeof href === "string" ? href : href.toString();
+	const isCurrent = targetPath === currentPath;
+	const disabled = isShellBusy;
+
+	return (
+		<Link
+			href={href}
+			aria-disabled={disabled || undefined}
+			tabIndex={disabled ? -1 : props.tabIndex}
+			className={cn(className, disabled && "pointer-events-none cursor-wait")}
+			onClick={(event) => {
+				onClick?.(event);
+				if (event.defaultPrevented) return;
+				if (disabled) {
+					event.preventDefault();
+					return;
+				}
+				if (
+					event.metaKey ||
+					event.ctrlKey ||
+					event.shiftKey ||
+					event.altKey ||
+					event.button !== 0 ||
+					isCurrent
+				) {
+					return;
+				}
+				onNavigate();
+			}}
+			{...props}
+		/>
 	);
 }
