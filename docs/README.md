@@ -6,6 +6,7 @@ Folder ini berisi catatan implementasi yang mengikuti kondisi kode saat ini. Jik
 
 - [Access, Routes, and Fallback Pages](access-and-routing.md)
 - [Device ↔ Server Communication](device-server-communication.md)
+- [Device Presence Redesign Note](device-server-redesign-note.md)
 - [Open Source Licenses](open-source-licenses.md)
 
 ## Feature Docs

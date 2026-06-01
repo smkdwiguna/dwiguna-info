@@ -92,6 +92,25 @@ Aturan:
 
 Ini satu-satunya endpoint device. Device melakukan polling dengan POST, server memproses event di body request, lalu mengembalikan command yang sedang pending atau response yang sesuai.
 
+## Redesign Note
+
+Model di atas adalah implementasi yang sekarang berjalan di server. Untuk arah baru, komunikasi sebaiknya digeser ke event-driven, bukan polling periodik.
+
+Target perubahan yang sedang dipertimbangkan:
+
+- Device hanya kirim request saat ada event fingerprint yang nyata, misalnya scan berhasil, scan gagal, atau enrollment.
+- Trigger sinkronisasi juga tidak bergantung pada polling rutin.
+- UI device tidak perlu lagi menampilkan status open/close/sync yang kompleks; cukup jam, hasil scan, dan hasil sukses/gagal.
+- Server-side queue berbasis `status`, `metadata`, dan `syncQueue` kemungkinan perlu diganti atau dipersempit.
+
+Implikasi yang perlu disepakati sebelum implementasi:
+
+- Format payload baru untuk event fingerprint.
+- Apakah response server tetap plain-text command atau cukup hasil proses scan.
+- Mekanisme start sync tanpa polling.
+- Cara menghitung online/offline kalau `timeout` tidak lagi diupdate secara periodik.
+- Apakah admin action tetap dibutuhkan dari dashboard, atau pindah ke trigger fisik/maintenance mode di device.
+
 ### Request Body
 
 Satu baris per event:
