@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 import {
 	PageHeader,
@@ -9,16 +7,13 @@ import {
 	PageShell,
 } from "@/components/ui/page-header";
 
-import { AccessManagementClient } from "@/features/access-management/components/access-management-client";
 import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
+import { AccessManagementPage } from "./access-management-page";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccessPage() {
 	await requireSuperUserOrRedirect();
-	const { getAccessList } =
-		await import("@/features/access-management/actions/get-access-list");
-	const users = await getAccessList();
 
 	return (
 		<>
@@ -31,9 +26,7 @@ export default async function AccessPage() {
 					<PageHeaderActions />
 				</PageHeader>
 
-				<Suspense fallback={<SuspenseSpinner className="min-h-40" />}>
-					<AccessManagementClient users={users} />
-				</Suspense>
+				<AccessManagementPage />
 			</PageShell>
 		</>
 	);

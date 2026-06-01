@@ -37,7 +37,7 @@ export default async function UsersPage() {
 				</PageHeader>
 
 				<div className="rounded-md border bg-background">
-					<Suspense fallback={<SuspenseSpinner className="min-h-40 p-6" />}>
+					<Suspense fallback={<SuspenseSpinner />}>
 						<UsersTable />
 					</Suspense>
 				</div>

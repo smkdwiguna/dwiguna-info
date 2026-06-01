@@ -24,9 +24,7 @@ export default async function SheetDetailPage({
 	await requirePermissionOrRedirect("presence");
 	return (
 		<PageShell>
-			<Suspense
-				fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
-			>
+			<Suspense fallback={<SuspenseSpinner />}>
 				<SheetDetailFetcher sheetId={sheetId} />
 			</Suspense>
 		</PageShell>

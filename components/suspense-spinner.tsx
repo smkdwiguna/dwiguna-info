@@ -1,21 +1,18 @@
 import { Spinner, type SpinnerProps } from "@/components/spinner";
-import { cn } from "@/lib/utils";
 
 interface SuspenseSpinnerProps {
-	className?: string;
 	spinnerClassName?: string;
 	size?: SpinnerProps["size"];
 	variant?: SpinnerProps["variant"];
 }
 
 export function SuspenseSpinner({
-	className,
 	spinnerClassName,
-	size = "lg",
+	size = 96,
 	variant = "muted",
 }: SuspenseSpinnerProps) {
 	return (
-		<div className={cn("flex items-center justify-center", className)}>
+		<div className="flex min-h-svh w-full items-center justify-center">
 			<Spinner className={spinnerClassName} size={size} variant={variant} />
 		</div>
 	);

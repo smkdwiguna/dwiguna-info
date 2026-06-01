@@ -13,9 +13,7 @@ export default function PresenceDeviceUsersPage() {
 		<>
 			<RouteRefreshPoller />
 			<PageShell>
-				<Suspense
-					fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
-				>
+				<Suspense fallback={<SuspenseSpinner />}>
 					<DeviceUsersFetcher />
 				</Suspense>
 			</PageShell>

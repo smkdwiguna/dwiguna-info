@@ -41,7 +41,7 @@ function LoginLogic() {
 
 export default function LoginPage() {
 	return (
-		<Suspense fallback={<SuspenseSpinner className="min-h-svh bg-muted/40" />}>
+		<Suspense fallback={<SuspenseSpinner />}>
 			<LoginLogic />
 		</Suspense>
 	);

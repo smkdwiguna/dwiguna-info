@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
@@ -26,7 +27,7 @@ import {
 	PageHeaderTitle,
 } from "@/components/ui/page-header";
 
-interface InventoryRecord {
+export interface InventoryRecord {
 	id: number;
 	name: string;
 	createdAt: string;
@@ -36,12 +37,14 @@ interface InventoryListClientProps {
 	initialInventories: InventoryRecord[];
 	isGlobalAdmin: boolean;
 	canCreateInventory: boolean;
+	isLoading?: boolean;
 }
 
 export function InventoryListClient({
 	initialInventories,
 	isGlobalAdmin,
 	canCreateInventory,
+	isLoading = false,
 }: InventoryListClientProps) {
 	const router = useRouter();
 	const [inventories, setInventories] =
@@ -56,6 +59,14 @@ export function InventoryListClient({
 	useEffect(() => {
 		setInventories(initialInventories);
 	}, [initialInventories]);
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-72 items-center justify-center rounded-md border bg-background">
+				<SuspenseSpinner />
+			</div>
+		);
+	}
 
 	const handleCreate = () => {
 		if (!newName.trim()) {

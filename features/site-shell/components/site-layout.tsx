@@ -35,32 +35,27 @@ import { Spinner } from "@/components/spinner";
 import { BrandLogo } from "@/components/brand-logo";
 import { toast } from "sonner";
 import { CreditsDialog } from "@/components/credits-dialog";
-import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 import { cn } from "@/lib/utils";
 
 interface SiteLayoutProps {
 	children: React.ReactNode;
 	userEmail?: string;
 	permissions?: string[];
+	inventoryEntries?: { id: number; name: string }[];
 }
 
 export function SiteLayout({
 	children,
 	userEmail,
 	permissions,
+	inventoryEntries = [],
 }: SiteLayoutProps) {
 	const superUser = isSuperUser(userEmail);
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
-	const [livePermissions, setLivePermissions] = useState<string[]>(["loading"]);
-	const [inventoryEntries, setInventoryEntries] = useState<
-		{ id: number; name: string }[]
-	>([]);
-	const [isSidebarLoading, setIsSidebarLoading] = useState(true);
 	const [isRoutePending, setIsRoutePending] = useState(false);
 	const currentPath = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
-	const isShellBusy = isSidebarLoading || isRoutePending;
 
 	useEffect(() => {
 		const flash = searchParams.get("flash");
@@ -71,42 +66,7 @@ export function SiteLayout({
 			const query = next.toString();
 			router.replace(query ? `${pathname}?${query}` : pathname);
 		}
-
-		if (!userEmail) return;
-		let active = true;
-		setIsSidebarLoading(true);
-		(async () => {
-			try {
-				const result = await getLivePermissions();
-				if (active && !result.isSuperUser) {
-					setLivePermissions(result.permissions);
-				}
-
-				const invModule =
-					await import("@/features/inventory/actions/inventory");
-				if (active && typeof invModule.getInventories === "function") {
-					const inventories = await invModule.getInventories();
-					const entries = inventories.map((inv) => ({
-						id: inv.id,
-						name: inv.name,
-					}));
-					setInventoryEntries(entries);
-				}
-			} catch {
-				if (active) {
-					setInventoryEntries([]);
-					setLivePermissions(permissions ?? []);
-				}
-			} finally {
-				if (active) {
-					setIsSidebarLoading(false);
-				}
-			}
-		})();
-		return () => {
-			active = false;
-		};
-	}, [userEmail, permissions, pathname, router, searchParams]);
+	}, [pathname, router, searchParams]);
 
 	useEffect(() => {
 		setIsRoutePending(false);
@@ -124,16 +84,15 @@ export function SiteLayout({
 				<AppSidebar
 					isSuperUser={superUser}
 					inventoryEntries={inventoryEntries}
-					isSidebarLoading={isSidebarLoading}
-					isShellBusy={isShellBusy}
+					isShellBusy={isRoutePending}
 					currentPath={currentPath}
 					onNavigate={() => setIsRoutePending(true)}
-					permissions={livePermissions}
+					permissions={permissions ?? []}
 				/>
 				<SidebarInset>
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
 						<div className="w-full flex gap-3 items-center justify-start">
-							<SidebarTrigger disabled={isShellBusy} />
+							<SidebarTrigger disabled={isRoutePending} />
 							<BrandLogo
 								priority
 								className="h-8 w-fit"
@@ -167,7 +126,6 @@ export function SiteLayout({
 function AppSidebar({
 	isSuperUser,
 	inventoryEntries,
-	isSidebarLoading,
 	isShellBusy,
 	currentPath,
 	onNavigate,
@@ -175,7 +133,6 @@ function AppSidebar({
 }: {
 	isSuperUser: boolean;
 	inventoryEntries: { id: number; name: string }[];
-	isSidebarLoading: boolean;
 	isShellBusy: boolean;
 	currentPath: string;
 	onNavigate: () => void;
@@ -353,11 +310,6 @@ function AppSidebar({
 						</SidebarMenuItem>
 					)}
 				</SidebarMenu>
-				{!isSuperUser && isSidebarLoading && (
-					<div className="text-center pt-2">
-						<Spinner variant="muted" />
-					</div>
-				)}
 			</SidebarContent>
 			<SidebarFooter className="p-4">
 				<div className="flex justify-center">

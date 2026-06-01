@@ -44,6 +44,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@/components/ui/input-group";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 type ShortLinkRecord = {
 	id: number;
@@ -126,8 +127,10 @@ function generateRandomSlugCandidate(length = 8) {
 
 export function ShortLinksClient({
 	initialShortLinks,
+	isLoading,
 }: {
 	initialShortLinks: ShortLinkRecord[];
+	isLoading: boolean;
 }) {
 	const router = useRouter();
 	const [shortLinks, setShortLinks] = useState(initialShortLinks);
@@ -259,6 +262,10 @@ export function ShortLinksClient({
 			setCurrentPage(currentPageSafe);
 		}
 	}, [currentPage, currentPageSafe]);
+
+	if (isLoading) {
+		return <SuspenseSpinner />;
+	}
 
 	const canSubmit =
 		isValidTargetUrl(originalUrl) &&

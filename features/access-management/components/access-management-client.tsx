@@ -27,6 +27,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@/components/ui/input-group";
+import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 interface WorkspaceUser {
 	id?: string;
@@ -93,7 +94,13 @@ function extractAccessFromCustomSchemas(
 	return values.join(",");
 }
 
-export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
+export function AccessManagementClient({
+	users,
+	isLoading,
+}: {
+	users: WorkspaceUser[];
+	isLoading: boolean;
+}) {
 	const [selectedPermission, setSelectedPermission] = useState<{
 		key: string;
 		label: string;
@@ -243,6 +250,10 @@ export function AccessManagementClient({ users }: { users: WorkspaceUser[] }) {
 			return name.includes(term) || email.toLowerCase().includes(term);
 		});
 	}, [accessMap, localUsers, searchTerm, selectedPermission]);
+
+	if (isLoading) {
+		return <SuspenseSpinner />;
+	}
 
 	return (
 		<div className="space-y-16">

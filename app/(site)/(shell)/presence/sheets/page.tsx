@@ -11,9 +11,7 @@ export default function PresenceSheetsPage() {
 		<>
 			<RouteRefreshPoller />
 			<PageShell>
-				<Suspense
-					fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
-				>
+				<Suspense fallback={<SuspenseSpinner />}>
 					<SheetsFetcher />
 				</Suspense>
 			</PageShell>

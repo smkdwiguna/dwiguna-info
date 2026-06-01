@@ -31,9 +31,7 @@ export default async function InventoryDetailPage({ params }: PageProps) {
 
 	return (
 		<PageShell>
-			<Suspense
-				fallback={<SuspenseSpinner className="h-full w-full" size={96} />}
-			>
+			<Suspense fallback={<SuspenseSpinner />}>
 				<InventoryDetailClient
 					initialData={detailData}
 					workspaceUsers={workspaceUsers}
