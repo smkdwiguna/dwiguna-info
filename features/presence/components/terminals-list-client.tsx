@@ -225,9 +225,9 @@ export function TerminalsListClient({
 			case "7":
 				return "Menampilkan Info";
 			case "0":
-				return "Standby";
+				return null;
 			default:
-				return status === "INHERIT" ? "Standby" : status;
+				return null;
 		}
 	};
 
@@ -321,25 +321,10 @@ export function TerminalsListClient({
 													}
 												/>
 												<span className="font-medium">
-													{formatStatus(terminal.status)}
+													{formatStatus(terminal.status) ||
+														getSyncStatus(terminal.syncQueue)}
 												</span>
 											</div>
-											<span
-												className={`text-xs ${
-													terminal.hasPassword
-														? "text-muted-foreground"
-														: "text-amber-600 dark:text-amber-500"
-												}`}
-											>
-												{terminal.hasPassword
-													? "Secret terkonfigurasi"
-													: "Secret belum diatur — perangkat tidak bisa auth"}
-											</span>
-											{getSyncStatus(terminal.syncQueue) && (
-												<span className="text-xs text-muted-foreground italic">
-													{getSyncStatus(terminal.syncQueue)}
-												</span>
-											)}
 										</div>
 									</TableCell>
 
@@ -455,8 +440,8 @@ export function TerminalsListClient({
 						<DialogTitle>Secret perangkat disimpan</DialogTitle>
 					</DialogHeader>
 					<p className="text-sm text-muted-foreground">
-						Masukkan secret ini ke firmware (variabel password HMAC). Tidak
-						bisa dilihat lagi dari dashboard.
+						Masukkan secret ini ke firmware (variabel password HMAC). Tidak bisa
+						dilihat lagi dari dashboard.
 					</p>
 					<Input
 						readOnly
@@ -466,9 +451,7 @@ export function TerminalsListClient({
 					<DialogFooter>
 						<Button
 							variant="outline"
-							onClick={() =>
-								createdSecret && copySecret(createdSecret)
-							}
+							onClick={() => createdSecret && copySecret(createdSecret)}
 						>
 							<Copy className="w-4 h-4" />
 							Salin
@@ -486,11 +469,13 @@ export function TerminalsListClient({
 			>
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Secret baru — {rotatedSecret?.terminalName}</DialogTitle>
+						<DialogTitle>
+							Secret baru — {rotatedSecret?.terminalName}
+						</DialogTitle>
 					</DialogHeader>
 					<p className="text-sm text-muted-foreground">
-						Perbarui firmware sebelum polling berikutnya, atau auth akan
-						gagal (401).
+						Perbarui firmware sebelum polling berikutnya, atau auth akan gagal
+						(401).
 					</p>
 					<Input
 						readOnly
