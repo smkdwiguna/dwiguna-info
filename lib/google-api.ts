@@ -1,12 +1,17 @@
-const SCOPES = [
+export const ADMIN_SCOPES = [
 	"https://www.googleapis.com/auth/admin.directory.user",
 	"https://www.googleapis.com/auth/admin.directory.group",
 	"https://www.googleapis.com/auth/admin.directory.orgunit",
 	"https://www.googleapis.com/auth/admin.directory.userschema",
-];
+] as const;
+
+export const PEOPLE_SCOPES = [
+	"https://www.googleapis.com/auth/directory.readonly",
+] as const;
 
 const SUBJECT = "proktor@smkdwiguna.sch.id";
-const ADMIN_BASE = "https://admin.googleapis.com/admin/directory/v1";
+export const ADMIN_BASE = "https://admin.googleapis.com/admin/directory/v1";
+export const PEOPLE_BASE = "https://people.googleapis.com";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 
 type GoogleUserName = {
@@ -116,6 +121,7 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 async function buildJWT(
 	clientEmail: string,
 	privateKey: string,
+	scopes: readonly string[],
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
 
@@ -124,7 +130,7 @@ async function buildJWT(
 		JSON.stringify({
 			iss: clientEmail,
 			sub: SUBJECT,
-			scope: SCOPES.join(" "),
+			scope: scopes.join(" "),
 			aud: TOKEN_ENDPOINT,
 			iat: now,
 			exp: now + 3600,
@@ -142,13 +148,16 @@ async function buildJWT(
 	return `${signingInput}.${b64url(sig)}`;
 }
 
-// Simple in-memory cache so we don't mint a new token on every request.
-let cachedToken: { value: string; expiresAt: number } | null = null;
+const tokenCache = new Map<string, { value: string; expiresAt: number }>();
 
-async function getAccessToken(): Promise<string> {
+export async function getAccessToken(
+	scopes: readonly string[] = ADMIN_SCOPES,
+): Promise<string> {
+	const cacheKey = scopes.join(" ");
 	const now = Date.now();
-	if (cachedToken && cachedToken.expiresAt > now + 30_000) {
-		return cachedToken.value;
+	const cached = tokenCache.get(cacheKey);
+	if (cached && cached.expiresAt > now + 30_000) {
+		return cached.value;
 	}
 
 	const clientEmail = process.env.GOOGLE_CLIENT_EMAIL?.trim();
@@ -162,7 +171,7 @@ async function getAccessToken(): Promise<string> {
 		);
 	}
 
-	const jwt = await buildJWT(clientEmail, privateKey);
+	const jwt = await buildJWT(clientEmail, privateKey, scopes);
 
 	const res = await fetch(TOKEN_ENDPOINT, {
 		method: "POST",
@@ -182,27 +191,31 @@ async function getAccessToken(): Promise<string> {
 		access_token: string;
 		expires_in: number;
 	};
-	cachedToken = {
+	tokenCache.set(cacheKey, {
 		value: json.access_token,
 		expiresAt: now + json.expires_in * 1000,
-	};
+	});
 
-	return cachedToken.value;
+	return json.access_token;
 }
 
-type AdminRequestOptions = {
+export type GoogleApiRequestOptions = {
 	method?: string;
 	params?: Record<string, string | number | boolean | undefined>;
 	body?: unknown;
 	headers?: HeadersInit;
 };
 
-async function adminRequest<T>(
+/** Authenticated request against any Google REST base (Admin, People, …). */
+export async function googleApiRequest<T>(
+	baseUrl: string,
 	path: string,
-	options: AdminRequestOptions = {},
+	options: GoogleApiRequestOptions = {},
+	apiLabel = "Google API",
+	scopes: readonly string[] = ADMIN_SCOPES,
 ): Promise<T> {
-	const token = await getAccessToken();
-	const url = new URL(`${ADMIN_BASE}${path}`);
+	const token = await getAccessToken(scopes);
+	const url = new URL(`${baseUrl}${path}`);
 
 	for (const [key, value] of Object.entries(options.params || {})) {
 		if (value === undefined || value === null || value === "") continue;
@@ -222,7 +235,7 @@ async function adminRequest<T>(
 
 	if (!response.ok) {
 		const body = await response.text();
-		const err = Object.assign(new Error(`Google Admin API error: ${body}`), {
+		const err = Object.assign(new Error(`${apiLabel} error: ${body}`), {
 			status: response.status,
 		});
 		throw err;
@@ -233,6 +246,32 @@ async function adminRequest<T>(
 	}
 
 	return (await response.json()) as T;
+}
+
+export async function adminRequest<T>(
+	path: string,
+	options: GoogleApiRequestOptions = {},
+): Promise<T> {
+	return googleApiRequest<T>(
+		ADMIN_BASE,
+		path,
+		options,
+		"Google Admin API",
+		ADMIN_SCOPES,
+	);
+}
+
+export async function peopleRequest<T>(
+	path: string,
+	options: GoogleApiRequestOptions = {},
+): Promise<T> {
+	return googleApiRequest<T>(
+		PEOPLE_BASE,
+		path,
+		options,
+		"Google People API",
+		PEOPLE_SCOPES,
+	);
 }
 
 export function getAdminService(): GoogleAdminService {

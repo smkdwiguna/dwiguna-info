@@ -47,3 +47,16 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 
 - Saat menambah fitur dashboard baru, daftarkan permission-nya di access management UI dan sambungkan ke sidebar.
 - Pertahankan site layout sebagai satu sumber kebenaran untuk navigasi.
+
+## Google API — domain-wide delegation
+
+Service account memakai **dua token terpisah**:
+
+| Token | Scope | Dipakai untuk |
+|-------|--------|----------------|
+| Admin | `admin.directory.*` (user, group, orgunit, userschema) | Directory users, foto thumbnail Admin, device presence |
+| People (opsional) | `directory.readonly` | Foto profil high-res via People API |
+
+Jika scope People **belum** ditambahkan di Google Admin → Security → API controls → Domain-wide delegation (client ID service account), People API dilewati dan foto device memakai Admin SDK + `thumbnailPhotoUrl`.
+
+**Jangan** mencampur scope People ke JWT Admin — satu scope yang belum di-delegasikan membuat seluruh token gagal (`unauthorized_client`) dan semua fallback ikut mati.

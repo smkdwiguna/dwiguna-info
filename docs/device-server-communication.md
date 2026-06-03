@@ -156,6 +156,7 @@ Response selalu satu command string plain text. Contoh:
 ### Foto untuk perangkat
 
 - Server selalu menormalisasi foto ke **JPEG 120×120** (crop persegi, center) sebelum dikirim sebagai `photoHex`.
+- Sumber foto: **People API** (`searchDirectoryPeople` → `people.get` + URL CDN `=s512-c`), fallback Admin `photos.get`, lalu `thumbnailPhotoUrl`.
 - Tanpa foto di Google Workspace, server membuat **avatar inisial** (mis. `BS` untuk Budi Santoso) dengan warna latar dari hash nama.
 - Firmware cukup decode JPEG dari hex; tidak perlu resize lagi di device.
 
