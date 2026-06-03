@@ -2,6 +2,8 @@
 
 Dokumen ini mendefinisikan protokol yang dipakai terminal ESP32 untuk berkomunikasi dengan server. Tujuannya supaya implementasi di firmware dan server sama persis.
 
+Untuk checklist implementasi firmware (chunked HTTP, decode foto, alur scan, debug umum), lihat juga [Catatan Tim Firmware / Hardware](device-firmware-team-notes.md).
+
 ## Provisioning
 
 Setiap terminal harus ada di tabel `terminals` dengan:
@@ -81,7 +83,7 @@ Aturan:
 | `4`  | Fetch   | Server → Device | `fid`                | Minta device mengirim template yang tersimpan.             |
 | `5`  | Remove  | Server → Device | `fid`                | Hapus fingerprint tertentu dari memori device.             |
 | `6`  | Empty   | Server → Device | -                    | Hapus semua fingerprint dari device.                       |
-| `7`  | Success | Server → Device | `name`, `photoHex`   | Tampilkan nama dan foto user setelah identifikasi.         |
+| `7`  | Success | Server → Device | `name`, `photoHex`   | Tampilkan nama dan foto user setelah identifikasi. `photoHex` adalah JPEG persegi 120×120 px (quality ~72), di-encode sebagai byte hex lowercase. Jika foto Workspace tidak ada, server mengirim avatar inisial (latar warna deterministik + 1–2 huruf). |
 | `8`  | Search  | Device → Server | `fid`                | Device menemukan fingerprint; server merespons dengan `7`. |
 | `9`  | Upload  | Device → Server | `fid`, `templateHex` | Device mengirim template fingerprint hasil enrollment.     |
 | `A`  | Ack     | Device → Server | opsional             | Menandakan command terakhir sudah dieksekusi.              |
@@ -141,6 +143,12 @@ Response selalu satu command string plain text. Contoh:
 6
 7;Budi Santoso;(photoHex)
 ```
+
+### Foto untuk perangkat
+
+- Server selalu menormalisasi foto ke **JPEG 120×120** (crop persegi, center) sebelum dikirim sebagai `photoHex`.
+- Tanpa foto di Google Workspace, server membuat **avatar inisial** (mis. `BS` untuk Budi Santoso) dengan warna latar dari hash nama.
+- Firmware cukup decode JPEG dari hex; tidak perlu resize lagi di device.
 
 ## Server-Side Command Storage
 

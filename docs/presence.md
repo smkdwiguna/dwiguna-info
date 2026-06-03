@@ -37,6 +37,6 @@ Fitur ini mencakup dashboard kehadiran, sinkronisasi terminal, mapping device-us
 
 ## Catatan
 
-- Perilaku sinkronisasi terminal sebaiknya didokumentasikan bersama protokol device.
+- Perilaku sinkronisasi terminal: [Device ↔ Server Communication](device-server-communication.md) dan [Catatan Tim Firmware / Hardware](device-firmware-team-notes.md).
 - Jika menambah tabel atau admin action baru untuk presence, tulis di sini agar alur fitur tetap mudah dilacak.
 - Arah redesign saat ini: hindari polling periodik dari terminal; sinkronisasi dan komunikasi server-device sebaiknya dipicu oleh event fingerprint nyata.

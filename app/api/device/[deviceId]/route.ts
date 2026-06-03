@@ -1,5 +1,9 @@
 import { getDb } from "@/lib/db";
 import { deviceUsers, terminals } from "@/lib/db/schema";
+import {
+	buildDevicePhotoHex,
+	isGooglePhotoNotFoundError,
+} from "@/lib/device-user-photo";
 import { getAdminService } from "@/lib/google-api";
 import { verifyDeviceRequest } from "@/lib/device-auth";
 import { eq } from "drizzle-orm";
@@ -23,30 +27,34 @@ async function resolveUserPresentation(deviceUserId: number) {
 	}
 
 	let name = deviceUser.email;
-	let photoHex = "";
+	let photoBytes: Uint8Array | null = null;
+	const adminService = getAdminService();
 
 	try {
-		const adminService = getAdminService();
 		const userResponse = await adminService.users.get({
 			userKey: deviceUser.email,
 			projection: "basic",
 		});
 		name = userResponse.data.name?.fullName || deviceUser.email;
+	} catch (error) {
+		console.error("[device-route] failed to resolve user name", error);
+	}
 
+	try {
 		const photoResponse = await adminService.users.photos.get({
 			userKey: deviceUser.email,
 		});
 		if (photoResponse.data.photoData) {
 			const binary = atob(photoResponse.data.photoData);
-			const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-			photoHex = Array.from(bytes)
-				.map((byte) => byte.toString(16).padStart(2, "0"))
-				.join("");
+			photoBytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
 		}
 	} catch (error) {
-		console.error("[device-route] failed to resolve user data", error);
+		if (!isGooglePhotoNotFoundError(error)) {
+			console.warn("[device-route] failed to fetch user photo", error);
+		}
 	}
 
+	const photoHex = await buildDevicePhotoHex(name, photoBytes);
 	return { name: sanitizeField(name), photoHex };
 }
 
