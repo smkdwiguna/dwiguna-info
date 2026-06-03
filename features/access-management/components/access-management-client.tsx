@@ -64,6 +64,11 @@ const FEATURE_SETS = [
 		title: "Inventaris",
 		permissions: [{ key: "inventory", label: "Kelola Inventaris" }],
 	},
+	{
+		key: "persuratan",
+		title: "Persuratan",
+		permissions: [{ key: "persuratan", label: "Kelola Persuratan & TTE" }],
+	},
 ];
 
 function extractAccessFromCustomSchemas(

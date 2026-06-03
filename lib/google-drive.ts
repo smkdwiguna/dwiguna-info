@@ -39,6 +39,7 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 async function buildJWT(
 	clientEmail: string,
 	privateKey: string,
+	subject: string,
 ): Promise<string> {
 	const now = Math.floor(Date.now() / 1000);
 
@@ -46,7 +47,9 @@ async function buildJWT(
 	const payload = b64url(
 		JSON.stringify({
 			iss: clientEmail,
-			sub: SUBJECT,
+			// Domain-wide delegation: impersonate this workspace user so files
+			// land in *their* Drive. Defaults to the central proktor account.
+			sub: subject,
 			scope: DRIVE_SCOPES.join(" "),
 			aud: TOKEN_ENDPOINT,
 			iat: now,
@@ -65,12 +68,13 @@ async function buildJWT(
 	return `${signingInput}.${b64url(sig)}`;
 }
 
-let cachedDriveToken: { value: string; expiresAt: number } | null = null;
+const driveTokenCache = new Map<string, { value: string; expiresAt: number }>();
 
-async function getDriveAccessToken(): Promise<string> {
+async function getDriveAccessToken(subject: string = SUBJECT): Promise<string> {
 	const now = Date.now();
-	if (cachedDriveToken && cachedDriveToken.expiresAt > now + 30_000) {
-		return cachedDriveToken.value;
+	const cached = driveTokenCache.get(subject);
+	if (cached && cached.expiresAt > now + 30_000) {
+		return cached.value;
 	}
 
 	const clientEmail = process.env.GOOGLE_CLIENT_EMAIL?.trim();
@@ -86,7 +90,7 @@ async function getDriveAccessToken(): Promise<string> {
 		.toString("utf-8")
 		.trim();
 
-	const jwt = await buildJWT(clientEmail, privateKey);
+	const jwt = await buildJWT(clientEmail, privateKey, subject);
 
 	const res = await fetch(TOKEN_ENDPOINT, {
 		method: "POST",
@@ -106,12 +110,13 @@ async function getDriveAccessToken(): Promise<string> {
 		access_token: string;
 		expires_in: number;
 	};
-	cachedDriveToken = {
+	const token = {
 		value: json.access_token,
 		expiresAt: now + json.expires_in * 1000,
 	};
+	driveTokenCache.set(subject, token);
 
-	return cachedDriveToken.value;
+	return token.value;
 }
 
 // Drive REST API helper
@@ -124,9 +129,10 @@ async function driveRequest<T>(
 		headers?: Record<string, string>;
 		isUpload?: boolean;
 		rawBody?: BodyInit;
+		subject?: string;
 	} = {},
 ): Promise<T> {
-	const token = await getDriveAccessToken();
+	const token = await getDriveAccessToken(options.subject);
 	const base = options.isUpload ? UPLOAD_BASE : DRIVE_BASE;
 	const url = new URL(`${base}${path}`);
 
@@ -170,6 +176,7 @@ async function driveRequest<T>(
 async function findOrCreateFolder(
 	name: string,
 	parentFolderId?: string,
+	subject?: string,
 ): Promise<string> {
 	let query = `name = '${name.replace(/'/g, "\\'")}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
 	if (parentFolderId) {
@@ -179,6 +186,7 @@ async function findOrCreateFolder(
 	}
 
 	const list = await driveRequest<{ files: Array<{ id: string }> }>("/files", {
+		subject,
 		params: {
 			q: query,
 			fields: "files(id)",
@@ -192,6 +200,7 @@ async function findOrCreateFolder(
 
 	// Create folder
 	const newFolder = await driveRequest<{ id: string }>("/files", {
+		subject,
 		method: "POST",
 		body: {
 			name,
@@ -224,9 +233,11 @@ export async function getInventoryFolderId(
 async function getUniqueFileName(
 	folderId: string,
 	originalName: string,
+	subject?: string,
 ): Promise<string> {
 	const query = `name = '${originalName.replace(/'/g, "\\'")}' and '${folderId}' in parents and trashed = false`;
 	const list = await driveRequest<{ files: Array<{ id: string }> }>("/files", {
+		subject,
 		params: {
 			q: query,
 			fields: "files(id)",
@@ -284,13 +295,9 @@ export async function uploadFileToDrive(
 	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}`;
 	const mediaPartHeader = `${delimiter}Content-Type: ${fileMime}\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
 
-	// Convert Buffer/ArrayBuffer to base64
-	const base64Data = btoa(
-		new Uint8Array(fileBuffer).reduce(
-			(data, byte) => data + String.fromCharCode(byte),
-			"",
-		),
-	);
+	// Use Buffer (nodejs_compat) for a fast, chunk-free base64 encode — the old
+	// char-by-char reduce blew up memory/time on multi-MB PDFs.
+	const base64Data = Buffer.from(new Uint8Array(fileBuffer)).toString("base64");
 
 	const multipartBody =
 		metadataPart + mediaPartHeader + base64Data + closeDelimiter;
@@ -345,4 +352,182 @@ export async function deleteFileFromDrive(fileId: string): Promise<void> {
 	await driveRequest(`/files/${fileId}`, {
 		method: "DELETE",
 	});
+}
+
+// ---------------------------------------------------------------------------
+// Persuratan (TTE) helpers
+// ---------------------------------------------------------------------------
+
+export interface DriveUploadResult {
+	id: string;
+	name: string;
+	webViewLink: string;
+	thumbnailLink: string;
+	/** The Drive account the file actually landed in. */
+	ownerEmail: string;
+}
+
+/**
+ * Folder structure for signed documents: /Dwiguna.Info/Tanda Tangan/.
+ * When impersonating a user (subject = their email) this is created in *their*
+ * Drive; otherwise it lives under the central service account, namespaced by
+ * the owner's email so files stay separated.
+ */
+async function getSignatureFolderId(
+	ownerEmail: string,
+	subject?: string,
+): Promise<string> {
+	const rootFolderId = await findOrCreateFolder("Dwiguna.Info", undefined, subject);
+	const signFolderId = await findOrCreateFolder(
+		"Tanda Tangan",
+		rootFolderId,
+		subject,
+	);
+	// Central fallback keeps each owner's files in their own sub-folder.
+	if (!subject) {
+		return findOrCreateFolder(ownerEmail, signFolderId, subject);
+	}
+	return signFolderId;
+}
+
+async function uploadPdfBytes(
+	folderId: string,
+	fileName: string,
+	pdfBytes: Uint8Array,
+	subject: string | undefined,
+	makePublic: boolean,
+): Promise<DriveUploadResult> {
+	const uniqueName = await getUniqueFileName(folderId, fileName, subject);
+	const metadata = { name: uniqueName, parents: [folderId] };
+
+	const boundary = "314159265358979323846";
+	const delimiter = `\r\n--${boundary}\r\n`;
+	const closeDelimiter = `\r\n--${boundary}--`;
+	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}`;
+	const mediaPartHeader = `${delimiter}Content-Type: application/pdf\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
+	const base64Data = Buffer.from(pdfBytes).toString("base64");
+	const multipartBody =
+		metadataPart + mediaPartHeader + base64Data + closeDelimiter;
+
+	const uploadResult = await driveRequest<{ id: string }>("/files", {
+		method: "POST",
+		isUpload: true,
+		subject,
+		params: { uploadType: "multipart" },
+		headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+		rawBody: multipartBody,
+	});
+
+	const fileId = uploadResult.id;
+
+	if (makePublic) {
+		await driveRequest(`/files/${fileId}/permissions`, {
+			method: "POST",
+			subject,
+			body: { role: "reader", type: "anyone" },
+		});
+	}
+
+	const fileDetails = await driveRequest<{
+		id: string;
+		name: string;
+		webViewLink: string;
+		thumbnailLink: string;
+	}>(`/files/${fileId}`, {
+		subject,
+		params: { fields: "id,name,webViewLink,thumbnailLink" },
+	});
+
+	return {
+		id: fileDetails.id,
+		name: fileDetails.name,
+		webViewLink: fileDetails.webViewLink,
+		thumbnailLink: fileDetails.thumbnailLink || "",
+		ownerEmail: subject ?? SUBJECT,
+	};
+}
+
+/**
+ * Upload a signed PDF to the owner's Google Drive via domain-wide delegation.
+ * Falls back to the central service account Drive if impersonation fails (e.g.
+ * the Drive scope is not yet granted for the service account in Admin console).
+ */
+export async function uploadSignedPdfToDrive(
+	ownerEmail: string,
+	fileName: string,
+	pdfBytes: Uint8Array,
+	options: { makePublic?: boolean } = {},
+): Promise<DriveUploadResult> {
+	const makePublic = options.makePublic ?? false;
+	try {
+		const folderId = await getSignatureFolderId(ownerEmail, ownerEmail);
+		return await uploadPdfBytes(
+			folderId,
+			fileName,
+			pdfBytes,
+			ownerEmail,
+			makePublic,
+		);
+	} catch (error) {
+		console.warn(
+			`[Drive] Impersonation upload for ${ownerEmail} failed, falling back to central Drive.`,
+			error,
+		);
+		const folderId = await getSignatureFolderId(ownerEmail, undefined);
+		return await uploadPdfBytes(
+			folderId,
+			fileName,
+			pdfBytes,
+			undefined,
+			makePublic,
+		);
+	}
+}
+
+/** Download a Drive file's raw bytes (used to fetch a stored signed PDF). */
+export async function downloadDriveFileBytes(
+	fileId: string,
+	subject?: string,
+): Promise<Uint8Array> {
+	const token = await getDriveAccessToken(subject);
+	const url = new URL(`${DRIVE_BASE}/files/${fileId}`);
+	url.searchParams.set("alt", "media");
+	const res = await fetch(url.toString(), {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	if (!res.ok) {
+		const text = await res.text();
+		throw new Error(`Google Drive download error (${res.status}): ${text}`);
+	}
+	return new Uint8Array(await res.arrayBuffer());
+}
+
+/** Toggle public (anyone-with-link reader) access on a signed document. */
+export async function setDriveFilePublic(
+	fileId: string,
+	isPublic: boolean,
+	subject?: string,
+): Promise<void> {
+	if (isPublic) {
+		await driveRequest(`/files/${fileId}/permissions`, {
+			method: "POST",
+			subject,
+			body: { role: "reader", type: "anyone" },
+		});
+		return;
+	}
+	// Remove the public "anyone" permission if present.
+	const list = await driveRequest<{
+		permissions: Array<{ id: string; type: string }>;
+	}>(`/files/${fileId}/permissions`, {
+		subject,
+		params: { fields: "permissions(id,type)" },
+	});
+	const anyone = list.permissions?.find((p) => p.type === "anyone");
+	if (anyone) {
+		await driveRequest(`/files/${fileId}/permissions/${anyone.id}`, {
+			method: "DELETE",
+			subject,
+		});
+	}
 }

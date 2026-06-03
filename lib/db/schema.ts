@@ -1,6 +1,10 @@
 import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
+// Better Auth (sessions/accounts) + Persuratan (TTE) tables.
+export * from "./auth-schema";
+export * from "./tte-schema";
+
 export const deviceUsers = sqliteTable("device_users", {
 	// Hardware limit ID from 0 to 999
 	id: integer("id").primaryKey(),
