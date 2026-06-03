@@ -38,6 +38,7 @@ export async function loadGoogleUserPhotoBytes(
 		const photoResponse = await adminService.users.photos.get({
 			userKey: email,
 		});
+
 		if (photoResponse.data.photoData) {
 			return decodeBase64Image(photoResponse.data.photoData);
 		}
@@ -49,6 +50,7 @@ export async function loadGoogleUserPhotoBytes(
 
 	const thumbnailUrl = user?.thumbnailPhotoUrl;
 	if (thumbnailUrl) {
+		console.log(thumbnailUrl);
 		return fetchImageBytesFromUrl(thumbnailUrl);
 	}
 
