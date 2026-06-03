@@ -2,18 +2,59 @@
 
 import { getDb } from "@/lib/db";
 import { terminals } from "@/lib/db/schema";
+import {
+	generateTerminalPassword,
+	isTerminalPasswordValid,
+} from "@/lib/terminal-secret";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-export async function createTerminal(payload: { id: string; name: string }) {
+export async function createTerminal(payload: {
+	id: string;
+	name: string;
+	password: string;
+}) {
+	const id = payload.id.trim();
+	const name = payload.name.trim();
+	const password = payload.password.trim();
+
+	if (!id || !name) {
+		throw new Error("ID dan nama harus diisi.");
+	}
+	if (!isTerminalPasswordValid(password)) {
+		throw new Error(
+			"Secret perangkat minimal 16 karakter (huruf, angka, atau simbol ASCII).",
+		);
+	}
+
 	const db = await getDb();
 	await db.insert(terminals).values({
-		id: payload.id,
-		name: payload.name,
+		id,
+		name,
+		password,
 		status: "0",
 	});
 	revalidatePath("/presence/terminals");
 	return { success: true };
+}
+
+export async function rotateTerminalPassword(terminalId: string) {
+	const db = await getDb();
+	const terminal = await db
+		.select({ id: terminals.id })
+		.from(terminals)
+		.where(eq(terminals.id, terminalId))
+		.get();
+	if (!terminal) throw new Error("Perangkat tidak ditemukan");
+
+	const password = generateTerminalPassword();
+	await db
+		.update(terminals)
+		.set({ password })
+		.where(eq(terminals.id, terminalId));
+
+	revalidatePath("/presence/terminals");
+	return { success: true, password };
 }
 
 export async function updateTerminal(payload: { id: string; name: string; password?: string; status?: string }) {

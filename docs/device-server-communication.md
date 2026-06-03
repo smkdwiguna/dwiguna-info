@@ -15,8 +15,10 @@ Contoh insert di D1:
 
 ```sql
 INSERT INTO terminals (id, name, status, password)
-VALUES ('ESP32-ROOM-1', 'Lab 1', 'INHERIT', 'super-secret-key');
+VALUES ('ESP32-ROOM-1', 'Lab 1', '0', 'super-secret-key-min-16-chars');
 ```
+
+Secret perangkat wajib diatur saat provisioning (dashboard **Tambah Perangkat** atau kolom `password`). Minimal 16 karakter ASCII; dipakai sebagai kunci HMAC. Dashboard tidak menampilkan ulang secret setelah disimpan — gunakan tombol rotasi secret jika perlu.
 
 ## Authentication
 
@@ -93,6 +95,13 @@ Aturan:
 **POST** `/api/device/{deviceId}`
 
 Ini satu-satunya endpoint device. Device melakukan polling dengan POST, server memproses event di body request, lalu mengembalikan command yang sedang pending atau response yang sesuai.
+
+### Prioritas respons
+
+1. Jika `terminals.status` bukan `0` / `INHERIT` (mis. enroll `2`, copy `3`, open `1`), **respons HTTP selalu perintah itu** (`{status};{metadata}`) sampai device mengirim `A`.
+2. Event di body (mis. `8;fid` scan) tetap diproses sebagai efek samping jika relevan (mis. upload template `9`), tetapi **tidak menimpa** perintah pending di respons maupun di database.
+3. Hanya jika tidak ada perintah pending: scan `8` → respons `7`, atau antrean `syncQueue` → promot `3`.
+4. `A` mengosongkan `status` ke `0` dan `metadata` ke `NULL` (dan mengeluarkan head `syncQueue` jika perintah terakhir adalah `3`).
 
 ## Redesign Note
 

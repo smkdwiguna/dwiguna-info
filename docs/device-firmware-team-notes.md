@@ -193,7 +193,21 @@ Pastikan library JPEG mendukung baseline JPEG umum (hasil server memakai mozjpeg
 
 ---
 
-## 5. Alur scan fingerprint (happy path)
+## 5. Perintah pending dari dashboard (prioritas)
+
+Admin bisa men-set `status` + `metadata` di database (enroll `2`, copy `3`, buka pintu `1`, dll.).
+
+**Aturan:** selama `status` bukan `0`, setiap POST dari device harus mendapat respons perintah itu — **bukan** `0;` atau `7;...` dari scan lain.
+
+- Poll kosong / heartbeat → tetap `2;{fid}` (atau perintah yang pending).
+- Body berisi `8;...` saat enroll pending → respons tetap `2;{fid}`; database **tidak** di-reset.
+- Setelah firmware selesai mengeksekusi perintah → kirim `A` → barulah server mengosongkan command.
+
+Jangan mengirim `A` sebelum perintah benar-benar selesai.
+
+---
+
+## 6. Alur scan fingerprint (happy path)
 
 ```mermaid
 sequenceDiagram
@@ -213,7 +227,7 @@ sequenceDiagram
 
 ---
 
-## 6. `fid` (fingerprint ID)
+## 7. `fid` (fingerprint ID)
 
 - Rentang **0–999** (sesuai kapasitas sensor / skema database).
 - `fid` = `device_users.id` di server, bukan slot internal sensor kecuali sudah disepakati mapping 1:1 saat sync.
@@ -221,7 +235,7 @@ sequenceDiagram
 
 ---
 
-## 7. Sinkronisasi template dari dashboard
+## 8. Sinkronisasi template dari dashboard
 
 Saat admin menekan sync di dashboard, server mengantre `fid` di `syncQueue` dan mengirim perintah `3;{fid};{templateHex}` secara bertahap.
 
@@ -235,7 +249,7 @@ Jika koneksi putus sebelum `A`, server mengulang command yang sama pada poll ber
 
 ---
 
-## 8. Error umum
+## 9. Error umum
 
 | Gejala | Kemungkinan penyebab |
 |--------|----------------------|
@@ -247,7 +261,7 @@ Jika koneksi putus sebelum `A`, server mengulang command yang sama pada poll ber
 
 ---
 
-## 9. Rekomendasi implementasi
+## 10. Rekomendasi implementasi
 
 - **TLS** wajib di production.
 - **NTP** saat boot + re-sync berkala (mis. tiap 6 jam).
@@ -258,7 +272,7 @@ Jika koneksi putus sebelum `A`, server mengulang command yang sama pada poll ber
 
 ---
 
-## 10. Rujukan & kontak
+## 11. Rujukan & kontak
 
 | Dokumen | Isi |
 |---------|-----|

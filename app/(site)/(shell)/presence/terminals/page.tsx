@@ -21,7 +21,11 @@ export default function PresenceTerminalsPage() {
 
 async function TerminalsFetcher() {
 	const db = await getDb();
-	const allTerminals = await db.select().from(terminals).all();
+	const rows = await db.select().from(terminals).all();
+	const allTerminals = rows.map(({ password, ...terminal }) => ({
+		...terminal,
+		hasPassword: Boolean(password && password.length > 0),
+	}));
 
 	return <TerminalsListClient initialTerminals={allTerminals} />;
 }

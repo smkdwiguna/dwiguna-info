@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit, Check, X, RefreshCcw } from "lucide-react";
+import {
+	Plus,
+	Trash2,
+	Edit,
+	Check,
+	X,
+	RefreshCcw,
+	KeyRound,
+	Copy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +28,9 @@ import {
 	updateTerminal,
 	deleteTerminal,
 	syncAllFingerprints,
+	rotateTerminalPassword,
 } from "../actions/terminals";
+import { generateTerminalPassword } from "@/lib/terminal-secret";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -44,25 +55,83 @@ export function TerminalsListClient({
 
 	const [id, setId] = useState("");
 	const [name, setName] = useState("");
+	const [password, setPassword] = useState("");
 
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editName, setEditName] = useState("");
 
+	const [createdSecret, setCreatedSecret] = useState<string | null>(null);
+	const [rotatedSecret, setRotatedSecret] = useState<{
+		terminalId: string;
+		terminalName: string;
+		password: string;
+	} | null>(null);
+
+	const fillGeneratedPassword = () => {
+		setPassword(generateTerminalPassword());
+	};
+
+	const openCreateDialog = () => {
+		setId("");
+		setName("");
+		setPassword(generateTerminalPassword());
+		setIsOpen(true);
+	};
+
+	const copySecret = async (secret: string) => {
+		try {
+			await navigator.clipboard.writeText(secret);
+			toast.success("Secret disalin ke clipboard.");
+		} catch {
+			toast.error("Gagal menyalin. Salin manual dari dialog.");
+		}
+	};
+
 	const handleCreate = async () => {
 		if (!id || !name) return toast.error("ID dan nama harus diisi");
+		if (!password.trim()) return toast.error("Secret perangkat harus diisi");
 
 		setIsSubmitting(true);
 		try {
-			await createTerminal({ id, name });
-			toast.success("Perangkat berhasil ditambahkan!");
+			await createTerminal({ id, name, password: password.trim() });
 			setIsOpen(false);
-			setTerminals([...terminals, { id, name, status: "Standby" }]);
+			setTerminals([
+				...terminals,
+				{ id, name, status: "0", hasPassword: true, timeout: null },
+			]);
+			setCreatedSecret(password.trim());
 			setId("");
 			setName("");
-		} catch (error: any) {
-			toast.error(`Gagal menambah perangkat: ${error.message}`);
+			setPassword("");
+		} catch (error: unknown) {
+			const message =
+				error instanceof Error ? error.message : "Terjadi kesalahan.";
+			toast.error(`Gagal menambah perangkat: ${message}`);
 		} finally {
 			setIsSubmitting(false);
+		}
+	};
+
+	const handleRotateSecret = async (
+		terminalId: string,
+		terminalName: string,
+	) => {
+		try {
+			const res = await rotateTerminalPassword(terminalId);
+			setTerminals(
+				terminals.map((t) =>
+					t.id === terminalId ? { ...t, hasPassword: true } : t,
+				),
+			);
+			setRotatedSecret({
+				terminalId,
+				terminalName,
+				password: res.password,
+			});
+		} catch (error: unknown) {
+			const message =
+				error instanceof Error ? error.message : "Terjadi kesalahan.";
+			toast.error(`Gagal membuat secret baru: ${message}`);
 		}
 	};
 
@@ -169,7 +238,7 @@ export function TerminalsListClient({
 					<PageHeaderTitle>Terminal Presensi</PageHeaderTitle>
 				</PageHeaderHeading>
 				<PageHeaderActions>
-					<Button onClick={() => setIsOpen(true)}>
+					<Button onClick={openCreateDialog}>
 						<Plus className="w-4 h-4" />
 						Tambah Perangkat
 					</Button>
@@ -237,7 +306,7 @@ export function TerminalsListClient({
 										{terminal.id}
 									</TableCell>
 									<TableCell>
-										<div className="flex flex-col">
+										<div className="flex flex-col gap-1">
 											<div className="flex items-center gap-2">
 												<div
 													className={`w-2.5 h-2.5 rounded-full ${
@@ -255,8 +324,19 @@ export function TerminalsListClient({
 													{formatStatus(terminal.status)}
 												</span>
 											</div>
+											<span
+												className={`text-xs ${
+													terminal.hasPassword
+														? "text-muted-foreground"
+														: "text-amber-600 dark:text-amber-500"
+												}`}
+											>
+												{terminal.hasPassword
+													? "Secret terkonfigurasi"
+													: "Secret belum diatur — perangkat tidak bisa auth"}
+											</span>
 											{getSyncStatus(terminal.syncQueue) && (
-												<span className="text-xs text-muted-foreground italic mt-1">
+												<span className="text-xs text-muted-foreground italic">
 													{getSyncStatus(terminal.syncQueue)}
 												</span>
 											)}
@@ -265,6 +345,16 @@ export function TerminalsListClient({
 
 									<TableCell className="flex justify-end">
 										<ButtonGroup>
+											<Button
+												variant="outline"
+												size="icon"
+												onClick={() =>
+													handleRotateSecret(terminal.id, terminal.name)
+												}
+												title="Buat secret baru (HMAC device)"
+											>
+												<KeyRound className="w-4 h-4" />
+											</Button>
 											<Button
 												variant="outline"
 												size="icon"
@@ -299,10 +389,13 @@ export function TerminalsListClient({
 						<div className="space-y-2">
 							<Label>ID Terminal</Label>
 							<Input
-								placeholder="Contoh: 2A9C"
+								placeholder="Contoh: ESP32-ROOM-1"
 								value={id}
 								onChange={(e) => setId(e.target.value)}
 							/>
+							<p className="text-xs text-muted-foreground">
+								Harus sama dengan device ID di firmware (untuk URL dan HMAC).
+							</p>
 						</div>
 						<div className="space-y-2">
 							<Label>Nama / Label</Label>
@@ -311,6 +404,29 @@ export function TerminalsListClient({
 								value={name}
 								onChange={(e) => setName(e.target.value)}
 							/>
+						</div>
+						<div className="space-y-2">
+							<Label>Secret perangkat (HMAC)</Label>
+							<div className="flex gap-2">
+								<Input
+									className="font-mono text-sm"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									autoComplete="off"
+									spellCheck={false}
+								/>
+								<Button
+									type="button"
+									variant="outline"
+									onClick={fillGeneratedPassword}
+								>
+									Acak
+								</Button>
+							</div>
+							<p className="text-xs text-muted-foreground">
+								Minimal 16 karakter. Salin ke firmware sekarang — tidak
+								ditampilkan lagi setelah dialog ditutup.
+							</p>
 						</div>
 					</div>
 					<DialogFooter>
@@ -324,6 +440,74 @@ export function TerminalsListClient({
 						<Button onClick={handleCreate} disabled={isSubmitting}>
 							{isSubmitting ? "Menyimpan..." : "Simpan Perangkat"}
 						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={createdSecret !== null}
+				onOpenChange={(open) => {
+					if (!open) setCreatedSecret(null);
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Secret perangkat disimpan</DialogTitle>
+					</DialogHeader>
+					<p className="text-sm text-muted-foreground">
+						Masukkan secret ini ke firmware (variabel password HMAC). Tidak
+						bisa dilihat lagi dari dashboard.
+					</p>
+					<Input
+						readOnly
+						className="font-mono text-sm"
+						value={createdSecret ?? ""}
+					/>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() =>
+								createdSecret && copySecret(createdSecret)
+							}
+						>
+							<Copy className="w-4 h-4" />
+							Salin
+						</Button>
+						<Button onClick={() => setCreatedSecret(null)}>Selesai</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<Dialog
+				open={rotatedSecret !== null}
+				onOpenChange={(open) => {
+					if (!open) setRotatedSecret(null);
+				}}
+			>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Secret baru — {rotatedSecret?.terminalName}</DialogTitle>
+					</DialogHeader>
+					<p className="text-sm text-muted-foreground">
+						Perbarui firmware sebelum polling berikutnya, atau auth akan
+						gagal (401).
+					</p>
+					<Input
+						readOnly
+						className="font-mono text-sm"
+						value={rotatedSecret?.password ?? ""}
+					/>
+					<DialogFooter>
+						<Button
+							variant="outline"
+							onClick={() =>
+								rotatedSecret && copySecret(rotatedSecret.password)
+							}
+						>
+							<Copy className="w-4 h-4" />
+							Salin
+						</Button>
+						<Button onClick={() => setRotatedSecret(null)}>Selesai</Button>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

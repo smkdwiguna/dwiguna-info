@@ -6,6 +6,11 @@ import {
 } from "@/lib/device-user-photo";
 import { getAdminService } from "@/lib/google-api";
 import { verifyDeviceRequest } from "@/lib/device-auth";
+import {
+	formatTerminalCommand,
+	hasTerminalPendingCommand,
+	isTerminalIdle,
+} from "@/lib/terminal-command";
 import { eq } from "drizzle-orm";
 
 const LINE_BREAK_REGEX = /\r?\n/;
@@ -122,8 +127,8 @@ export async function POST(
 	}
 
 	const now = Math.floor(Date.now() / 1000);
-	let currentStatus = auth.terminal.status || "0";
-	let currentMetadata = auth.terminal.metadata || null;
+	let storedStatus = auth.terminal.status || "0";
+	let storedMetadata = auth.terminal.metadata ?? null;
 	const syncQueue = parseSyncQueue(auth.terminal.syncQueue);
 
 	// Update lastSeenAt in timeout column
@@ -132,17 +137,7 @@ export async function POST(
 		.set({ timeout: now })
 		.where(eq(terminals.id, auth.terminal.id));
 
-	// Handle ACK: clear the current command
-	if (hasAck && currentStatus !== "0") {
-		// Check if the current command was part of a sync
-		if (currentStatus === "3" && syncQueue.length > 0) {
-			syncQueue.shift();
-		}
-		currentStatus = "0";
-		currentMetadata = null;
-	}
-
-	// Handle enrolled template from device
+	// Handle enrolled template from device (side effect; does not clear pending commands)
 	if (enrolledTemplate) {
 		await db
 			.update(deviceUsers)
@@ -150,58 +145,63 @@ export async function POST(
 			.where(eq(deviceUsers.id, enrolledTemplate.fid));
 	}
 
-	// Handle user search from device (code 8 → respond with code 7)
-	if (searchedId !== null) {
-		const presentation = await resolveUserPresentation(searchedId);
-		currentStatus = "7";
-		currentMetadata = `${presentation.name};${presentation.photoHex}`;
+	// Handle ACK: clear the pending command in DB
+	if (hasAck && hasTerminalPendingCommand(storedStatus)) {
+		if (storedStatus === "3" && syncQueue.length > 0) {
+			syncQueue.shift();
+		}
+		storedStatus = "0";
+		storedMetadata = null;
 	}
 
-	// Process syncQueue: if no current command and queue has items, pop next
-	if (
-		(currentStatus === "0" || currentStatus === "INHERIT") &&
-		syncQueue.length > 0
-	) {
-		while (syncQueue.length > 0) {
-			const nextFid = syncQueue[0];
-			const [userToSync] = await db
-				.select()
-				.from(deviceUsers)
-				.where(eq(deviceUsers.id, nextFid));
-			if (userToSync && userToSync.fingerprint) {
-				// Set a copy command (code 3)
-				currentStatus = "3";
-				currentMetadata = `${nextFid};${userToSync.fingerprint}`;
-				break;
-			} else {
-				// No fingerprint data, skip this user
+	let responseStatus = storedStatus;
+	let responseMetadata = storedMetadata;
+
+	// Pending dashboard commands always win over search/sync for this response
+	if (hasTerminalPendingCommand(storedStatus)) {
+		responseStatus = storedStatus;
+		responseMetadata = storedMetadata;
+	} else {
+		if (searchedId !== null) {
+			const presentation = await resolveUserPresentation(searchedId);
+			responseStatus = "7";
+			responseMetadata = `${presentation.name};${presentation.photoHex}`;
+			storedStatus = responseStatus;
+			storedMetadata = responseMetadata;
+		} else if (syncQueue.length > 0) {
+			while (syncQueue.length > 0) {
+				const nextFid = syncQueue[0];
+				const [userToSync] = await db
+					.select()
+					.from(deviceUsers)
+					.where(eq(deviceUsers.id, nextFid));
+				if (userToSync?.fingerprint) {
+					responseStatus = "3";
+					responseMetadata = `${nextFid};${userToSync.fingerprint}`;
+					storedStatus = responseStatus;
+					storedMetadata = responseMetadata;
+					break;
+				}
 				syncQueue.shift();
 			}
 		}
-	}
 
-	// Ensure status is initialized nicely if it was INHERIT
-	if (currentStatus === "INHERIT") {
-		currentStatus = "0";
+		if (isTerminalIdle(storedStatus)) {
+			storedStatus = "0";
+		}
 	}
 
 	// Persist metadata, status, and syncQueue changes
 	await db
 		.update(terminals)
 		.set({
-			status: currentStatus,
-			metadata: currentMetadata,
+			status: storedStatus,
+			metadata: storedMetadata,
 			syncQueue: syncQueue.length > 0 ? JSON.stringify(syncQueue) : null,
 		})
 		.where(eq(terminals.id, auth.terminal.id));
 
-	// Format payload
-	let payload = "0;";
-	if (currentStatus !== "0") {
-		payload = currentMetadata
-			? `${currentStatus};${currentMetadata}`
-			: `${currentStatus};`;
-	}
+	const payload = formatTerminalCommand(responseStatus, responseMetadata);
 
 	return new Response(payload, {
 		headers: { "content-type": "text/plain; charset=utf-8" },
