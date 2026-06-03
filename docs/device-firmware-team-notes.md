@@ -237,13 +237,19 @@ sequenceDiagram
 
 ## 8. Sinkronisasi template dari dashboard
 
-Saat admin menekan sync di dashboard, server mengantre `fid` di `syncQueue` dan mengirim perintah `3;{fid};{templateHex}` secara bertahap.
+Saat admin menekan sync di dashboard:
+
+1. Server mengirim **`6;`** dulu (hapus semua template di memori device).
+2. Firmware eksekusi empty → POST **`A`**.
+3. Baru server mengirim rangkaian **`3;{fid};{templateHex}`** dari `syncQueue`.
 
 Firmware:
 
-1. Terima `3`, simpan template ke slot `fid`
+1. Terima `6`, hapus semua sidik jari di sensor
 2. POST `A`
-3. Ulangi sampai respons `0;` dan antrean habis
+3. Terima `3`, simpan template ke slot `fid`
+4. POST `A`
+5. Ulangi langkah 3–4 sampai respons `0;`
 
 Jika koneksi putus sebelum `A`, server mengulang command yang sama pada poll berikutnya.
 

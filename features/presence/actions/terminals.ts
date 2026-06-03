@@ -89,9 +89,14 @@ export async function syncAllFingerprints(terminalId: string) {
 		.get();
 	if (!terminal) throw new Error("Terminal tidak ditemukan");
 
+	// Command 6 (empty) runs first; after device ACK, route drains syncQueue as copy (3).
 	await db
 		.update(terminals)
-		.set({ syncQueue: JSON.stringify(fidsWithFingerprints) })
+		.set({
+			status: "6",
+			metadata: null,
+			syncQueue: JSON.stringify(fidsWithFingerprints),
+		})
 		.where(eq(terminals.id, terminalId));
 
 	revalidatePath("/presence/terminals");

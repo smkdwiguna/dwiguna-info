@@ -179,7 +179,7 @@ export function TerminalsListClient({
 		try {
 			const res = await syncAllFingerprints(terminalId);
 			toast.success(
-				`Berhasil mengantrekan sinkronisasi ${res.count} sidik jari! Perangkat akan mulai mengunduhnya perlahan.`,
+				`Sync dimulai: perangkat akan mengosongkan memori sidik jari lalu mengunduh ${res.count} template.`,
 			);
 		} catch (e: any) {
 			toast.error("Gagal memulai sinkronisasi: " + e.message);

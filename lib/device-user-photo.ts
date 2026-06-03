@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { decode as decodeJpeg, encode as encodeJpeg } from "jpeg-js";
 import { PNG } from "pngjs";
 
@@ -254,11 +255,44 @@ function resizeCoverRgba(
 	return dst;
 }
 
+function isJpeg(bytes: Uint8Array): boolean {
+	return bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xd8;
+}
+
+function isPng(bytes: Uint8Array): boolean {
+	return (
+		bytes.length >= 8 &&
+		bytes[0] === 0x89 &&
+		bytes[1] === 0x50 &&
+		bytes[2] === 0x4e &&
+		bytes[3] === 0x47
+	);
+}
+
 function decodeToRgba(bytes: Uint8Array): {
 	data: Uint8Array;
 	width: number;
 	height: number;
 } {
+	if (isJpeg(bytes)) {
+		const decoded = decodeJpeg(bytes, { useTArray: true });
+		return {
+			data: decoded.data,
+			width: decoded.width,
+			height: decoded.height,
+		};
+	}
+
+	if (isPng(bytes)) {
+		const png = PNG.sync.read(Buffer.from(bytes));
+		return {
+			data: new Uint8Array(png.data),
+			width: png.width,
+			height: png.height,
+		};
+	}
+
+	// Unknown magic — try JPEG then PNG (e.g. truncated headers)
 	try {
 		const decoded = decodeJpeg(bytes, { useTArray: true });
 		return {
@@ -267,15 +301,13 @@ function decodeToRgba(bytes: Uint8Array): {
 			height: decoded.height,
 		};
 	} catch {
-		// Google may return PNG in some cases
+		const png = PNG.sync.read(Buffer.from(bytes));
+		return {
+			data: new Uint8Array(png.data),
+			width: png.width,
+			height: png.height,
+		};
 	}
-
-	const png = PNG.sync.read(Buffer.from(bytes));
-	return {
-		data: new Uint8Array(png.data),
-		width: png.width,
-		height: png.height,
-	};
 }
 
 function encodeAvatarJpeg(rgba: Uint8Array, size: number): Uint8Array {
@@ -316,7 +348,8 @@ export async function buildDevicePhotoHex(
 	} catch (error) {
 		console.warn(
 			"[device-user-photo] failed to prepare photo, using initials",
-			error,
+			displayName,
+			error instanceof Error ? error.message : error,
 		);
 		return bytesToHex(prepareInitialsBytes(displayName));
 	}

@@ -199,8 +199,9 @@ Contoh:
 #### Alur Sync
 
 1. Admin menekan tombol sync pada terminal di dashboard.
-2. Server mengumpulkan semua user yang punya fingerprint dan memasukkannya ke `syncQueue`.
-3. Saat polling berikutnya, jika `metadata` kosong dan `syncQueue` masih berisi item, server mengambil `fid` pertama.
+2. Server mengumpulkan semua user yang punya fingerprint dan memasukkannya ke `syncQueue`, serta men-set `status` ke **`6`** (empty — hapus semua template di device).
+3. Device poll → terima `6;`, hapus memori sidik jari, kirim `A`.
+4. Poll berikutnya (idle): jika `syncQueue` masih berisi item, server mengambil `fid` pertama.
 4. Server mencari template fingerprint di `device_users` dan menulis `3;{fid};{templateHex}` ke `metadata`.
 5. Device menerima command `3`, menyimpan template, lalu mengirim `A`.
 6. Setelah `A` diterima, server menghapus command yang pending, mengeluarkan `fid` tadi dari queue, lalu lanjut ke item berikutnya.
