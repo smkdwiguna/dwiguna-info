@@ -3,10 +3,10 @@ import { decode as decodeJpeg, encode as encodeJpeg } from "jpeg-js";
 import { PNG } from "pngjs";
 
 /** Square avatar for TFT widgets (device display 480×320; photo is not full-screen). */
-export const DEVICE_AVATAR_SIZE = 120;
+export const DEVICE_AVATAR_SIZE = 200;
 
 /** JPEG quality — balances clarity vs. hex payload size on the wire. */
-export const DEVICE_AVATAR_JPEG_QUALITY = 72;
+export const DEVICE_AVATAR_JPEG_QUALITY = 100;
 
 const FONT_5X7: Record<string, readonly number[]> = {
 	"?": [0x0e, 0x11, 0x01, 0x02, 0x04, 0x00, 0x04],
@@ -52,7 +52,9 @@ const INITIALS_PIXEL_SCALE = 9;
 const INITIALS_CHAR_GAP = 2;
 
 export function bytesToHex(bytes: Uint8Array): string {
-	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+	return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+		"",
+	);
 }
 
 export function extractInitials(fullName: string): string {
@@ -194,8 +196,7 @@ function createInitialsRgba(name: string, size: number): Uint8Array {
 		.replace(/[^A-Za-z0-9?]/g, "")
 		.slice(0, 2)
 		.toUpperCase();
-	const chars =
-		initials.length > 0 ? initials.split("") : ["?"];
+	const chars = initials.length > 0 ? initials.split("") : ["?"];
 
 	const glyphW = 5 * INITIALS_PIXEL_SCALE;
 	const glyphH = 7 * INITIALS_PIXEL_SCALE;
