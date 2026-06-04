@@ -8,7 +8,8 @@ import { fromBase64 } from "./crypto";
 /** Generate a PNG image (bytes) for the given text/URL. */
 export async function generateQrPng(text: string): Promise<Uint8Array> {
 	const dataUrl = await QRCode.toDataURL(text, {
-		errorCorrectionLevel: "M",
+		// High error correction so the QR still scans with a center logo overlay.
+		errorCorrectionLevel: "H",
 		margin: 1,
 		scale: 8,
 	});

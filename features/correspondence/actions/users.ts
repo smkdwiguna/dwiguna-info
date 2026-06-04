@@ -1,7 +1,7 @@
 "use server";
 
 import { fetchAllWorkspaceUsers } from "@/lib/google-api";
-import type { UserOption } from "../components/user-picker";
+import type { UserOption } from "@/components/user-picker";
 import { requireCorrespondenceAccess } from "./access";
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -23,7 +23,7 @@ import {
 	PenLine,
 } from "lucide-react";
 import { PdfViewer, type QrBox } from "./pdf-viewer";
-import { UserPicker, type UserOption } from "./user-picker";
+import { UserPicker, type UserOption } from "@/components/user-picker";
 import { inviteSigner, setDocumentPublic } from "../actions/documents";
 import type { DocumentDetail } from "../actions/documents";
 
@@ -47,10 +47,17 @@ export function CorrespondenceDetailClient({
 	const [box, setBox] = useState<QrBox | null>(null);
 	const [isPublic, setIsPublic] = useState(detail.isPublic);
 	const [signing, setSigning] = useState(false);
+	const [reloadKey, setReloadKey] = useState(0);
 	const [isPending, startTransition] = useTransition();
+
+	const userByEmail = useMemo(
+		() => new Map(users.map((u) => [u.email.toLowerCase(), u])),
+		[users],
+	);
 
 	useEffect(() => {
 		let active = true;
+		setPdfData(null);
 		fetch(`/api/correspondence/${detail.id}/file`, { credentials: "include" })
 			.then((res) => {
 				if (!res.ok) throw new Error("Gagal memuat berkas");
@@ -65,7 +72,7 @@ export function CorrespondenceDetailClient({
 		return () => {
 			active = false;
 		};
-	}, [detail.id]);
+	}, [detail.id, reloadKey]);
 
 	async function handleSign() {
 		if (!box) {
@@ -86,6 +93,7 @@ export function CorrespondenceDetailClient({
 			if (!res.ok) throw new Error(json.error || "Gagal menandatangani.");
 			toast.success("Dokumen berhasil ditandatangani.");
 			setBox(null);
+			setReloadKey((k) => k + 1);
 			router.refresh();
 		} catch (error) {
 			toast.error(
@@ -195,12 +203,21 @@ export function CorrespondenceDetailClient({
 							<CardTitle className="text-base">Penandatangan</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
-							{detail.signers.map((s) => (
+							{detail.signers.map((s) => {
+								const name = userByEmail.get(s.email.toLowerCase())?.name;
+								return (
 								<div
 									key={s.email}
 									className="flex items-center justify-between gap-2 text-sm"
 								>
-									<span className="truncate">{s.email}</span>
+									<span className="min-w-0 truncate">
+										<span className="block truncate">{name || s.email}</span>
+										{name && (
+											<span className="block truncate text-xs text-muted-foreground">
+												{s.email}
+											</span>
+										)}
+									</span>
 									<Badge
 										variant={s.status === "SIGNED" ? "default" : "outline"}
 									>
@@ -212,7 +229,8 @@ export function CorrespondenceDetailClient({
 										{STATUS_LABELS[s.status] ?? s.status}
 									</Badge>
 								</div>
-							))}
+								);
+							})}
 						</CardContent>
 					</Card>
 

@@ -16,6 +16,13 @@ import { SignPdf } from "@signpdf/signpdf";
 import { Signer } from "@signpdf/utils";
 import { Buffer } from "buffer";
 import { signDetachedCms } from "./pkcs7";
+import { fromBase64 } from "./crypto";
+import { LOGO_MARK_PNG_BASE64 } from "./logo-data";
+
+/** Center-logo footprint as a ratio of the QR size (incl. its white padding). */
+const LOGO_RATIO = 0.26;
+/** White padding around the logo, as a ratio of the QR size. */
+const LOGO_PAD_RATIO = 0.04;
 
 export interface QrPlacement {
 	/** 0-based page index. */
@@ -42,6 +49,7 @@ export async function embedSignatureVisuals(
 	const pdfDoc = await PDFDocument.load(pdfBytes);
 	const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 	const pages = pdfDoc.getPages();
+	const logoImage = await pdfDoc.embedPng(fromBase64(LOGO_MARK_PNG_BASE64));
 
 	for (const placement of placements) {
 		const page = pages[placement.page];
@@ -61,6 +69,27 @@ export async function embedSignatureVisuals(
 			y: drawY,
 			width: drawWidth,
 			height: drawHeight,
+		});
+
+		// Center mark: white rounded backing + the school logo on top. The QR uses
+		// high error correction, so the covered modules remain recoverable.
+		const qrSize = Math.min(drawWidth, drawHeight);
+		const backSize = qrSize * (LOGO_RATIO + LOGO_PAD_RATIO * 2);
+		const logoSize = qrSize * LOGO_RATIO;
+		const centerX = drawX + drawWidth / 2;
+		const centerY = drawY + drawHeight / 2;
+		page.drawRectangle({
+			x: centerX - backSize / 2,
+			y: centerY - backSize / 2,
+			width: backSize,
+			height: backSize,
+			color: rgb(1, 1, 1),
+		});
+		page.drawImage(logoImage, {
+			x: centerX - logoSize / 2,
+			y: centerY - logoSize / 2,
+			width: logoSize,
+			height: logoSize,
 		});
 
 		if (placement.label) {

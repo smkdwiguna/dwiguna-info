@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,8 @@ import {
 	DialogFooter,
 	DialogClose,
 } from "@/components/ui/dialog";
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldLabel,
-	FieldTitle,
-} from "@/components/ui/field";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { UserPicker } from "@/components/user-picker";
 import {
 	Select,
 	SelectContent,
@@ -46,6 +39,9 @@ import {
 	Boxes,
 	ArrowLeftRight,
 	ArrowUpDown,
+	FileText,
+	Upload,
+	ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -59,6 +55,8 @@ import {
 	updateInventoryMemberRole,
 	updateInventoryName,
 	deleteInventory,
+	uploadInventoryFile,
+	deleteInventoryFile,
 } from "@/features/inventory/actions/inventory";
 import {
 	PageHeader,
@@ -170,6 +168,7 @@ export function InventoryDetailClient({
 	const [transactions, setTransactions] = useState<TransactionRecord[]>(
 		initialData.transactions,
 	);
+	const [files, setFiles] = useState<FileRecord[]>(initialData.files);
 	const [transferInventories, setTransferInventories] = useState<
 		InventoryOption[]
 	>([]);
@@ -200,6 +199,12 @@ export function InventoryDetailClient({
 		null,
 	);
 
+	// File state
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [isUploadingFile, setIsUploadingFile] = useState(false);
+	const [isDeleteFileOpen, setIsDeleteFileOpen] = useState(false);
+	const [selectedFile, setSelectedFile] = useState<FileRecord | null>(null);
+
 	// FORMS STATE
 	// Add/Edit Item Form
 	const [itemName, setItemName] = useState("");
@@ -219,8 +224,6 @@ export function InventoryDetailClient({
 	const [transferTargetInventoryId, setTransferTargetInventoryId] =
 		useState("");
 
-	// Member Access Form
-	const [memberPickerSearch, setMemberPickerSearch] = useState("");
 
 	// PERMISSION BOOLEANS
 	const canEdit =
@@ -239,23 +242,22 @@ export function InventoryDetailClient({
 		);
 	}, [workspaceUsers]);
 
-	const existingMemberEmails = React.useMemo(
-		() => new Set(members.map((member) => member.email.toLowerCase())),
-		[members],
+	const memberUserOptions = React.useMemo(
+		() =>
+			workspaceUsers
+				.filter((user) => user.primaryEmail && !user.suspended)
+				.map((user) => ({
+					email: user.primaryEmail as string,
+					name: user.name?.fullName || (user.primaryEmail as string),
+				}))
+				.sort((a, b) => a.name.localeCompare(b.name)),
+		[workspaceUsers],
 	);
 
-	const candidateUsers = React.useMemo(() => {
-		const term = memberPickerSearch.toLowerCase().trim();
-		return workspaceUsers.filter((user) => {
-			const email = user.primaryEmail?.toLowerCase() || "";
-			if (!email) return false;
-			if (existingMemberEmails.has(email)) return false;
-			if (user.suspended) return false;
-			if (!term) return true;
-			const fullName = user.name?.fullName?.toLowerCase() || "";
-			return fullName.includes(term) || email.includes(term);
-		});
-	}, [existingMemberEmails, memberPickerSearch, workspaceUsers]);
+	const memberExcludeEmails = React.useMemo(
+		() => members.map((member) => member.email),
+		[members],
+	);
 
 	// Filtered lists
 	const filteredItems = items.filter((item) => {
@@ -569,7 +571,6 @@ export function InventoryDetailClient({
 				setMembers((prev) => [...prev, ...results]);
 				setIsAddMemberOpen(false);
 				setSelectedMemberEmails([]);
-				setMemberPickerSearch("");
 				toast.success("Anggota berhasil ditambahkan.");
 				router.refresh();
 			} catch (error: unknown) {
@@ -580,12 +581,51 @@ export function InventoryDetailClient({
 		});
 	};
 
-	const toggleMemberCandidate = (email: string) => {
-		setSelectedMemberEmails((prev) =>
-			prev.includes(email)
-				? prev.filter((value) => value !== email)
-				: [...prev, email],
-		);
+	const handleUploadFile = (fileList: FileList | null) => {
+		if (!canEdit || !fileList || fileList.length === 0) return;
+		const picked = Array.from(fileList);
+		setIsUploadingFile(true);
+		(async () => {
+			try {
+				for (const file of picked) {
+					const formData = new FormData();
+					formData.append("file", file);
+					const inserted = await uploadInventoryFile(inventory.id, formData);
+					setFiles((prev) => [inserted, ...prev]);
+				}
+				toast.success(
+					picked.length > 1
+						? `${picked.length} berkas berhasil diunggah.`
+						: "Berkas berhasil diunggah.",
+				);
+				router.refresh();
+			} catch (error: unknown) {
+				const message =
+					error instanceof Error ? error.message : "Gagal mengunggah berkas.";
+				toast.error(message);
+			} finally {
+				setIsUploadingFile(false);
+				if (fileInputRef.current) fileInputRef.current.value = "";
+			}
+		})();
+	};
+
+	const handleDeleteFile = () => {
+		if (!selectedFile) return;
+		startTransition(async () => {
+			try {
+				await deleteInventoryFile(inventory.id, selectedFile.id);
+				setFiles((prev) => prev.filter((f) => f.id !== selectedFile.id));
+				setIsDeleteFileOpen(false);
+				setSelectedFile(null);
+				toast.success("Berkas berhasil dihapus.");
+				router.refresh();
+			} catch (error: unknown) {
+				const message =
+					error instanceof Error ? error.message : "Gagal menghapus berkas.";
+				toast.error(message);
+			}
+		});
 	};
 
 	const handleRemoveMember = () => {
@@ -690,6 +730,10 @@ export function InventoryDetailClient({
 					<TabsTrigger value="members">
 						<Users className="h-4.5 w-4.5" />
 						Anggota
+					</TabsTrigger>
+					<TabsTrigger value="files">
+						<FileText className="h-4.5 w-4.5" />
+						Berkas
 					</TabsTrigger>
 					<TabsTrigger value="transactions">
 						<History className="h-4.5 w-4.5" />
@@ -865,7 +909,6 @@ export function InventoryDetailClient({
 						<div className="flex justify-center gap-4 p-4">
 							<Button
 								onClick={() => {
-									setMemberPickerSearch("");
 									setSelectedMemberEmails([]);
 									setIsAddMemberOpen(true);
 								}}
@@ -876,6 +919,106 @@ export function InventoryDetailClient({
 							</Button>
 						</div>
 					)}
+				</TabsContent>
+
+				{/* TAB: FILES */}
+				<TabsContent
+					value="files"
+					className="rounded-md border bg-background mt-4"
+				>
+					{canEdit && (
+						<div className="flex items-center justify-between gap-4 p-4">
+							<p className="text-sm text-muted-foreground">
+								Berkas tersimpan di Google Drive sekolah pada folder{" "}
+								<span className="font-medium">
+									Dwiguna.Info/Inventaris/{inventory.name}
+								</span>
+								.
+							</p>
+							<input
+								ref={fileInputRef}
+								type="file"
+								multiple
+								className="hidden"
+								onChange={(e) => handleUploadFile(e.target.files)}
+							/>
+							<Button
+								onClick={() => fileInputRef.current?.click()}
+								disabled={isUploadingFile || isPending}
+								className="w-fit shrink-0 shadow-md"
+							>
+								<Upload className="mr-2 h-4 w-4" />
+								{isUploadingFile ? "Mengunggah..." : "Unggah Berkas"}
+							</Button>
+						</div>
+					)}
+					<Table>
+						<TableBody>
+							{files.length === 0 ? (
+								<TableRow>
+									<TableCell
+										colSpan={canEdit ? 4 : 3}
+										className="h-32 text-center text-muted-foreground"
+									>
+										Belum ada berkas yang diunggah.
+									</TableCell>
+								</TableRow>
+							) : (
+								files.map((file) => (
+									<TableRow key={file.id}>
+										<TableCell className="pl-4">
+											<div className="flex items-center gap-2">
+												<FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+												<span className="truncate font-medium">{file.name}</span>
+											</div>
+										</TableCell>
+										<TableCell
+											className="text-xs text-muted-foreground truncate"
+											title={file.uploadedByEmail}
+										>
+											{workspaceUserMap.get(file.uploadedByEmail.toLowerCase())
+												?.name?.fullName || file.uploadedByEmail}
+										</TableCell>
+										<TableCell className="tabular-nums text-xs text-muted-foreground">
+											{new Date(file.createdAt).toLocaleString("id-ID")}
+										</TableCell>
+										<TableCell className="flex justify-end gap-1 pr-4">
+											{file.webViewLink && (
+												<Button
+													size="icon"
+													variant="outline"
+													aria-label="Buka berkas"
+													asChild
+												>
+													<a
+														href={file.webViewLink}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														<ExternalLink />
+													</a>
+												</Button>
+											)}
+											{canEdit && (
+												<Button
+													size="icon"
+													variant="outline"
+													aria-label="Hapus berkas"
+													onClick={() => {
+														setSelectedFile(file);
+														setIsDeleteFileOpen(true);
+													}}
+													disabled={isPending}
+												>
+													<Trash2 />
+												</Button>
+											)}
+										</TableCell>
+									</TableRow>
+								))
+							)}
+						</TableBody>
+					</Table>
 				</TabsContent>
 
 				{/* TAB 3: TRANSACTION AUDIT LOGS */}
@@ -1316,45 +1459,15 @@ export function InventoryDetailClient({
 					<DialogHeader>
 						<DialogTitle>Berikan Akses Inventaris</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-4 py-4">
-						<InputGroup>
-							<InputGroupAddon>
-								<Search />
-							</InputGroupAddon>
-							<InputGroupInput
-								placeholder="Cari nama atau email..."
-								value={memberPickerSearch}
-								onChange={(e) => setMemberPickerSearch(e.target.value)}
-								disabled={isPending}
-							/>
-						</InputGroup>
-						<div className="space-y-2 max-h-80 overflow-y-auto">
-							{candidateUsers.length === 0 ? (
-								<div className="p-4 text-sm text-muted-foreground text-center">
-									Tidak ada pengguna yang cocok.
-								</div>
-							) : (
-								candidateUsers.map((user) => {
-									const email = user.primaryEmail || "";
-									const label = user.name?.fullName;
-									const checked = selectedMemberEmails.includes(email);
-									return (
-										<FieldLabel key={email}>
-											<Field orientation="horizontal">
-												<Checkbox
-													checked={checked}
-													onCheckedChange={() => toggleMemberCandidate(email)}
-												/>
-												<FieldContent>
-													<FieldTitle>{label}</FieldTitle>
-													<FieldDescription>{email}</FieldDescription>
-												</FieldContent>
-											</Field>
-										</FieldLabel>
-									);
-								})
-							)}
-						</div>
+					<div className="py-4">
+						<UserPicker
+							users={memberUserOptions}
+							value={selectedMemberEmails}
+							onChange={setSelectedMemberEmails}
+							disabled={isPending}
+							excludeEmails={memberExcludeEmails}
+							placeholder="Cari nama atau email..."
+						/>
 					</div>
 					<DialogFooter>
 						<DialogClose asChild>
@@ -1398,6 +1511,40 @@ export function InventoryDetailClient({
 							disabled={isPending}
 						>
 							{isPending ? "Mencabut..." : "Ya, Cabut Akses"}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			{/* DELETE FILE DIALOG */}
+			<Dialog open={isDeleteFileOpen} onOpenChange={setIsDeleteFileOpen}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle className="text-destructive">
+							Hapus Berkas?
+						</DialogTitle>
+					</DialogHeader>
+					<div className="text-sm">
+						<div className="font-bold text-foreground text-center bg-muted/50 p-2.5 rounded border break-all">
+							{selectedFile?.name}
+						</div>
+						<p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+							* Berkas akan dihapus dari Google Drive dan dari semua barang yang
+							terlampir. Tindakan ini tidak dapat dibatalkan.
+						</p>
+					</div>
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="outline" disabled={isPending}>
+								Batal
+							</Button>
+						</DialogClose>
+						<Button
+							variant="destructive"
+							onClick={handleDeleteFile}
+							disabled={isPending}
+						>
+							{isPending ? "Menghapus..." : "Ya, Hapus Berkas"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

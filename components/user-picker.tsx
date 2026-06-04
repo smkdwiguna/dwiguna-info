@@ -109,7 +109,11 @@ export function UserPicker({
 				/>
 			</InputGroup>
 
-			<div className="max-h-56 divide-y overflow-y-auto rounded-md border">
+			<div
+				role="listbox"
+				aria-multiselectable
+				className="max-h-56 divide-y overflow-y-auto rounded-md border"
+			>
 				{candidates.length === 0 ? (
 					<div className="p-3 text-center text-sm text-muted-foreground">
 						Tidak ada pengguna yang cocok.
@@ -118,12 +122,21 @@ export function UserPicker({
 					candidates.map((u) => {
 						const checked = value.includes(u.email);
 						return (
-							<button
-								type="button"
+							<div
 								key={u.email}
-								onClick={() => toggle(u.email)}
-								disabled={disabled}
-								className="flex w-full items-center gap-2 p-2 text-left transition-colors hover:bg-muted/50 disabled:opacity-50"
+								role="option"
+								aria-selected={checked}
+								aria-disabled={disabled}
+								tabIndex={disabled ? -1 : 0}
+								onClick={() => !disabled && toggle(u.email)}
+								onKeyDown={(e) => {
+									if (disabled) return;
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault();
+										toggle(u.email);
+									}
+								}}
+								className="flex w-full cursor-pointer items-center gap-2 p-2 text-left transition-colors outline-none hover:bg-muted/50 focus-visible:bg-muted/50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 							>
 								<Checkbox checked={checked} className="pointer-events-none" />
 								<span className="min-w-0">
@@ -134,7 +147,7 @@ export function UserPicker({
 										{u.email}
 									</span>
 								</span>
-							</button>
+							</div>
 						);
 					})
 				)}

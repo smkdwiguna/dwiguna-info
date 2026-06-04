@@ -122,7 +122,9 @@ export function PdfViewer({
 			const relX = (e.clientX - rect.left) / rect.width;
 			const relY = (e.clientY - rect.top) / rect.height;
 			const width = DEFAULT_BOX_RATIO;
-			const height = DEFAULT_BOX_RATIO;
+			// Keep the box visually square: equal pixel width/height means the
+			// normalized height must scale by the page's width/height ratio.
+			const height = Math.min(width * (rect.width / rect.height), 1);
 			onBoxChange({
 				page: pageIndex,
 				x: Math.min(Math.max(relX - width / 2, 0), 1 - width),
@@ -170,14 +172,18 @@ export function PdfViewer({
 					y: Math.min(Math.max(state.origin.y + dy, 0), 1 - box.height),
 				});
 			} else {
-				const newWidth = Math.min(
-					Math.max(state.origin.width + dx, 0.05),
-					1 - box.x,
-				);
-				const newHeight = Math.min(
-					Math.max(state.origin.height + dy, 0.05),
-					1 - box.y,
-				);
+				// Resize while locking a 1:1 pixel aspect ratio (square QR). Grow
+				// from whichever axis the user drags further, then derive the other.
+				const ratio = state.pageW / state.pageH;
+				const widthFromX = state.origin.width + dx;
+				const widthFromY = (state.origin.height + dy) / ratio;
+				let newWidth = Math.max(widthFromX, widthFromY, 0.05);
+				newWidth = Math.min(newWidth, 1 - box.x);
+				let newHeight = newWidth * ratio;
+				if (box.y + newHeight > 1) {
+					newHeight = 1 - box.y;
+					newWidth = newHeight / ratio;
+				}
 				onBoxChange({ ...box, width: newWidth, height: newHeight });
 			}
 		},
