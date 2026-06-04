@@ -20,6 +20,7 @@ import { CheckCircle2, Clock, Download, Globe, PenLine } from "lucide-react";
 import { PdfViewer, type QrBox } from "./pdf-viewer";
 import { UserPicker, type UserOption } from "@/components/user-picker";
 import { inviteSigner, setDocumentPublic } from "../actions/documents";
+import { signDocument } from "../actions/sign";
 import type { DocumentDetail } from "../actions/documents";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -86,14 +87,7 @@ export function CorrespondenceDetailClient({
 		}
 		setSigning(true);
 		try {
-			const res = await fetch("/api/correspondence/sign", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				credentials: "include",
-				body: JSON.stringify({ documentId: detail.id, placement: box }),
-			});
-			const json = (await res.json()) as { error?: string };
-			if (!res.ok) throw new Error(json.error || "Gagal menandatangani.");
+			await signDocument(detail.id, box);
 			toast.success("Dokumen berhasil ditandatangani.");
 			setBox(null);
 			setReloadKey((k) => k + 1);
