@@ -5,10 +5,6 @@ import { oneTap } from "better-auth/plugins";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { isWorkspaceEmail, WORKSPACE_DOMAIN } from "./access";
-import {
-	fetchUserAccessFromWorkspace,
-	fetchUserOUFromWorkspace,
-} from "./google-api";
 
 // The Drizzle adapter binds to a D1 instance that is only available within a
 // Cloudflare request context, so the auth instance is built lazily. The binding
@@ -39,36 +35,15 @@ function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 				// Persist a refresh token so the account row stays usable long-term.
 				accessType: "offline",
 				prompt: "select_account",
+				// Org unit (`ou`) and permissions (`access`) are owned by Google
+				// Workspace/Admin and resolved live at request time, so nothing about
+				// them is persisted here — we only enforce the workspace domain.
 				mapProfileToUser: async (profile) => {
 					if (!isWorkspaceEmail(profile.email)) {
 						throw new Error("Hanya akun smkdwiguna.sch.id yang bisa masuk.");
 					}
-
-					const [userOUResult, userAccessResult] = await Promise.allSettled([
-						fetchUserOUFromWorkspace(profile.email),
-						fetchUserAccessFromWorkspace(profile.email),
-					]);
-
-					const userOU =
-						userOUResult.status === "fulfilled" ? userOUResult.value : "/";
-					const userAccess =
-						userAccessResult.status === "fulfilled"
-							? userAccessResult.value
-							: "";
-
-					return {
-						firstName: profile.given_name,
-						lastName: profile.family_name,
-						ou: userOU,
-						access: userAccess,
-					};
+					return {};
 				},
-			},
-		},
-		user: {
-			additionalFields: {
-				ou: { type: "string", required: false, input: false },
-				access: { type: "string", required: false, input: false },
 			},
 		},
 		session: {

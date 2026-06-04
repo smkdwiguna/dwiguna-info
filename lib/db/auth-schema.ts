@@ -19,9 +19,6 @@ export const user = sqliteTable("user", {
 		.default(false)
 		.notNull(),
 	image: text("image"),
-	// App-specific fields populated from Google Workspace at login.
-	ou: text("ou"),
-	access: text("access"),
 	createdAt: integer("created_at", { mode: "timestamp_ms" })
 		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 		.notNull(),
