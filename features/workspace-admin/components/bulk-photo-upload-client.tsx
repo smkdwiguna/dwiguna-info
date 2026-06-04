@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { FileArchive, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import JSZip from "jszip";
 
 export function BulkPhotoUploadClient() {
 	const [isBulkPhotoOpen, setIsBulkPhotoOpen] = useState(false);
@@ -66,6 +65,7 @@ export function BulkPhotoUploadClient() {
 		if (!file) return;
 
 		try {
+			const { default: JSZip } = await import("jszip");
 			const zip = new JSZip();
 			const contents = await zip.loadAsync(file);
 			const photos: {

@@ -8,9 +8,16 @@ import { BrandLogo } from "@/components/brand-logo";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Download, Upload, XCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import type { VerificationResult } from "../actions/verify";
 import type { PublicDocumentInfo } from "../actions/verify";
-import { PdfViewer } from "./pdf-viewer";
+
+// pdf.js is browser-only; loading it client-side keeps the heavy library out of
+// the server/worker bundle.
+const PdfViewer = dynamic(
+	() => import("./pdf-viewer").then((m) => m.PdfViewer),
+	{ ssr: false },
+);
 
 function ResultRow({ ok, label }: { ok: boolean; label: string }) {
 	return (

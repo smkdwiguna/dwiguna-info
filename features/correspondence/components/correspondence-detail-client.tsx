@@ -17,10 +17,18 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2, Clock, Download, Globe, PenLine } from "lucide-react";
-import { PdfViewer, type QrBox } from "./pdf-viewer";
+import dynamic from "next/dynamic";
+import { type QrBox } from "./pdf-viewer";
 import { UserPicker, type UserOption } from "@/components/user-picker";
 import { inviteSigner, setDocumentPublic } from "../actions/documents";
 import type { DocumentDetail } from "../actions/documents";
+
+// pdf.js is browser-only; loading it client-side keeps the heavy library out of
+// the server/worker bundle.
+const PdfViewer = dynamic(
+	() => import("./pdf-viewer").then((m) => m.PdfViewer),
+	{ ssr: false },
+);
 
 const STATUS_LABELS: Record<string, string> = {
 	DRAFT: "Draf",
