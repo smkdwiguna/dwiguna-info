@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { createAuthClient } from "better-auth/react";
 import { oneTapClient } from "better-auth/client/plugins";
-import { WORKSPACE_DOMAIN } from "@/lib/access";
 
 /**
- * Renders the official "Sign in with Google" (One Tap) button and triggers the
- * One Tap prompt for returning users. Sign-up is disabled server-side, so the
- * first-ever login still goes through the standard OAuth flow (which also
- * captures the Drive refresh token).
+ * Triggers Google's native One Tap prompt (the FedCM account chooser the
+ * browser renders itself — not a popup tab) for returning users. Sign-up is
+ * disabled server-side, so the first-ever login still goes through the regular
+ * OAuth button below (which also captures the Drive refresh token).
+ *
+ * This renders nothing: the prompt is an overlay drawn by Google. The styled
+ * "Lanjutkan dengan akun smkdwiguna.sch.id" button stays as the explicit
+ * fallback in the login card.
  */
 export function GoogleOneTap({
 	clientId,
@@ -18,11 +21,8 @@ export function GoogleOneTap({
 	clientId: string;
 	callbackURL?: string;
 }) {
-	const containerRef = useRef<HTMLDivElement>(null);
-
 	useEffect(() => {
-		const container = containerRef.current;
-		if (!clientId || !container) return;
+		if (!clientId) return;
 
 		const client = createAuthClient({
 			plugins: [
@@ -30,33 +30,22 @@ export function GoogleOneTap({
 					clientId,
 					autoSelect: false,
 					cancelOnTapOutside: true,
-					// Restrict the account chooser to the school workspace.
-					additionalOptions: { hd: WORKSPACE_DOMAIN },
+					// Use the browser-native FedCM prompt instead of the legacy
+					// third-party-cookie bubble.
+					additionalOptions: { use_fedcm_for_prompt: true },
 				}),
 			],
 		});
 
+		// No `button` option → Better Auth calls google.accounts.id.prompt(),
+		// which shows the native One Tap chooser.
 		client
-			.oneTap({
-				callbackURL,
-				button: {
-					container,
-					config: {
-						type: "standard",
-						theme: "outline",
-						size: "large",
-						text: "continue_with",
-						shape: "pill",
-						width: 320,
-						locale: "id",
-					},
-				},
-			})
+			.oneTap({ callbackURL })
 			.catch((error) => {
-				// Never block the login screen if GSI is unavailable.
+				// Never block the login screen if GSI/FedCM is unavailable.
 				console.warn("Google One Tap tidak tersedia:", error);
 			});
 	}, [clientId, callbackURL]);
 
-	return <div ref={containerRef} className="flex min-h-[40px] justify-center" />;
+	return null;
 }
