@@ -15,9 +15,11 @@ import {
 	requireCorrespondenceUpload,
 } from "./access";
 import { ensureUserKeys } from "./keys";
+import { resolveUserNames } from "../lib/user-names";
 
 export interface SignerView {
 	email: string;
+	name: string | null;
 	status: string;
 	signedAt: string | null;
 	qr: { page: number; x: number; y: number; width: number; height: number } | null;
@@ -27,6 +29,7 @@ export interface DocumentSummary {
 	id: string;
 	title: string;
 	ownerEmail: string;
+	ownerName: string;
 	status: string;
 	isPublic: boolean;
 	createdAt: string;
@@ -150,6 +153,7 @@ export async function listDocuments(): Promise<DocumentSummary[]> {
 		)
 		.orderBy(desc(signatureDocuments.createdAt));
 
+	const names = await resolveUserNames(docs.map((d) => d.ownerEmail));
 	const summaries: DocumentSummary[] = [];
 	for (const doc of docs) {
 		const signers = await db
@@ -160,6 +164,7 @@ export async function listDocuments(): Promise<DocumentSummary[]> {
 			id: doc.id,
 			title: doc.title,
 			ownerEmail: doc.ownerEmail,
+			ownerName: names[doc.ownerEmail.toLowerCase()] ?? doc.ownerEmail,
 			status: doc.status,
 			isPublic: doc.isPublic,
 			createdAt: doc.createdAt,
@@ -196,10 +201,16 @@ export async function getDocumentDetail(
 	const isParticipant = isOwner || !!mySigner;
 	if (!isParticipant && !ctx.isSuperUser) return null;
 
+	const names = await resolveUserNames([
+		doc.ownerEmail,
+		...signers.map((s) => s.signerEmail),
+	]);
+
 	return {
 		id: doc.id,
 		title: doc.title,
 		ownerEmail: doc.ownerEmail,
+		ownerName: names[doc.ownerEmail.toLowerCase()] ?? doc.ownerEmail,
 		status: doc.status,
 		isPublic: doc.isPublic,
 		createdAt: doc.createdAt,
@@ -214,6 +225,7 @@ export async function getDocumentDetail(
 		mySignerStatus: mySigner?.status ?? null,
 		signers: signers.map((s) => ({
 			email: s.signerEmail,
+			name: names[s.signerEmail.toLowerCase()] ?? null,
 			status: s.status,
 			signedAt: s.signedAt,
 			qr:

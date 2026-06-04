@@ -10,9 +10,11 @@ import {
 } from "@/lib/db/schema";
 import { fromBase64, sha256Hex, verifyData } from "@/lib/tte/crypto";
 import { extractByteRanges } from "@/lib/tte/pdf-signature";
+import { resolveUserNames } from "../lib/user-names";
 
 export interface VerifySignerInfo {
 	email: string;
+	name: string | null;
 	signedAt: string | null;
 	trusted: boolean;
 }
@@ -22,6 +24,7 @@ export interface VerificationResult {
 	documentId: string | null;
 	title: string | null;
 	ownerEmail: string | null;
+	ownerName: string | null;
 	/** Hashes match — the uploaded copy is identical to the authentic file. */
 	isUntampered: boolean;
 	/** A signer's public key is registered in our internal key store. */
@@ -64,6 +67,11 @@ async function buildResultForDocument(
 
 	const isUntampered = !!doc.documentHash && doc.documentHash === uploadedHash;
 
+	const names = await resolveUserNames([
+		doc.ownerEmail,
+		...signerRows.map((s) => s.signerEmail),
+	]);
+
 	// Identity: at least one signer's public key matches our registered key.
 	const signers: VerifySignerInfo[] = [];
 	let isTrustedIdentity = false;
@@ -80,6 +88,7 @@ async function buildResultForDocument(
 		if (trusted) isTrustedIdentity = true;
 		signers.push({
 			email: s.signerEmail,
+			name: names[s.signerEmail.toLowerCase()] ?? null,
 			signedAt: s.signedAt,
 			trusted,
 		});
@@ -116,6 +125,7 @@ async function buildResultForDocument(
 		documentId,
 		title: doc.title,
 		ownerEmail: doc.ownerEmail,
+		ownerName: names[doc.ownerEmail.toLowerCase()] ?? doc.ownerEmail,
 		isUntampered,
 		isTrustedIdentity,
 		hasTimestamp: logs.length > 0,
@@ -131,6 +141,7 @@ function emptyResult(message: string): VerificationResult {
 		documentId: null,
 		title: null,
 		ownerEmail: null,
+		ownerName: null,
 		isUntampered: false,
 		isTrustedIdentity: false,
 		hasTimestamp: false,
@@ -194,9 +205,10 @@ export interface PublicDocumentInfo {
 	isPublic: boolean;
 	title: string | null;
 	ownerEmail: string | null;
+	ownerName: string | null;
 	status: string | null;
 	webViewLink: string | null;
-	signers: { email: string; signedAt: string | null }[];
+	signers: { email: string; name: string | null; signedAt: string | null }[];
 }
 
 /** Minimal public-facing metadata for a /verify/[id] landing page. */
@@ -216,6 +228,7 @@ export async function getPublicDocument(
 			isPublic: false,
 			title: null,
 			ownerEmail: null,
+			ownerName: null,
 			status: null,
 			webViewLink: null,
 			signers: [],
@@ -230,6 +243,7 @@ export async function getPublicDocument(
 			isPublic: false,
 			title: null,
 			ownerEmail: null,
+			ownerName: null,
 			status: null,
 			webViewLink: null,
 			signers: [],
@@ -244,13 +258,23 @@ export async function getPublicDocument(
 		.from(signatureSigners)
 		.where(eq(signatureSigners.documentId, documentId));
 
+	const names = await resolveUserNames([
+		doc.ownerEmail,
+		...signerRows.map((s) => s.email),
+	]);
+
 	return {
 		exists: true,
 		isPublic: true,
 		title: doc.title,
 		ownerEmail: doc.ownerEmail,
+		ownerName: names[doc.ownerEmail.toLowerCase()] ?? doc.ownerEmail,
 		status: doc.status,
 		webViewLink: doc.driveWebViewLink,
-		signers: signerRows,
+		signers: signerRows.map((s) => ({
+			email: s.email,
+			name: names[s.email.toLowerCase()] ?? null,
+			signedAt: s.signedAt,
+		})),
 	};
 }
