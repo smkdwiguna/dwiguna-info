@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import {
 	PageHeader,
 	PageHeaderActions,
-	PageHeaderDescription,
 	PageHeaderHeading,
 	PageHeaderTitle,
 } from "@/components/ui/page-header";
@@ -21,7 +20,6 @@ import { UserPicker, type UserOption } from "@/components/user-picker";
 import {
 	Dialog,
 	DialogContent,
-	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
@@ -30,12 +28,6 @@ import {
 import { FileSignature, Globe, Lock, Plus, Upload } from "lucide-react";
 import { createDocument } from "../actions/documents";
 import type { DocumentSummary } from "../actions/documents";
-
-const STATUS_LABELS: Record<string, string> = {
-	DRAFT: "Draf",
-	PARTIAL: "Sebagian",
-	COMPLETED: "Selesai",
-};
 
 export function CorrespondenceListClient({
 	documents,
@@ -93,9 +85,6 @@ export function CorrespondenceListClient({
 				<PageHeaderHeading>
 					<div>
 						<PageHeaderTitle>Persuratan</PageHeaderTitle>
-						<PageHeaderDescription>
-							Tanda tangan elektronik &amp; verifikasi dokumen.
-						</PageHeaderDescription>
 					</div>
 				</PageHeaderHeading>
 				{canUpload && (
@@ -109,10 +98,6 @@ export function CorrespondenceListClient({
 							<DialogContent className="max-w-lg">
 								<DialogHeader>
 									<DialogTitle>Unggah Dokumen</DialogTitle>
-									<DialogDescription>
-										Unggah PDF, undang penandatangan, lalu bubuhkan tanda
-										tangan.
-									</DialogDescription>
 								</DialogHeader>
 								<div className="space-y-4">
 									<div className="space-y-2">
@@ -142,9 +127,6 @@ export function CorrespondenceListClient({
 											disabled={isPending}
 											placeholder="Cari nama penandatangan..."
 										/>
-										<p className="text-xs text-muted-foreground">
-											Penerima undangan bisa menandatangani tanpa izin fitur.
-										</p>
 									</div>
 									<div className="flex items-center gap-2">
 										<Checkbox
@@ -183,7 +165,8 @@ export function CorrespondenceListClient({
 						<p>Belum ada dokumen.</p>
 						{!canUpload && (
 							<p className="text-xs">
-								Anda akan melihat dokumen di sini ketika diundang menandatangani.
+								Anda akan melihat dokumen di sini ketika diundang
+								menandatangani.
 							</p>
 						)}
 					</CardContent>
@@ -193,7 +176,7 @@ export function CorrespondenceListClient({
 					{documents.map((doc) => (
 						<Link key={doc.id} href={`/correspondence/${doc.id}`}>
 							<Card className="transition hover:border-primary/50">
-								<CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+								<CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 									<div className="flex items-start gap-3">
 										<FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 										<div>
@@ -213,15 +196,12 @@ export function CorrespondenceListClient({
 											)}
 											{doc.isPublic ? "Publik" : "Privat"}
 										</Badge>
-										<Badge variant="secondary">
-											{doc.signedCount}/{doc.signerCount} tanda tangan
-										</Badge>
 										<Badge
 											variant={
 												doc.status === "COMPLETED" ? "default" : "outline"
 											}
 										>
-											{STATUS_LABELS[doc.status] ?? doc.status}
+											{doc.signedCount}/{doc.signerCount} tanda tangan
 										</Badge>
 									</div>
 								</CardContent>

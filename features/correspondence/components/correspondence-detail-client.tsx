@@ -175,29 +175,6 @@ export function CorrespondenceDetailClient({
 				</Card>
 
 				<div className="order-2 space-y-4">
-					{detail.canSign && (
-						<Card>
-							<CardHeader className="pb-2">
-								<CardTitle className="text-base">Tindakan</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-2">
-								<Button
-									className="w-full"
-									onClick={handleSign}
-									disabled={signing || !box || !pdfData}
-								>
-									<PenLine className="mr-1 h-4 w-4" />
-									{signing ? "Memproses..." : "Tandatangani"}
-								</Button>
-								{!box && (
-									<p className="text-xs text-muted-foreground">
-										Ketuk dokumen untuk menaruh QR.
-									</p>
-								)}
-							</CardContent>
-						</Card>
-					)}
-
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-base">Penandatangan</CardTitle>
@@ -206,29 +183,29 @@ export function CorrespondenceDetailClient({
 							{detail.signers.map((s) => {
 								const name = userByEmail.get(s.email.toLowerCase())?.name;
 								return (
-								<div
-									key={s.email}
-									className="flex items-center justify-between gap-2 text-sm"
-								>
-									<span className="min-w-0 truncate">
-										<span className="block truncate">{name || s.email}</span>
-										{name && (
-											<span className="block truncate text-xs text-muted-foreground">
-												{s.email}
-											</span>
-										)}
-									</span>
-									<Badge
-										variant={s.status === "SIGNED" ? "default" : "outline"}
+									<div
+										key={s.email}
+										className="flex items-center justify-between gap-2 text-sm"
 									>
-										{s.status === "SIGNED" ? (
-											<CheckCircle2 className="mr-1 h-3 w-3" />
-										) : (
-											<Clock className="mr-1 h-3 w-3" />
-										)}
-										{STATUS_LABELS[s.status] ?? s.status}
-									</Badge>
-								</div>
+										<span className="min-w-0 truncate">
+											<span className="block truncate">{name || s.email}</span>
+											{name && (
+												<span className="block truncate text-xs text-muted-foreground">
+													{s.email}
+												</span>
+											)}
+										</span>
+										<Badge
+											variant={s.status === "SIGNED" ? "default" : "outline"}
+										>
+											{s.status === "SIGNED" ? (
+												<CheckCircle2 className="mr-1 h-3 w-3" />
+											) : (
+												<Clock className="mr-1 h-3 w-3" />
+											)}
+											{STATUS_LABELS[s.status] ?? s.status}
+										</Badge>
+									</div>
 								);
 							})}
 						</CardContent>
@@ -271,16 +248,27 @@ export function CorrespondenceDetailClient({
 						</Card>
 					)}
 
-					{detail.driveWebViewLink && (
-						<Button variant="outline" className="w-full" asChild>
-							<a
-								href={detail.driveWebViewLink}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<ExternalLink className="mr-1 h-4 w-4" /> Buka di Google Drive
-							</a>
-						</Button>
+					{detail.canSign && (
+						<Card>
+							<CardHeader className="pb-2">
+								<CardTitle className="text-base">Tindakan</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-2">
+								<Button
+									className="w-full"
+									onClick={handleSign}
+									disabled={signing || !box || !pdfData}
+								>
+									<PenLine className="mr-1 h-4 w-4" />
+									{signing ? "Memproses..." : "Tandatangani"}
+								</Button>
+								{!box && (
+									<p className="text-xs text-muted-foreground">
+										Ketuk dokumen untuk menaruh QR.
+									</p>
+								)}
+							</CardContent>
+						</Card>
 					)}
 				</div>
 			</div>
