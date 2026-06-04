@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function VerifyPage() {
 	return (
-		<main className="min-h-screen bg-muted/20 py-8">
+		<main className="min-h-screen bg-muted/20 py-4">
 			<VerifyClient />
 		</main>
 	);

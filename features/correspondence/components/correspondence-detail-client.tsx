@@ -8,7 +8,6 @@ import {
 	PageHeader,
 	PageHeaderActions,
 	PageHeaderBack,
-	PageHeaderDescription,
 	PageHeaderHeading,
 	PageHeaderTitle,
 } from "@/components/ui/page-header";
@@ -153,7 +152,7 @@ export function CorrespondenceDetailClient({
 				{signing ? "Memproses..." : "Tandatangani"}
 			</Button>
 			{!box && (
-				<p className="text-xs text-muted-foreground">
+				<p className="text-xs text-center text-muted-foreground">
 					Ketuk dokumen untuk menaruh QR.
 				</p>
 			)}
@@ -165,13 +164,7 @@ export function CorrespondenceDetailClient({
 			<PageHeader>
 				<PageHeaderHeading>
 					<PageHeaderBack />
-					<div>
-						<PageHeaderTitle>{detail.title}</PageHeaderTitle>
-						<PageHeaderDescription>
-							{detail.ownerName} · {detail.signedCount}/{detail.signerCount}{" "}
-							tanda tangan
-						</PageHeaderDescription>
-					</div>
+					<PageHeaderTitle>{detail.title}</PageHeaderTitle>
 				</PageHeaderHeading>
 				<PageHeaderActions>
 					<Button
@@ -206,15 +199,6 @@ export function CorrespondenceDetailClient({
 				</Card>
 
 				<div className="order-2 space-y-4">
-					{detail.canSign && (
-						<Card className="hidden lg:block lg:sticky lg:top-4">
-							<CardHeader className="pb-2">
-								<CardTitle className="text-base">Tindakan</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-2">{signAction}</CardContent>
-						</Card>
-					)}
-
 					<Card>
 						<CardHeader className="pb-2">
 							<CardTitle className="text-base">Penandatangan</CardTitle>
@@ -275,6 +259,14 @@ export function CorrespondenceDetailClient({
 									/>
 								</div>
 							</CardContent>
+						</Card>
+					)}
+					{detail.canSign && (
+						<Card className="hidden lg:block lg:sticky lg:top-20 z-10">
+							<CardHeader className="pb-2">
+								<CardTitle className="text-base">Tindakan</CardTitle>
+							</CardHeader>
+							<CardContent className="space-y-2">{signAction}</CardContent>
 						</Card>
 					)}
 				</div>

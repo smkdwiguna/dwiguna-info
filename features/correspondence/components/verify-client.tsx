@@ -5,18 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { BrandLogo } from "@/components/brand-logo";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import {
-	CheckCircle2,
-	Download,
-	FileCheck2,
-	ShieldCheck,
-	ShieldX,
-	Stamp,
-	Upload,
-	XCircle,
-} from "lucide-react";
+import { CheckCircle2, Download, Upload, XCircle } from "lucide-react";
 import type { VerificationResult } from "../actions/verify";
 import type { PublicDocumentInfo } from "../actions/verify";
 import { PdfViewer } from "./pdf-viewer";
@@ -71,24 +63,9 @@ export function VerifyClient({
 	}
 
 	const infoPanel = isPublic && publicDoc && (
-		<Card>
-			<CardHeader className="pb-2">
+		<Card className="pb-0">
+			<CardHeader className="flex gap-4 justify-between">
 				<CardTitle className="text-base">{publicDoc.title}</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-3 text-sm">
-				<p className="text-muted-foreground">
-					Pemilik: {publicDoc.ownerName ?? publicDoc.ownerEmail}
-				</p>
-				{publicDoc.signers.length > 0 && (
-					<div className="flex flex-wrap gap-2">
-						{publicDoc.signers.map((s) => (
-							<Badge key={s.email} variant="outline">
-								{s.name ?? s.email}
-								{s.signedAt ? " ✓" : ""}
-							</Badge>
-						))}
-					</div>
-				)}
 				{fileUrl && (
 					<Button variant="outline" size="sm" asChild>
 						<a href={fileUrl} download={`${publicDoc.title ?? "dokumen"}.pdf`}>
@@ -96,10 +73,22 @@ export function VerifyClient({
 						</a>
 					</Button>
 				)}
+			</CardHeader>
+			<CardContent className="p-0">
+				<Table className="bg-background">
+					<TableBody>
+						{publicDoc.signers.map((s) => (
+							<TableRow key={s.email}>
+								<TableCell className="text-center">
+									{s.name ?? s.email}
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
 			</CardContent>
 		</Card>
 	);
-
 	const privateNotice = documentId && publicDoc && !publicDoc.isPublic && (
 		<Card>
 			<CardContent className="py-4 text-sm text-muted-foreground">
@@ -114,7 +103,7 @@ export function VerifyClient({
 			<CardHeader className="pb-2">
 				<CardTitle className="text-base">Pengecekan salinan</CardTitle>
 			</CardHeader>
-			<CardContent className="space-y-3">
+			<CardContent className="">
 				<div className="space-y-2">
 					<Label htmlFor="verify-file">Berkas PDF</Label>
 					<Input
@@ -128,91 +117,41 @@ export function VerifyClient({
 					<Upload className="mr-1 h-4 w-4" />
 					{loading ? "Memeriksa..." : "Periksa Dokumen"}
 				</Button>
-			</CardContent>
-		</Card>
-	);
-
-	const resultCard = result && (
-		<Card
-			className={
-				result.isUntampered ? "border-emerald-500/50" : "border-destructive/50"
-			}
-		>
-			<CardHeader className="pb-2">
-				<CardTitle className="flex items-center gap-2 text-base">
-					{result.isUntampered ? (
-						<ShieldCheck className="h-5 w-5 text-emerald-600" />
-					) : (
-						<ShieldX className="h-5 w-5 text-destructive" />
-					)}
-					{result.found ? (result.title ?? "Hasil Verifikasi") : "Tidak Dikenali"}
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-2">
-				<p className="text-sm text-muted-foreground">{result.message}</p>
-				{result.found && (
+				{result && (
 					<div className="space-y-1 pt-2">
-						<ResultRow
-							ok={result.isUntampered}
-							label="Dokumen belum dimodifikasi"
-						/>
+						<p className="font-bold">{result.message}</p>
+						<ResultRow ok={result.isUntampered} label="Keaslian dokumen" />
 						<ResultRow
 							ok={result.isCryptographicallyValid}
-							label="Tanda tangan kriptografis valid"
+							label="Validasi kriptografis"
 						/>
 						<ResultRow
 							ok={result.isTrustedIdentity}
-							label="Identitas terpercaya secara internal"
+							label="Pengecekan identitas"
 						/>
-						<ResultRow
-							ok={result.hasTimestamp}
-							label="Memiliki penanda waktu elektronik"
-						/>
-					</div>
-				)}
-				{result.signers.length > 0 && (
-					<div className="flex flex-wrap gap-2 pt-2">
-						{result.signers.map((s) => (
-							<Badge key={s.email} variant={s.trusted ? "default" : "outline"}>
-								<Stamp className="mr-1 h-3 w-3" />
-								{s.name ?? s.email}
-							</Badge>
-						))}
+						<ResultRow ok={result.hasTimestamp} label="Penanda waktu" />
 					</div>
 				)}
 			</CardContent>
 		</Card>
-	);
-
-	const header = (
-		<div className="space-y-1 text-center">
-			<h1 className="flex items-center justify-center gap-2 text-2xl font-bold">
-				<FileCheck2 className="h-6 w-6" /> Verifikasi Dokumen
-			</h1>
-			<p className="text-sm text-muted-foreground">
-				Unggah salinan PDF untuk memeriksa keasliannya terhadap basis data tanda
-				tangan elektronik.
-			</p>
-		</div>
 	);
 
 	// Public document: two columns on desktop (document left, menus right) and
 	// render the document immediately without an extra click.
 	if (isPublic && fileUrl) {
 		return (
-			<div className="mx-auto w-full max-w-6xl space-y-4 p-4">
-				{header}
-				<div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
-					<Card className="order-2 lg:order-1">
+			<div className="mx-auto w-full flex flex-col items-center max-w-6xl space-y-8 p-4">
+				<BrandLogo />
+				<div className="flex flex-col lg:flex-row-reverse gap-4 w-full">
+					<div className="space-y-4">
+						{infoPanel}
+						{uploadCard}
+					</div>
+					<Card className="flex-1">
 						<CardContent>
 							<PdfViewer url={fileUrl} />
 						</CardContent>
 					</Card>
-					<div className="order-1 space-y-4 lg:order-2">
-						{infoPanel}
-						{uploadCard}
-						{resultCard}
-					</div>
 				</div>
 			</div>
 		);
@@ -221,10 +160,8 @@ export function VerifyClient({
 	// Private/unknown document or the generic verify page: single column.
 	return (
 		<div className={cn("mx-auto w-full max-w-2xl space-y-4 p-4")}>
-			{header}
 			{privateNotice}
 			{uploadCard}
-			{resultCard}
 		</div>
 	);
 }

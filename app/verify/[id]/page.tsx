@@ -17,7 +17,7 @@ export default async function VerifyByIdPage({
 	const publicDoc = await getPublicDocument(id);
 
 	return (
-		<main className="min-h-screen bg-muted/20 py-8">
+		<main className="min-h-screen bg-muted/20 py-4">
 			<VerifyClient documentId={id} publicDoc={publicDoc} />
 		</main>
 	);

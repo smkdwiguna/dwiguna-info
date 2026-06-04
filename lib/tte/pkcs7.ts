@@ -50,7 +50,7 @@ export function createSelfSignedCertificate(
 	const attrs: forge.pki.CertificateField[] = [
 		{ name: "commonName", value: options.commonName },
 		{ name: "organizationName", value: "SMK TI Dwiguna" },
-		{ name: "organizationalUnitName", value: "Persuratan Dwiguna.Info" },
+		{ name: "organizationalUnitName", value: "Dwiguna.Info" },
 	];
 	cert.setSubject(attrs);
 	cert.setIssuer(attrs);

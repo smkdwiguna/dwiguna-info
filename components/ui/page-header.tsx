@@ -56,7 +56,7 @@ export function PageHeaderHeading({
 	return (
 		<div
 			className={cn(
-				"w-full flex gap-2 justify-center md:justify-start",
+				"w-full flex gap-2 md:justify-center justify-start",
 				className,
 			)}
 			{...props}
@@ -73,15 +73,6 @@ export function PageHeaderTitle({
 			className={cn("text-2xl font-bold tracking-tight", className)}
 			{...props}
 		/>
-	);
-}
-
-export function PageHeaderDescription({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-	return (
-		<p className={cn("text-sm text-muted-foreground", className)} {...props} />
 	);
 }
 
