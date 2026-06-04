@@ -6,13 +6,16 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getHighResPeoplePhotoUrl } from "@/lib/google-people-photo";
 
 export default async function DashboardPage() {
 	const session = await getServerSession();
 
-	if (!session?.user) return null; // handled by layout
+	if (!session?.user) return null;
 
 	const { user } = session;
+
+	const photo = await getHighResPeoplePhotoUrl(user.email);
 
 	return (
 		<div className="space-y-4">
@@ -22,7 +25,7 @@ export default async function DashboardPage() {
 						<Avatar className="size-14">
 							<AvatarImage
 								referrerPolicy="no-referrer"
-								src={user.image ?? undefined}
+								src={photo ? photo : (user.image ?? undefined)}
 								alt={user.name || user.email}
 							/>
 							<AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
