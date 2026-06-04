@@ -14,7 +14,7 @@ export default async function DashboardLayout({
 	const userEmail = session?.user?.email;
 
 	if (!userEmail) {
-		return <Login googleClientId={process.env.GOOGLE_CLIENT_ID} />;
+		return <Login />;
 	}
 
 	let permissions: string[] = [];
