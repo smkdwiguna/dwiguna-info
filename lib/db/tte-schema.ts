@@ -1,5 +1,5 @@
 /**
- * Persuratan (Tanda Tangan Elektronik / TTE) tables in Cloudflare D1.
+ * Correspondence (Tanda Tangan Elektronik / TTE) tables in Cloudflare D1.
  */
 import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
@@ -48,7 +48,7 @@ export const signatureDocuments = sqliteTable("signature_documents", {
 /**
  * A signer attached to a document. The owner is also inserted as a signer.
  * Invited signers (status INVITED) can view & sign the document WITHOUT holding
- * the `persuratan` feature permission (bypass).
+ * the `correspondence` feature permission (bypass).
  */
 export const signatureSigners = sqliteTable(
 	"signature_signers",

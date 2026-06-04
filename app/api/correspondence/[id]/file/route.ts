@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDocumentDetail } from "@/features/persuratan/actions/documents";
+import { getDocumentDetail } from "@/features/correspondence/actions/documents";
 import { downloadDriveFileBytes } from "@/lib/google-drive";
 import { getDb } from "@/lib/db";
 import { signatureDocuments } from "@/lib/db/schema";

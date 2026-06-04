@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+import { oneTap } from "better-auth/plugins";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { isWorkspaceEmail, WORKSPACE_DOMAIN } from "./access";
@@ -77,7 +78,10 @@ function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 		telemetry: {
 			enabled: false,
 		},
-		plugins: [nextCookies()],
+		// One Tap signs in returning users instantly. Signup stays on the full
+		// OAuth flow so the workspace-domain check (hd) and Drive refresh token
+		// continue to be enforced/captured there.
+		plugins: [oneTap({ disableSignup: true }), nextCookies()],
 	});
 }
 

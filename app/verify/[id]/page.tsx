@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { VerifyClient } from "@/features/persuratan/components/verify-client";
-import { getPublicDocument } from "@/features/persuratan/actions/verify";
+import { VerifyClient } from "@/features/correspondence/components/verify-client";
+import { getPublicDocument } from "@/features/correspondence/actions/verify";
 
 export const dynamic = "force-dynamic";
 

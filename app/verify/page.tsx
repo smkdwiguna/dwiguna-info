@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { VerifyClient } from "@/features/persuratan/components/verify-client";
+import { VerifyClient } from "@/features/correspondence/components/verify-client";
 
 export const metadata: Metadata = {
 	title: "Verifikasi Dokumen · Dwiguna.Info",

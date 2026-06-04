@@ -10,9 +10,9 @@ import { isWorkspaceEmail } from "@/lib/access";
 import { sha256Hex } from "@/lib/tte/crypto";
 import { uploadSignedPdfToDrive, setDriveFilePublic } from "@/lib/google-drive";
 import {
-	getPersuratanContext,
-	requirePersuratanAccess,
-	requirePersuratanUpload,
+	getCorrespondenceContext,
+	requireCorrespondenceAccess,
+	requireCorrespondenceUpload,
 } from "./access";
 import { ensureUserKeys } from "./keys";
 
@@ -51,7 +51,7 @@ function normalizeEmail(value: string): string {
 
 /** Create a document from an uploaded PDF and invite the given signers. */
 export async function createDocument(formData: FormData): Promise<string> {
-	const ctx = await requirePersuratanUpload();
+	const ctx = await requireCorrespondenceUpload();
 	const title = String(formData.get("title") || "").trim();
 	const isPublic = String(formData.get("isPublic") || "false") === "true";
 	const file = formData.get("file");
@@ -128,7 +128,7 @@ export async function createDocument(formData: FormData): Promise<string> {
 
 /** List documents the user owns or is invited to. */
 export async function listDocuments(): Promise<DocumentSummary[]> {
-	const ctx = await requirePersuratanAccess();
+	const ctx = await requireCorrespondenceAccess();
 	const db = await getDb();
 
 	const participantDocIds = await db
@@ -175,7 +175,7 @@ export async function listDocuments(): Promise<DocumentSummary[]> {
 export async function getDocumentDetail(
 	documentId: string,
 ): Promise<DocumentDetail | null> {
-	const ctx = await requirePersuratanAccess();
+	const ctx = await requireCorrespondenceAccess();
 	const db = await getDb();
 
 	const docs = await db
@@ -235,7 +235,7 @@ export async function inviteSigner(
 	documentId: string,
 	email: string,
 ): Promise<void> {
-	const ctx = await requirePersuratanAccess();
+	const ctx = await requireCorrespondenceAccess();
 	const normalized = normalizeEmail(email);
 	if (!isWorkspaceEmail(normalized)) {
 		throw new Error("Hanya email smkdwiguna.sch.id yang bisa diundang.");
@@ -277,7 +277,7 @@ export async function setDocumentPublic(
 	documentId: string,
 	isPublic: boolean,
 ): Promise<void> {
-	const ctx = await requirePersuratanAccess();
+	const ctx = await requireCorrespondenceAccess();
 	const db = await getDb();
 	const docs = await db
 		.select()
@@ -304,7 +304,7 @@ export async function setDocumentPublic(
 }
 
 /** Whether the feature should be shown in the sidebar for the current user. */
-export async function isPersuratanVisible(): Promise<boolean> {
-	const ctx = await getPersuratanContext();
+export async function isCorrespondenceVisible(): Promise<boolean> {
+	const ctx = await getCorrespondenceContext();
 	return !!ctx?.visible;
 }

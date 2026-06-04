@@ -65,9 +65,9 @@ const FEATURE_SETS = [
 		permissions: [{ key: "inventory", label: "Kelola Inventaris" }],
 	},
 	{
-		key: "persuratan",
+		key: "correspondence",
 		title: "Persuratan",
-		permissions: [{ key: "persuratan", label: "Kelola Persuratan & TTE" }],
+		permissions: [{ key: "correspondence", label: "Kelola Persuratan & TTE" }],
 	},
 ];
 

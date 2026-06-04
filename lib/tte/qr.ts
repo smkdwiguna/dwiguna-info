@@ -1,5 +1,5 @@
 /**
- * QR code generation for the Persuratan (TTE) feature.
+ * QR code generation for the Correspondence (TTE) feature.
  * `qrcode` is pure JS (uses pngjs) and runs on the Edge Runtime.
  */
 import QRCode from "qrcode";

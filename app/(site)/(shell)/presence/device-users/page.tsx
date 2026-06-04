@@ -7,8 +7,10 @@ import { DeviceUsersClient } from "@/features/presence/components/device-users-c
 import { PageShell } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
+import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
 
-export default function PresenceDeviceUsersPage() {
+export default async function PresenceDeviceUsersPage() {
+	await requireSuperUserOrRedirect();
 	return (
 		<>
 			<RouteRefreshPoller />

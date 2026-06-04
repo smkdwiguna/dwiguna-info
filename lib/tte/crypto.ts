@@ -1,6 +1,6 @@
 /**
  * Edge / Cloudflare Worker-compatible cryptographic utilities for the
- * "Persuratan" (Tanda Tangan Elektronik / TTE) feature.
+ * Correspondence (Tanda Tangan Elektronik / TTE) feature.
  *
  * IMPORTANT — Edge Runtime limitations:
  * - This module ONLY uses the Web Crypto API (`crypto.subtle`) and `Buffer`

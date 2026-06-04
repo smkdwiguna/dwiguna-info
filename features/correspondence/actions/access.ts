@@ -6,13 +6,13 @@ import { signatureSigners } from "@/lib/db/schema";
 import { getServerSession } from "@/lib/server-session";
 import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
-export const PERSURATAN_PERMISSION = "persuratan";
+export const CORRESPONDENCE_PERMISSION = "correspondence";
 
-export interface PersuratanContext {
+export interface CorrespondenceContext {
 	email: string;
 	displayName: string;
 	isSuperUser: boolean;
-	/** Has the `persuratan` feature permission (can upload + manage). */
+	/** Has the `correspondence` feature permission (can upload + manage). */
 	hasFeaturePermission: boolean;
 	/** Is invited to at least one document (bypass — can view & sign). */
 	hasInvitations: boolean;
@@ -23,21 +23,21 @@ export interface PersuratanContext {
 }
 
 /**
- * Resolve the current user's Persuratan access.
+ * Resolve the current user's Correspondence access.
  *
- * - Users with the `persuratan` permission (or the superuser) can do everything.
+ * - Users with the `correspondence` permission (or the superuser) can do everything.
  * - Users WITHOUT the permission but invited to a document get a bypass: the
  *   feature becomes visible and they can view/sign documents that include them,
  *   but they cannot upload new documents.
  */
-export async function getPersuratanContext(): Promise<PersuratanContext | null> {
+export async function getCorrespondenceContext(): Promise<CorrespondenceContext | null> {
 	const session = await getServerSession();
 	const email = session?.user?.email;
 	if (!email) return null;
 
 	const { permissions, isSuperUser } = await getLivePermissions();
 	const hasFeaturePermission =
-		isSuperUser || permissions.includes(PERSURATAN_PERMISSION);
+		isSuperUser || permissions.includes(CORRESPONDENCE_PERMISSION);
 
 	let hasInvitations = false;
 	if (!hasFeaturePermission) {
@@ -62,8 +62,8 @@ export async function getPersuratanContext(): Promise<PersuratanContext | null> 
 }
 
 /** Throw unless the user can access the feature at all. */
-export async function requirePersuratanAccess(): Promise<PersuratanContext> {
-	const ctx = await getPersuratanContext();
+export async function requireCorrespondenceAccess(): Promise<CorrespondenceContext> {
+	const ctx = await getCorrespondenceContext();
 	if (!ctx || !ctx.visible) {
 		throw new Error("FORBIDDEN");
 	}
@@ -71,8 +71,8 @@ export async function requirePersuratanAccess(): Promise<PersuratanContext> {
 }
 
 /** Throw unless the user may upload/manage documents. */
-export async function requirePersuratanUpload(): Promise<PersuratanContext> {
-	const ctx = await getPersuratanContext();
+export async function requireCorrespondenceUpload(): Promise<CorrespondenceContext> {
+	const ctx = await getCorrespondenceContext();
 	if (!ctx || !ctx.canUpload) {
 		throw new Error("FORBIDDEN");
 	}

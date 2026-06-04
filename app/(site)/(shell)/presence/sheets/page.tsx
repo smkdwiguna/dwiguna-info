@@ -5,8 +5,10 @@ import { SheetsListClient } from "@/features/presence/components/sheets-list-cli
 import { PageShell } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
+import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
 
-export default function PresenceSheetsPage() {
+export default async function PresenceSheetsPage() {
+	await requireSuperUserOrRedirect();
 	return (
 		<>
 			<RouteRefreshPoller />

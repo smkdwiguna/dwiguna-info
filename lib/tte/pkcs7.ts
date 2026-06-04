@@ -1,5 +1,5 @@
 /**
- * PKCS#7 / X.509 helpers for the Persuratan (TTE) feature, built on `node-forge`.
+ * PKCS#7 / X.509 helpers for the Correspondence (TTE) feature, built on `node-forge`.
  *
  * Edge Runtime notes:
  * - `node-forge` is pure JS and runs on Cloudflare Workers (with `nodejs_compat`).

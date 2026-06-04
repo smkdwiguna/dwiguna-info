@@ -4,15 +4,17 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
+import { GoogleOneTap } from "@/components/google-one-tap";
 
-export default function Login() {
+export default function Login({ googleClientId }: { googleClientId?: string }) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
+	const searchStr = searchParams.toString();
+	const currentUrl = pathname + (searchStr ? `?${searchStr}` : "");
+
 	const handleGoogleLogin = () => {
-		const searchStr = searchParams.toString();
-		const currentUrl = pathname + (searchStr ? `?${searchStr}` : "");
 		router.replace(`/login?callbackURL=${encodeURIComponent(currentUrl)}`);
 	};
 
@@ -31,6 +33,12 @@ export default function Login() {
 						<CardTitle className="text-xl">Dwiguna.Info</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-4">
+						{googleClientId && (
+							<GoogleOneTap
+								clientId={googleClientId}
+								callbackURL={currentUrl}
+							/>
+						)}
 						<Button
 							variant="outline"
 							size="lg"

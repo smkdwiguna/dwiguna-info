@@ -3,7 +3,7 @@ import { SiteLayout } from "@/features/site-shell/components/site-layout";
 import Login from "@/components/login";
 import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 import { getInventories } from "@/features/inventory/actions/inventory";
-import { isPersuratanVisible } from "@/features/persuratan/actions/documents";
+import { isCorrespondenceVisible } from "@/features/correspondence/actions/documents";
 
 export default async function DashboardLayout({
 	children,
@@ -14,24 +14,24 @@ export default async function DashboardLayout({
 	const userEmail = session?.user?.email;
 
 	if (!userEmail) {
-		return <Login />;
+		return <Login googleClientId={process.env.GOOGLE_CLIENT_ID} />;
 	}
 
 	let permissions: string[] = [];
 	let inventoryEntries: { id: number; name: string }[] = [];
-	let showPersuratan = false;
+	let showCorrespondence = false;
 	try {
-		const [livePermissions, inventories, persuratanVisible] = await Promise.all([
+		const [livePermissions, inventories, correspondenceVisible] = await Promise.all([
 			getLivePermissions(),
 			getInventories(),
-			isPersuratanVisible(),
+			isCorrespondenceVisible(),
 		]);
 		permissions = livePermissions.permissions;
 		inventoryEntries = inventories.map((inventory) => ({
 			id: inventory.id,
 			name: inventory.name,
 		}));
-		showPersuratan = persuratanVisible;
+		showCorrespondence = correspondenceVisible;
 	} catch (error) {
 		console.error("Failed to preload site shell data", error);
 	}
@@ -41,7 +41,7 @@ export default async function DashboardLayout({
 			userEmail={userEmail}
 			permissions={permissions}
 			inventoryEntries={inventoryEntries}
-			showPersuratan={showPersuratan}
+			showCorrespondence={showCorrespondence}
 		>
 			{children}
 		</SiteLayout>

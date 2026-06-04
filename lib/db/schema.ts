@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-// Better Auth (sessions/accounts) + Persuratan (TTE) tables.
+// Better Auth (sessions/accounts) + Correspondence (TTE) tables.
 export * from "./auth-schema";
 export * from "./tte-schema";
 

@@ -355,7 +355,7 @@ export async function deleteFileFromDrive(fileId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Persuratan (TTE) helpers
+// Correspondence (TTE) helpers
 // ---------------------------------------------------------------------------
 
 export interface DriveUploadResult {
@@ -368,7 +368,7 @@ export interface DriveUploadResult {
 }
 
 /**
- * Folder structure for signed documents: /Dwiguna.Info/Tanda Tangan/.
+ * Folder structure for signed documents: /Dwiguna.Info/Persuratan/.
  * When impersonating a user (subject = their email) this is created in *their*
  * Drive; otherwise it lives under the central service account, namespaced by
  * the owner's email so files stay separated.
@@ -379,7 +379,7 @@ async function getSignatureFolderId(
 ): Promise<string> {
 	const rootFolderId = await findOrCreateFolder("Dwiguna.Info", undefined, subject);
 	const signFolderId = await findOrCreateFolder(
-		"Tanda Tangan",
+		"Persuratan",
 		rootFolderId,
 		subject,
 	);

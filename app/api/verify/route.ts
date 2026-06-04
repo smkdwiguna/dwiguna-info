@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { verifyUploadedPdf } from "@/features/persuratan/actions/verify";
+import { verifyUploadedPdf } from "@/features/correspondence/actions/verify";
 
 // Public verification endpoint: accepts a multipart PDF upload (and optional
 // documentId) and returns the verification result. No authentication required.

@@ -19,7 +19,7 @@ import {
 	downloadDriveFileBytes,
 	uploadSignedPdfToDrive,
 } from "@/lib/google-drive";
-import { requirePersuratanAccess } from "./access";
+import { requireCorrespondenceAccess } from "./access";
 import { getSignerCredentials } from "./keys";
 import { getVerifyUrl } from "../lib/constants";
 
@@ -40,7 +40,7 @@ export async function signDocument(
 	documentId: string,
 	placement: QrPlacementInput,
 ): Promise<{ status: string }> {
-	const ctx = await requirePersuratanAccess();
+	const ctx = await requireCorrespondenceAccess();
 	const db = await getDb();
 
 	const docs = await db
@@ -165,8 +165,8 @@ export async function signDocument(
 		signedAt: nowIso,
 	});
 
-	revalidatePath(`/persuratan/${documentId}`);
-	revalidatePath("/persuratan");
+	revalidatePath(`/correspondence/${documentId}`);
+	revalidatePath("/correspondence");
 
 	return { status: newStatus };
 }

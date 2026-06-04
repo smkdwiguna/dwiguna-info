@@ -1,5 +1,5 @@
 /**
- * PDF signing/verification for the Persuratan (TTE) feature.
+ * PDF signing/verification for the Correspondence (TTE) feature.
  *
  * Flow (all Edge Runtime compatible — pdf-lib, @signpdf, node-forge are pure JS):
  * 1. `embedSignatureVisuals` draws the QR code(s) onto the PDF at the position

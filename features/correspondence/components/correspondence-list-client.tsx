@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
+import { UserPicker, type UserOption } from "./user-picker";
 import {
 	Dialog,
 	DialogContent,
@@ -37,19 +37,21 @@ const STATUS_LABELS: Record<string, string> = {
 	COMPLETED: "Selesai",
 };
 
-export function PersuratanListClient({
+export function CorrespondenceListClient({
 	documents,
 	canUpload,
+	users = [],
 }: {
 	documents: DocumentSummary[];
 	canUpload: boolean;
+	users?: UserOption[];
 }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
 	const [title, setTitle] = useState("");
 	const [isPublic, setIsPublic] = useState(false);
-	const [signers, setSigners] = useState("");
+	const [signers, setSigners] = useState<string[]>([]);
 	const fileRef = useRef<HTMLInputElement>(null);
 
 	function handleSubmit() {
@@ -62,15 +64,10 @@ export function PersuratanListClient({
 			toast.error("Pilih berkas PDF.");
 			return;
 		}
-		const emails = signers
-			.split(/[\s,;\n]+/)
-			.map((s) => s.trim())
-			.filter(Boolean);
-
 		const formData = new FormData();
 		formData.set("title", title.trim());
 		formData.set("isPublic", String(isPublic));
-		formData.set("signers", JSON.stringify(emails));
+		formData.set("signers", JSON.stringify(signers));
 		formData.set("file", file);
 
 		startTransition(async () => {
@@ -78,7 +75,10 @@ export function PersuratanListClient({
 				const id = await createDocument(formData);
 				toast.success("Dokumen dibuat.");
 				setOpen(false);
-				router.push(`/persuratan/${id}`);
+				setTitle("");
+				setSigners([]);
+				setIsPublic(false);
+				router.push(`/correspondence/${id}`);
 			} catch (error) {
 				toast.error(
 					error instanceof Error ? error.message : "Gagal membuat dokumen.",
@@ -134,15 +134,13 @@ export function PersuratanListClient({
 										/>
 									</div>
 									<div className="space-y-2">
-										<Label htmlFor="doc-signers">
-											Undang penandatangan (opsional)
-										</Label>
-										<Textarea
-											id="doc-signers"
+										<Label>Undang penandatangan (opsional)</Label>
+										<UserPicker
+											users={users}
 											value={signers}
-											onChange={(e) => setSigners(e.target.value)}
-											placeholder="email1@smkdwiguna.sch.id, email2@smkdwiguna.sch.id"
-											rows={2}
+											onChange={setSigners}
+											disabled={isPending}
+											placeholder="Cari nama penandatangan..."
 										/>
 										<p className="text-xs text-muted-foreground">
 											Penerima undangan bisa menandatangani tanpa izin fitur.
@@ -193,7 +191,7 @@ export function PersuratanListClient({
 			) : (
 				<div className="grid gap-3">
 					{documents.map((doc) => (
-						<Link key={doc.id} href={`/persuratan/${doc.id}`}>
+						<Link key={doc.id} href={`/correspondence/${doc.id}`}>
 							<Card className="transition hover:border-primary/50">
 								<CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
 									<div className="flex items-start gap-3">

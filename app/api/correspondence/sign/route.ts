@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { signDocument } from "@/features/persuratan/actions/sign";
+import { signDocument } from "@/features/correspondence/actions/sign";
 
 // Sign a document. Access control + crypto live in the server action; this
 // endpoint is a thin JSON wrapper around it.

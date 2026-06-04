@@ -56,8 +56,8 @@ export function PdfViewer({
 			setLoading(true);
 			setError(null);
 			try {
-				const pdfjs = await import("pdfjs-dist");
-				pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+				const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+				pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
 				let source: { data: Uint8Array } | { url: string };
 				if (data) {

@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -22,9 +21,9 @@ import {
 	ExternalLink,
 	Globe,
 	PenLine,
-	UserPlus,
 } from "lucide-react";
 import { PdfViewer, type QrBox } from "./pdf-viewer";
+import { UserPicker, type UserOption } from "./user-picker";
 import { inviteSigner, setDocumentPublic } from "../actions/documents";
 import type { DocumentDetail } from "../actions/documents";
 
@@ -36,18 +35,23 @@ const STATUS_LABELS: Record<string, string> = {
 	SIGNED: "Sudah TTE",
 };
 
-export function PersuratanDetailClient({ detail }: { detail: DocumentDetail }) {
+export function CorrespondenceDetailClient({
+	detail,
+	users = [],
+}: {
+	detail: DocumentDetail;
+	users?: UserOption[];
+}) {
 	const router = useRouter();
 	const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
 	const [box, setBox] = useState<QrBox | null>(null);
 	const [isPublic, setIsPublic] = useState(detail.isPublic);
-	const [inviteEmail, setInviteEmail] = useState("");
 	const [signing, setSigning] = useState(false);
 	const [isPending, startTransition] = useTransition();
 
 	useEffect(() => {
 		let active = true;
-		fetch(`/api/persuratan/${detail.id}/file`, { credentials: "include" })
+		fetch(`/api/correspondence/${detail.id}/file`, { credentials: "include" })
 			.then((res) => {
 				if (!res.ok) throw new Error("Gagal memuat berkas");
 				return res.arrayBuffer();
@@ -70,7 +74,7 @@ export function PersuratanDetailClient({ detail }: { detail: DocumentDetail }) {
 		}
 		setSigning(true);
 		try {
-			const res = await fetch("/api/persuratan/sign", {
+			const res = await fetch("/api/correspondence/sign", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -106,14 +110,13 @@ export function PersuratanDetailClient({ detail }: { detail: DocumentDetail }) {
 		});
 	}
 
-	function handleInvite() {
-		const email = inviteEmail.trim();
+	function handleInvite(emails: string[]) {
+		const email = emails[emails.length - 1]?.trim();
 		if (!email) return;
 		startTransition(async () => {
 			try {
 				await inviteSigner(detail.id, email);
 				toast.success("Penandatangan diundang.");
-				setInviteEmail("");
 				router.refresh();
 			} catch (error) {
 				toast.error(
@@ -228,25 +231,19 @@ export function PersuratanDetailClient({ detail }: { detail: DocumentDetail }) {
 									</Label>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="invite" className="text-xs">
-										Undang penandatangan
-									</Label>
-									<div className="flex gap-2">
-										<Input
-											id="invite"
-											value={inviteEmail}
-											onChange={(e) => setInviteEmail(e.target.value)}
-											placeholder="email@smkdwiguna.sch.id"
-										/>
-										<Button
-											size="icon"
-											variant="outline"
-											onClick={handleInvite}
-											disabled={isPending}
-										>
-											<UserPlus className="h-4 w-4" />
-										</Button>
-									</div>
+									<Label className="text-xs">Undang penandatangan</Label>
+									<UserPicker
+										users={users}
+										value={[]}
+										onChange={handleInvite}
+										disabled={isPending}
+										hideSelected
+										excludeEmails={[
+											detail.ownerEmail,
+											...detail.signers.map((s) => s.email),
+										]}
+										placeholder="Cari nama penandatangan..."
+									/>
 								</div>
 							</CardContent>
 						</Card>
