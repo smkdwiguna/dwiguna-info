@@ -199,7 +199,7 @@ export function CorrespondenceListClient({
 										<div>
 											<p className="font-medium">{doc.title}</p>
 											<p className="text-xs text-muted-foreground">
-												{doc.ownerEmail}
+												{doc.ownerName}
 												{doc.isOwner ? " (Anda)" : ""}
 											</p>
 										</div>
