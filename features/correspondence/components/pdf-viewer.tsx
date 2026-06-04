@@ -212,7 +212,10 @@ export function PdfViewer({
 						pageRefs.current[page.index] = el;
 					}}
 					className="relative w-full max-w-3xl shadow-sm ring-1 ring-border"
-					style={{ aspectRatio: `${page.width} / ${page.height}`, touchAction: placementMode ? "none" : undefined }}
+					style={{
+						aspectRatio: `${page.width} / ${page.height}`,
+						touchAction: placementMode ? "none" : undefined,
+					}}
 					onPointerDown={(e) => handlePagePointerDown(page.index, e)}
 					onPointerMove={onPointerMove}
 					onPointerUp={endDrag}

@@ -69,7 +69,9 @@ export function CorrespondenceDetailClient({
 
 	async function handleSign() {
 		if (!box) {
-			toast.error("Tentukan posisi QR dengan mengetuk dokumen terlebih dahulu.");
+			toast.error(
+				"Tentukan posisi QR dengan mengetuk dokumen terlebih dahulu.",
+			);
 			return;
 		}
 		setSigning(true);
@@ -99,7 +101,9 @@ export function CorrespondenceDetailClient({
 		startTransition(async () => {
 			try {
 				await setDocumentPublic(detail.id, next);
-				toast.success(next ? "Dokumen dipublikasikan." : "Dokumen disetel privat.");
+				toast.success(
+					next ? "Dokumen dipublikasikan." : "Dokumen disetel privat.",
+				);
 				router.refresh();
 			} catch (error) {
 				setIsPublic(!next);
@@ -142,8 +146,8 @@ export function CorrespondenceDetailClient({
 			</PageHeader>
 
 			<div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-				<Card className="order-2 lg:order-1">
-					<CardContent className="p-3 sm:p-4">
+				<Card className="order-1">
+					<CardContent>
 						{detail.canSign && (
 							<div className="mb-3 rounded-md bg-muted p-3 text-sm">
 								<p className="font-medium">Bubuhkan tanda tangan</p>
@@ -162,7 +166,7 @@ export function CorrespondenceDetailClient({
 					</CardContent>
 				</Card>
 
-				<div className="order-1 space-y-4 lg:order-2">
+				<div className="order-2 space-y-4">
 					{detail.canSign && (
 						<Card>
 							<CardHeader className="pb-2">
