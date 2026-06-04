@@ -35,6 +35,10 @@ function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 				// Persist a refresh token so the account row stays usable long-term.
 				accessType: "offline",
 				prompt: "select_account",
+				// Keep the cached D1 profile (name + photo) in sync with Google on
+				// every sign-in. Workspace stays the source of truth; D1 is only a
+				// self-healing cache so stored fields never drift out of date.
+				overrideUserInfoOnSignIn: true,
 				// Org unit (`ou`) and permissions (`access`) are owned by Google
 				// Workspace/Admin and resolved live at request time, so nothing about
 				// them is persisted here — we only enforce the workspace domain.
