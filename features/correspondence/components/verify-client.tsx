@@ -3,8 +3,7 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/spinner";
 import { BrandLogo } from "@/components/brand-logo";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -103,34 +102,52 @@ export function VerifyClient({
 			<CardHeader className="pb-2">
 				<CardTitle className="text-base">Pengecekan salinan</CardTitle>
 			</CardHeader>
-			<CardContent className="">
-				<div className="space-y-2">
-					<Label htmlFor="verify-file">Berkas PDF</Label>
-					<Input
-						id="verify-file"
-						type="file"
-						accept="application/pdf"
-						ref={fileRef}
-					/>
-				</div>
-				<Button onClick={handleVerify} disabled={loading} className="w-full">
-					<Upload className="mr-1 h-4 w-4" />
-					{loading ? "Memeriksa..." : "Periksa Dokumen"}
-				</Button>
-				{result && (
-					<div className="space-y-1 pt-2">
-						<p className="font-bold">{result.message}</p>
-						<ResultRow ok={result.isUntampered} label="Keaslian dokumen" />
-						<ResultRow
-							ok={result.isCryptographicallyValid}
-							label="Validasi kriptografis"
-						/>
-						<ResultRow
-							ok={result.isTrustedIdentity}
-							label="Pengecekan identitas"
-						/>
-						<ResultRow ok={result.hasTimestamp} label="Penanda waktu" />
+			<CardContent className="space-y-3">
+				<input
+					type="file"
+					accept="application/pdf"
+					ref={fileRef}
+					className="hidden"
+					onChange={handleVerify}
+				/>
+				{!result && !loading && (
+					<Button
+						onClick={() => fileRef.current?.click()}
+						className="w-full"
+					>
+						<Upload className="mr-1 h-4 w-4" />
+						Unggah salinan untuk diperiksa
+					</Button>
+				)}
+				{loading && (
+					<div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
+						<Spinner size={18} /> Memeriksa salinan...
 					</div>
+				)}
+				{result && (
+					<>
+						<div className="space-y-1">
+							<p className="font-bold">{result.message}</p>
+							<ResultRow ok={result.isUntampered} label="Keaslian dokumen" />
+							<ResultRow
+								ok={result.isCryptographicallyValid}
+								label="Validasi kriptografis"
+							/>
+							<ResultRow
+								ok={result.isTrustedIdentity}
+								label="Pengecekan identitas"
+							/>
+							<ResultRow ok={result.hasTimestamp} label="Penanda waktu" />
+						</div>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => fileRef.current?.click()}
+							className="w-full"
+						>
+							<Upload className="mr-1 h-4 w-4" /> Periksa berkas lain
+						</Button>
+					</>
 				)}
 			</CardContent>
 		</Card>
