@@ -9,7 +9,6 @@ import {
 	decryptPrivateKey,
 	generateSigningKeyPair,
 } from "@/lib/tte/crypto";
-import { createSelfSignedCertificate } from "@/lib/tte/pkcs7";
 
 function getMasterSecret(): string {
 	const secret = process.env.MASTER_SECRET;
@@ -50,6 +49,9 @@ export async function ensureUserKeys(
 	}
 
 	const { publicKeyPem, privateKeyPem } = await generateSigningKeyPair();
+	// Loaded lazily so node-forge stays out of the SSR bundle of components
+	// that import this module (transitively) only for key bootstrapping.
+	const { createSelfSignedCertificate } = await import("@/lib/tte/pkcs7");
 	const certificatePem = createSelfSignedCertificate({
 		publicKeyPem,
 		privateKeyPem,

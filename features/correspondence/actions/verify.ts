@@ -9,7 +9,6 @@ import {
 	userKeys,
 } from "@/lib/db/schema";
 import { fromBase64, sha256Hex, verifyData } from "@/lib/tte/crypto";
-import { extractByteRanges } from "@/lib/tte/pdf-signature";
 import { resolveUserNames } from "../lib/user-names";
 
 export interface VerifySignerInfo {
@@ -98,6 +97,9 @@ async function buildResultForDocument(
 	// exact ByteRange content of the uploaded file.
 	let isCryptographicallyValid = false;
 	if (isUntampered) {
+		// Loaded lazily so pdf-lib stays out of the SSR bundle of pages that
+		// import this module only for lightweight metadata.
+		const { extractByteRanges } = await import("@/lib/tte/pdf-signature");
 		const ranges = extractByteRanges(uploadedBytes);
 		const lastSigner = [...signerRows]
 			.filter((s) => s.status === "SIGNED" && s.signature && s.publicKey)
