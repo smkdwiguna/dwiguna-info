@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -176,9 +175,8 @@ export function CorrespondenceListClient({
 					{documents.map((doc) => (
 						<Link key={doc.id} href={`/correspondence/${doc.id}`}>
 							<Card className="transition hover:border-primary/50">
-								<CardContent className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+								<CardContent className="flex gap-2 items-center justify-between">
 									<div className="flex items-start gap-3">
-										<FileSignature className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 										<div>
 											<p className="font-medium">{doc.title}</p>
 											<p className="text-xs text-muted-foreground">
@@ -187,22 +185,18 @@ export function CorrespondenceListClient({
 											</p>
 										</div>
 									</div>
-									<div className="flex flex-wrap items-center gap-2">
-										<Badge variant="outline">
+									<div className="flex flex-col items-end md:flex-row md:items-center">
+										<span className="text-sm font-bold text-muted-foreground">
+											{doc.signedCount}/{doc.signerCount} tanda tangan
+										</span>
+										<span className="text-sm flex items-center gap-1 text-muted-foreground">
 											{doc.isPublic ? (
-												<Globe className="mr-1 h-3 w-3" />
+												<Globe className="h-3 w-3" />
 											) : (
-												<Lock className="mr-1 h-3 w-3" />
+												<Lock className="h-3 w-3" />
 											)}
 											{doc.isPublic ? "Publik" : "Privat"}
-										</Badge>
-										<Badge
-											variant={
-												doc.status === "COMPLETED" ? "default" : "outline"
-											}
-										>
-											{doc.signedCount}/{doc.signerCount} tanda tangan
-										</Badge>
+										</span>
 									</div>
 								</CardContent>
 							</Card>
