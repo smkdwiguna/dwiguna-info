@@ -53,22 +53,23 @@ export function PdfViewer({
 	useEffect(() => {
 		let cancelled = false;
 		async function render() {
+			// No source provided yet — the parent is still fetching the bytes.
+			// Stay in the loading state instead of flashing a "no PDF" error.
+			if (!data && !url) {
+				setLoading(true);
+				setError(null);
+				setPages([]);
+				return;
+			}
 			setLoading(true);
 			setError(null);
 			try {
 				const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 				pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
-				let source: { data: Uint8Array } | { url: string };
-				if (data) {
-					source = { data: data.slice() };
-				} else if (url) {
-					source = { url };
-				} else {
-					setError("Tidak ada berkas PDF.");
-					setLoading(false);
-					return;
-				}
+				const source: { data: Uint8Array } | { url: string } = data
+					? { data: data.slice() }
+					: { url: url as string };
 
 				const loadingTask = pdfjs.getDocument(source);
 				const pdf = await loadingTask.promise;
