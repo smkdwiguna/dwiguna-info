@@ -6,10 +6,12 @@ const SHORT_LINK_RESERVED_SEGMENTS = new Set(
 		"bulk-upload",
 		"inventory",
 		"login",
+		"correspondence",
 		"presence",
 		"settings",
 		"shortlinks",
 		"users",
+		"verify",
 	].map((value) => value.toLowerCase()),
 );
 

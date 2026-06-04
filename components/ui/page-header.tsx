@@ -41,7 +41,7 @@ export function PageHeader({
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between",
+				"flex flex-col gap-4 md:flex-row md:items-center md:justify-between",
 				className,
 			)}
 			{...props}
@@ -76,15 +76,6 @@ export function PageHeaderTitle({
 	);
 }
 
-export function PageHeaderDescription({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLParagraphElement>) {
-	return (
-		<p className={cn("text-sm text-muted-foreground", className)} {...props} />
-	);
-}
-
 export function PageHeaderActions({
 	className,
 	...props
@@ -92,7 +83,7 @@ export function PageHeaderActions({
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-2 w-full justify-center xl:w-auto xl:justify-end",
+				"flex items-center gap-2 w-full justify-center md:w-auto md:justify-end",
 				className,
 			)}
 			{...props}

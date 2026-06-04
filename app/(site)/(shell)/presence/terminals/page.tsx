@@ -5,8 +5,10 @@ import { TerminalsListClient } from "@/features/presence/components/terminals-li
 import { PageShell } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
+import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
 
-export default function PresenceTerminalsPage() {
+export default async function PresenceTerminalsPage() {
+	await requireSuperUserOrRedirect();
 	return (
 		<>
 			<RouteRefreshPoller />

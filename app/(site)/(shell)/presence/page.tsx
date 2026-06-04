@@ -23,8 +23,10 @@ import {
 } from "@/components/ui/page-header";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
+import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
 
-export default function PresenceDashboardPage() {
+export default async function PresenceDashboardPage() {
+	await requireSuperUserOrRedirect();
 	return (
 		<>
 			<RouteRefreshPoller />

@@ -24,6 +24,7 @@ import {
 	Shield,
 	LinkIcon,
 	ShelvingUnit,
+	FileSignature,
 } from "lucide-react";
 import Link from "next/link";
 import Logout from "@/components/logout";
@@ -42,6 +43,7 @@ interface SiteLayoutProps {
 	userEmail?: string;
 	permissions?: string[];
 	inventoryEntries?: { id: number; name: string }[];
+	showCorrespondence?: boolean;
 }
 
 export function SiteLayout({
@@ -49,6 +51,7 @@ export function SiteLayout({
 	userEmail,
 	permissions,
 	inventoryEntries = [],
+	showCorrespondence = false,
 }: SiteLayoutProps) {
 	const superUser = isSuperUser(userEmail);
 	const router = useRouter();
@@ -88,6 +91,7 @@ export function SiteLayout({
 					currentPath={currentPath}
 					onNavigate={() => setIsRoutePending(true)}
 					permissions={permissions ?? []}
+					showCorrespondence={showCorrespondence}
 				/>
 				<SidebarInset>
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
@@ -130,6 +134,7 @@ function AppSidebar({
 	currentPath,
 	onNavigate,
 	permissions,
+	showCorrespondence,
 }: {
 	isSuperUser: boolean;
 	inventoryEntries: { id: number; name: string }[];
@@ -137,6 +142,7 @@ function AppSidebar({
 	currentPath: string;
 	onNavigate: () => void;
 	permissions: string[];
+	showCorrespondence: boolean;
 }) {
 	const showInventoryMenu =
 		isSuperUser ||
@@ -307,6 +313,24 @@ function AppSidebar({
 									))}
 								</SidebarMenuSub>
 							)}
+						</SidebarMenuItem>
+					)}
+
+					{(isSuperUser ||
+						permissions.includes("correspondence") ||
+						showCorrespondence) && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Persuratan">
+								<ShellNavLink
+									href="/correspondence"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
+									<FileSignature />
+									<span>Persuratan</span>
+								</ShellNavLink>
+							</SidebarMenuButton>
 						</SidebarMenuItem>
 					)}
 				</SidebarMenu>

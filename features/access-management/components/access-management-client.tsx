@@ -11,22 +11,10 @@ import {
 	DialogClose,
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { CircleMinus, Plus, Search } from "lucide-react";
+import { CircleMinus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { normalizeAccessList, SUPERUSER_EMAIL } from "@/lib/access";
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldLabel,
-	FieldTitle,
-} from "@/components/ui/field";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-} from "@/components/ui/input-group";
+import { UserPicker } from "@/components/user-picker";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 
 interface WorkspaceUser {
@@ -63,6 +51,11 @@ const FEATURE_SETS = [
 		key: "inventory",
 		title: "Inventaris",
 		permissions: [{ key: "inventory", label: "Kelola Inventaris" }],
+	},
+	{
+		key: "correspondence",
+		title: "Persuratan",
+		permissions: [{ key: "correspondence", label: "Kelola Persuratan & TTE" }],
 	},
 ];
 
@@ -106,7 +99,6 @@ export function AccessManagementClient({
 		label: string;
 	} | null>(null);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	const [searchTerm, setSearchTerm] = useState("");
 	const [isSaving, setIsSaving] = useState(false);
 	const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 	const [localUsers, setLocalUsers] = useState(users);
@@ -134,7 +126,6 @@ export function AccessManagementClient({
 
 	const openAddDialog = (permission: { key: string; label: string }) => {
 		setSelectedPermission(permission);
-		setSearchTerm("");
 		setSelectedEmails([]);
 		setIsDialogOpen(true);
 	};
@@ -151,14 +142,6 @@ export function AccessManagementClient({
 						}
 					: u,
 			),
-		);
-	};
-
-	const toggleCandidate = (email: string) => {
-		setSelectedEmails((prev) =>
-			prev.includes(email)
-				? prev.filter((item) => item !== email)
-				: [...prev, email],
 		);
 	};
 
@@ -234,22 +217,32 @@ export function AccessManagementClient({
 		}
 	};
 
-	const filteredCandidates = useMemo(() => {
+	const userOptions = useMemo(
+		() =>
+			localUsers
+				.filter(
+					(u) =>
+						u.primaryEmail && u.primaryEmail.toLowerCase() !== SUPERUSER_EMAIL,
+				)
+				.map((u) => ({
+					email: u.primaryEmail as string,
+					name: u.fullName || (u.primaryEmail as string),
+				}))
+				.sort((a, b) => a.name.localeCompare(b.name)),
+		[localUsers],
+	);
+
+	const grantedEmails = useMemo(() => {
 		if (!selectedPermission) return [];
-		const term = searchTerm.trim().toLowerCase();
-		return localUsers.filter((u) => {
-			const email = u.primaryEmail || "";
-			if (!email) return false;
-			if (email.toLowerCase() === SUPERUSER_EMAIL) return false;
-			const hasPermission = normalizeAccessList(
-				accessMap[email] || "",
-			).includes(selectedPermission.key);
-			if (hasPermission) return false;
-			if (!term) return true;
-			const name = u.fullName?.toLowerCase() || "";
-			return name.includes(term) || email.toLowerCase().includes(term);
-		});
-	}, [accessMap, localUsers, searchTerm, selectedPermission]);
+		return localUsers
+			.filter((u) =>
+				normalizeAccessList(accessMap[u.primaryEmail || ""] || "").includes(
+					selectedPermission.key,
+				),
+			)
+			.map((u) => u.primaryEmail || "")
+			.filter(Boolean);
+	}, [accessMap, localUsers, selectedPermission]);
 
 	if (isLoading) {
 		return <SuspenseSpinner />;
@@ -337,41 +330,15 @@ export function AccessManagementClient({
 					<DialogHeader>
 						<DialogTitle>Berikan Izin: {selectedPermission?.label}</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-4 py-4">
-						<InputGroup>
-							<InputGroupAddon>
-								<Search />
-							</InputGroupAddon>
-							<InputGroupInput
-								placeholder="Cari nama atau email..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-							/>
-						</InputGroup>
-						<div className="space-y-2 max-h-80 overflow-y-auto">
-							{filteredCandidates.length === 0 ? (
-								<div className="p-4 text-sm text-muted-foreground text-center">
-									Tidak ada pengguna yang bisa ditambahkan.
-								</div>
-							) : (
-								filteredCandidates.map((u) => (
-									<FieldLabel key={u.primaryEmail}>
-										<Field orientation="horizontal">
-											<Checkbox
-												checked={selectedEmails.includes(u.primaryEmail || "")}
-												onCheckedChange={() =>
-													toggleCandidate(u.primaryEmail || "")
-												}
-											/>
-											<FieldContent>
-												<FieldTitle>{u.fullName}</FieldTitle>
-												<FieldDescription>{u.primaryEmail}</FieldDescription>
-											</FieldContent>
-										</Field>
-									</FieldLabel>
-								))
-							)}
-						</div>
+					<div className="py-4">
+						<UserPicker
+							users={userOptions}
+							value={selectedEmails}
+							onChange={setSelectedEmails}
+							disabled={isSaving}
+							excludeEmails={grantedEmails}
+							placeholder="Cari nama atau email..."
+						/>
 					</div>
 					<DialogFooter>
 						<DialogClose asChild>

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 import { cookies, headers } from "next/headers";
 
 type ServerSession = {
@@ -15,7 +15,8 @@ export async function getServerSession(): Promise<ServerSession> {
 	const headerStore = await headers();
 	const cookieStore = await cookies();
 
-	// Build a clean header with just cookie + host
+	// Build a clean header with just cookie + host so Better Auth can read the
+	// session cookie regardless of proxy header quirks on Cloudflare.
 	const cookieHeader = cookieStore
 		.getAll()
 		.map((c) => `${c.name}=${c.value}`)
@@ -32,6 +33,7 @@ export async function getServerSession(): Promise<ServerSession> {
 		"x-forwarded-host": host ?? "",
 	});
 
+	const auth = await getAuth();
 	const session = (await auth.api.getSession({
 		headers: cleanHeaders,
 	})) as ServerSession;

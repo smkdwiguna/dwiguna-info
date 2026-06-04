@@ -3,6 +3,7 @@ import { SiteLayout } from "@/features/site-shell/components/site-layout";
 import Login from "@/components/login";
 import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 import { getInventories } from "@/features/inventory/actions/inventory";
+import { isCorrespondenceVisible } from "@/features/correspondence/actions/documents";
 
 export default async function DashboardLayout({
 	children,
@@ -18,16 +19,19 @@ export default async function DashboardLayout({
 
 	let permissions: string[] = [];
 	let inventoryEntries: { id: number; name: string }[] = [];
+	let showCorrespondence = false;
 	try {
-		const [livePermissions, inventories] = await Promise.all([
+		const [livePermissions, inventories, correspondenceVisible] = await Promise.all([
 			getLivePermissions(),
 			getInventories(),
+			isCorrespondenceVisible(),
 		]);
 		permissions = livePermissions.permissions;
 		inventoryEntries = inventories.map((inventory) => ({
 			id: inventory.id,
 			name: inventory.name,
 		}));
+		showCorrespondence = correspondenceVisible;
 	} catch (error) {
 		console.error("Failed to preload site shell data", error);
 	}
@@ -37,6 +41,7 @@ export default async function DashboardLayout({
 			userEmail={userEmail}
 			permissions={permissions}
 			inventoryEntries={inventoryEntries}
+			showCorrespondence={showCorrespondence}
 		>
 			{children}
 		</SiteLayout>
