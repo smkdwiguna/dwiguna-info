@@ -438,7 +438,7 @@ export function ShortLinksClient({
 							value={searchTerm}
 							onChange={(event) => {
 								setSearchTerm(event.target.value);
-								setCurrentPage(0);
+								setCurrentPage(1);
 							}}
 							placeholder="Cari tautan..."
 						/>

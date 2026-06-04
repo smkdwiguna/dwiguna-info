@@ -684,7 +684,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 						value={searchTerm}
 						onChange={(e) => {
 							setSearchTerm(e.target.value);
-							setCurrentPage(0);
+							setCurrentPage(1);
 						}}
 						className="pl-9 w-full"
 					/>
