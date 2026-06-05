@@ -1,9 +1,11 @@
 import { getDb } from "@/lib/db";
 import {
+	attendanceSheets,
 	deviceUsers,
+	pointSchedules,
 	presenceLogs,
 	presencePoints,
-	schedules,
+	terminals,
 } from "@/lib/db/schema";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,12 @@ import {
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { RouteRefreshPoller } from "@/components/route-refresh-poller";
 import { requireSuperUserOrRedirect } from "@/features/access-management/actions/require-superuser";
+import {
+	minutesToTime,
+	nowInJakarta,
+	resolveWindow,
+	type ResolvedWindow,
+} from "@/lib/presence-schedule";
 
 export default async function PresenceDashboardPage() {
 	await requireSuperUserOrRedirect();
@@ -48,24 +56,69 @@ function formatTimestamp(value: number) {
 
 async function PresenceDashboard() {
 	const db = await getDb();
-	const [allSchedules, allPoints, allLogs, allDeviceUsers] = await Promise.all([
-		db.select().from(schedules),
+	const { dateKey: today, minutes: nowMinutes } = nowInJakarta();
+
+	const [
+		allPointSchedules,
+		allPoints,
+		allLogs,
+		allDeviceUsers,
+		allTerminals,
+		allSheets,
+	] = await Promise.all([
+		db.select().from(pointSchedules),
 		db.select().from(presencePoints),
 		db.select().from(presenceLogs),
 		db.select().from(deviceUsers),
+		db.select().from(terminals),
+		db.select().from(attendanceSheets),
 	]);
 
-	const scheduleBySheet = new Map<number, string[]>();
-	for (const schedule of allSchedules) {
-		const list = scheduleBySheet.get(schedule.sheetId) || [];
-		list.push(schedule.date);
-		scheduleBySheet.set(schedule.sheetId, list);
-	}
+	const pointById = new Map(allPoints.map((p) => [p.id, p]));
+	const terminalById = new Map(allTerminals.map((t) => [t.id, t]));
+	const sheetById = new Map(allSheets.map((s) => [s.id, s]));
+	const emailByDeviceId = new Map(allDeviceUsers.map((u) => [u.id, u.email]));
 
-	const emailByDeviceId = new Map(
-		allDeviceUsers.map((user) => [user.id, user.email]),
-	);
-	const pointById = new Map(allPoints.map((point) => [point.id, point]));
+	// Today's scheduled sessions
+	const todaySchedules: {
+		id: number;
+		pointName: string;
+		sheetName: string;
+		terminalName: string;
+		window: ResolvedWindow;
+		isOpen: boolean;
+		isPast: boolean;
+	}[] = [];
+	for (const s of allPointSchedules) {
+		if (s.date !== today) continue;
+		const point = pointById.get(s.presencePointId);
+		if (!point) continue;
+		const defaults: ResolvedWindow = {
+			startTime: point.startTime,
+			thresholdTime: point.thresholdTime,
+			endTime: point.endTime,
+		};
+		const w = resolveWindow(s, defaults);
+		const terminal = terminalById.get(s.terminalId);
+		const sheet = sheetById.get(point.sheetId);
+		todaySchedules.push({
+			id: s.id,
+			pointName: point.name,
+			sheetName: sheet?.name ?? "-",
+			terminalName: terminal?.name ?? s.terminalId,
+			window: w,
+			isOpen: nowMinutes >= w.startTime && nowMinutes < w.endTime,
+			isPast: nowMinutes >= w.endTime,
+		});
+	}
+	todaySchedules.sort((a, b) => a.window.startTime - b.window.startTime);
+
+	// Today's logs
+	const todayLogs = allLogs.filter((l) => l.date === today);
+	const presentCount = todayLogs.filter((l) => l.status === "PRESENT").length;
+	const lateCount = todayLogs.filter((l) => l.status === "LATE").length;
+
+	// Recent logs (across all dates)
 	const latestLogs = [...allLogs]
 		.sort((a, b) => b.timestamp - a.timestamp)
 		.slice(0, 10);
@@ -78,7 +131,107 @@ async function PresenceDashboard() {
 				</PageHeaderHeading>
 			</PageHeader>
 
+			{/* Summary cards */}
+			<div className="grid gap-4 sm:grid-cols-3">
+				<Card>
+					<CardHeader className="pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							Sesi Hari Ini
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-2xl font-bold">{todaySchedules.length}</p>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							Tepat Waktu
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-2xl font-bold text-green-600 dark:text-green-400">
+							{presentCount}
+						</p>
+					</CardContent>
+				</Card>
+				<Card>
+					<CardHeader className="pb-2">
+						<CardTitle className="text-sm font-medium text-muted-foreground">
+							Terlambat
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+							{lateCount}
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="grid gap-4 xl:grid-cols-2">
+				{/* Today's schedule */}
+				<Card>
+					<CardHeader>
+						<CardTitle>Jadwal Hari Ini ({today})</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<Table>
+							<TableHeader>
+								<TableRow>
+									<TableHead>Titik</TableHead>
+									<TableHead>Lembar</TableHead>
+									<TableHead>Terminal</TableHead>
+									<TableHead>Waktu</TableHead>
+									<TableHead>Status</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{todaySchedules.length === 0 ? (
+									<TableRow>
+										<TableCell
+											colSpan={5}
+											className="text-center text-muted-foreground"
+										>
+											Tidak ada sesi terjadwal hari ini.
+										</TableCell>
+									</TableRow>
+								) : (
+									todaySchedules.map((s) => (
+										<TableRow key={s.id}>
+											<TableCell className="font-medium">
+												{s.pointName}
+											</TableCell>
+											<TableCell>{s.sheetName}</TableCell>
+											<TableCell>{s.terminalName}</TableCell>
+											<TableCell>
+												{minutesToTime(s.window.startTime)} –{" "}
+												{minutesToTime(s.window.endTime)}
+											</TableCell>
+											<TableCell>
+												{s.isOpen ? (
+													<span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+														Buka
+													</span>
+												) : s.isPast ? (
+													<span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+														Selesai
+													</span>
+												) : (
+													<span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+														Belum Buka
+													</span>
+												)}
+											</TableCell>
+										</TableRow>
+									))
+								)}
+							</TableBody>
+						</Table>
+					</CardContent>
+				</Card>
+
+				{/* Recent logs */}
 				<Card>
 					<CardHeader>
 						<CardTitle>Log Terbaru</CardTitle>
@@ -113,7 +266,19 @@ async function PresenceDashboard() {
 											<TableCell>
 												{pointById.get(log.presencePointId)?.name || "-"}
 											</TableCell>
-											<TableCell>{log.status}</TableCell>
+											<TableCell>
+												{log.status === "PRESENT" ? (
+													<span className="text-green-600 dark:text-green-400">
+														{log.status}
+													</span>
+												) : log.status === "LATE" ? (
+													<span className="text-amber-600 dark:text-amber-400">
+														{log.status}
+													</span>
+												) : (
+													log.status
+												)}
+											</TableCell>
 										</TableRow>
 									))
 								)}
