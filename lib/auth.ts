@@ -6,10 +6,9 @@ import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
 import { isWorkspaceEmail, WORKSPACE_DOMAIN } from "./access";
 
-// The Drizzle adapter binds to a D1 instance that is only available within a
-// Cloudflare request context, so the auth instance is built lazily. The binding
-// is stable per Worker isolate, so caching the instance is safe and avoids
-// rebuilding it on every request.
+// The Drizzle adapter binds to the Netlify DB (Neon) connection, built lazily
+// per request. Caching the instance per isolate is safe and avoids rebuilding
+// it on every request.
 function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 	return betterAuth({
 		secret: process.env.BETTER_AUTH_SECRET ?? "",
@@ -18,7 +17,7 @@ function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 			process.env.BETTER_AUTH_URL?.replace(/;$/, "") || "http://localhost:3000",
 		],
 		database: drizzleAdapter(db, {
-			provider: "sqlite",
+			provider: "pg",
 			// Table variables already use Better Auth's default singular names.
 			schema: {
 				user: schema.user,

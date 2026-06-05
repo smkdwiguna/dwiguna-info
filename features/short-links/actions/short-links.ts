@@ -45,7 +45,7 @@ async function findShortLinkBySlugInternal(slug: string) {
 		.select()
 		.from(shortLinks)
 		.where(eq(shortLinks.slug, slug))
-		.get();
+		.then((r) => r[0]);
 }
 
 async function assertShortLinkSlugAvailability(slugInput: string) {
@@ -111,7 +111,7 @@ export async function getCurrentUserShortLinks(): Promise<ShortLinkRecord[]> {
 		.from(shortLinks)
 		.where(eq(shortLinks.createdByEmail, session.user.email))
 		.orderBy(desc(shortLinks.id))
-		.all();
+		;
 }
 
 export async function createShortLink(payload: {
@@ -182,7 +182,7 @@ export async function deleteShortLink(shortLinkId: number) {
 		.select()
 		.from(shortLinks)
 		.where(eq(shortLinks.id, shortLinkId))
-		.get();
+		.then((r) => r[0]);
 
 	if (!current) {
 		throw new Error("Shortlink tidak ditemukan.");
@@ -208,5 +208,5 @@ export async function getShortLinkBySlug(slug: string) {
 		.select()
 		.from(shortLinks)
 		.where(eq(shortLinks.slug, normalizedSlug))
-		.get();
+		.then((r) => r[0]);
 }

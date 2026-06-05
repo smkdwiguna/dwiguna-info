@@ -74,7 +74,7 @@ export async function assertInventoryAccess(
 				eq(inventoryMembers.email, email),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!member) {
 		throw new Error("FORBIDDEN: Anda tidak memiliki akses ke inventaris ini.");
@@ -106,7 +106,7 @@ export async function getInventories() {
 			.select()
 			.from(inventories)
 			.orderBy(desc(inventories.id))
-			.all();
+			;
 	}
 
 	// Normal user sees inventories they are a member of
@@ -116,7 +116,7 @@ export async function getInventories() {
 		})
 		.from(inventoryMembers)
 		.where(eq(inventoryMembers.email, email))
-		.all();
+		;
 
 	if (userMemberships.length === 0) {
 		return [];
@@ -128,7 +128,7 @@ export async function getInventories() {
 		.select()
 		.from(inventories)
 		.orderBy(desc(inventories.id))
-		.all();
+		;
 
 	return allInvs.filter((inv) => ids.includes(inv.id));
 }
@@ -238,7 +238,7 @@ export async function getInventoryDetail(inventoryId: number) {
 		.select()
 		.from(inventories)
 		.where(eq(inventories.id, inventoryId))
-		.get();
+		.then((r) => r[0]);
 
 	if (!info) {
 		throw new Error("Inventaris tidak ditemukan.");
@@ -249,27 +249,27 @@ export async function getInventoryDetail(inventoryId: number) {
 		.from(inventoryItems)
 		.where(eq(inventoryItems.inventoryId, inventoryId))
 		.orderBy(desc(inventoryItems.id))
-		.all();
+		;
 
 	const members = await db
 		.select()
 		.from(inventoryMembers)
 		.where(eq(inventoryMembers.inventoryId, inventoryId))
-		.all();
+		;
 
 	const txs = await db
 		.select()
 		.from(inventoryTransactions)
 		.where(eq(inventoryTransactions.inventoryId, inventoryId))
 		.orderBy(desc(inventoryTransactions.id))
-		.all();
+		;
 
 	const files = await db
 		.select()
 		.from(inventoryFiles)
 		.where(eq(inventoryFiles.inventoryId, inventoryId))
 		.orderBy(desc(inventoryFiles.id))
-		.all();
+		;
 
 	// Fetch all attachments for items belonging to this inventory
 	const itemIds = items.map((item) => item.id);
@@ -278,7 +278,7 @@ export async function getInventoryDetail(inventoryId: number) {
 		const allAttachments = await db
 			.select()
 			.from(inventoryItemAttachments)
-			.all();
+			;
 		attachments = allAttachments.filter((att) => itemIds.includes(att.itemId));
 	}
 
@@ -308,7 +308,7 @@ export async function getInventoryFilesPublic(inventoryId: number) {
 		.from(inventoryFiles)
 		.where(eq(inventoryFiles.inventoryId, inventoryId))
 		.orderBy(desc(inventoryFiles.id))
-		.all();
+		;
 
 	return { files, requestedByEmail: email };
 }
@@ -328,7 +328,7 @@ export async function getHasAnyInventoryAccess(): Promise<boolean> {
 		.select()
 		.from(inventoryMembers)
 		.where(eq(inventoryMembers.email, email))
-		.all();
+		;
 
 	return memberships.length > 0;
 }
@@ -366,7 +366,7 @@ export async function transferInventoryItem(
 				eq(inventoryItems.inventoryId, sourceInventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!sourceItem) throw new Error("Barang sumber tidak ditemukan.");
 	if (sourceItem.quantity < quantity)
@@ -400,7 +400,7 @@ export async function transferInventoryItem(
 					eq(inventoryItems.sku, sourceItem.sku),
 				),
 			)
-			.get();
+			.then((r) => r[0]);
 	}
 	if (!targetItem) {
 		targetItem = await db
@@ -412,7 +412,7 @@ export async function transferInventoryItem(
 					eq(inventoryItems.name, sourceItem.name),
 				),
 			)
-			.get();
+			.then((r) => r[0]);
 	}
 
 	if (!targetItem) {
@@ -557,7 +557,7 @@ export async function updateInventoryItem(
 				eq(inventoryItems.inventoryId, inventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!current) {
 		throw new Error("Barang tidak ditemukan.");
@@ -652,7 +652,7 @@ export async function createStockTransaction(
 				eq(inventoryItems.inventoryId, inventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!item) {
 		throw new Error("Barang tidak ditemukan.");
@@ -734,7 +734,7 @@ export async function addInventoryMember(
 					eq(inventoryMembers.email, targetEmail),
 				),
 			)
-			.get();
+			.then((r) => r[0]);
 
 		if (existing) {
 			throw new Error("Pengguna sudah menjadi anggota inventaris ini.");
@@ -778,7 +778,7 @@ export async function removeInventoryMember(
 				eq(inventoryMembers.inventoryId, inventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!member) {
 		throw new Error("Anggota tidak ditemukan.");
@@ -795,7 +795,7 @@ export async function removeInventoryMember(
 					eq(inventoryMembers.role, "OWNER"),
 				),
 			)
-			.all();
+			;
 
 		if (owners.length <= 1) {
 			throw new Error(
@@ -834,7 +834,7 @@ export async function updateInventoryMemberRole(
 				eq(inventoryMembers.inventoryId, inventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!member) {
 		throw new Error("Anggota tidak ditemukan.");
@@ -851,7 +851,7 @@ export async function updateInventoryMemberRole(
 					eq(inventoryMembers.role, "OWNER"),
 				),
 			)
-			.all();
+			;
 
 		if (owners.length <= 1) {
 			throw new Error(
@@ -901,7 +901,7 @@ export async function uploadInventoryFile(
 		.select()
 		.from(inventories)
 		.where(eq(inventories.id, inventoryId))
-		.get();
+		.then((r) => r[0]);
 
 	if (!inv) {
 		throw new Error("Inventaris tidak ditemukan.");
@@ -949,7 +949,7 @@ export async function deleteInventoryFile(inventoryId: number, fileId: number) {
 				eq(inventoryFiles.inventoryId, inventoryId),
 			),
 		)
-		.get();
+		.then((r) => r[0]);
 
 	if (!file) {
 		throw new Error("File tidak ditemukan.");

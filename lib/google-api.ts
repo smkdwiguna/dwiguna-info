@@ -161,9 +161,10 @@ export async function getAccessToken(
 	}
 
 	const clientEmail = process.env.GOOGLE_CLIENT_EMAIL?.trim();
-	const privateKey = Buffer.from(process.env.GOOGLE_PRIVATE_KEY, "base64")
-		.toString("utf-8")
-		.trim();
+	const rawPrivateKey = process.env.GOOGLE_PRIVATE_KEY;
+	const privateKey = rawPrivateKey
+		? Buffer.from(rawPrivateKey, "base64").toString("utf-8").trim()
+		: "";
 
 	if (!clientEmail || !privateKey) {
 		throw new Error(

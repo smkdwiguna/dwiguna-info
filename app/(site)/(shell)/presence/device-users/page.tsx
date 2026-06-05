@@ -26,8 +26,8 @@ export default async function PresenceDeviceUsersPage() {
 async function DeviceUsersFetcher() {
 	try {
 		const db = await getDb();
-		const allUsers = await db.select().from(deviceUsers).all();
-		const allTerminals = await db.select().from(terminals).all();
+		const allUsers = await db.select().from(deviceUsers);
+		const allTerminals = await db.select().from(terminals);
 		const orgUnits = await fetchAllOrgUnits();
 		const workspaceUsers = await fetchAllWorkspaceUsers();
 

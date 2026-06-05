@@ -25,8 +25,8 @@ async function SheetsFetcher() {
 	const db = await getDb();
 
 	// Fetch all sheets
-	const allSheets = await db.select().from(attendanceSheets).all();
-	const allSchedules = await db.select().from(schedules).all();
+	const allSheets = await db.select().from(attendanceSheets);
+	const allSchedules = await db.select().from(schedules);
 
 	// Calculate date ranges
 	const structuredSheets = allSheets.map((sheet) => {

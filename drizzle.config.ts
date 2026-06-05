@@ -3,6 +3,8 @@ import { defineConfig } from "drizzle-kit";
 export default defineConfig({
   schema: "./lib/db/schema.ts",
   out: "./drizzle",
-  dialect: "sqlite",
-  driver: "d1-http",
+  dialect: "postgresql",
+  dbCredentials: {
+    url: process.env.NETLIFY_DATABASE_URL!,
+  },
 });

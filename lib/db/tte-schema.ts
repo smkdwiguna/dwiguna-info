@@ -1,23 +1,31 @@
 /**
- * Correspondence (Tanda Tangan Elektronik / TTE) tables in Cloudflare D1.
+ * Correspondence (Tanda Tangan Elektronik / TTE) tables in Netlify DB (Neon / Postgres).
  */
-import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import {
+	pgTable,
+	text,
+	integer,
+	serial,
+	real,
+	boolean,
+	timestamp,
+	unique,
+} from "drizzle-orm/pg-core";
 
 /**
  * One asymmetric key pair per user. The private key is stored encrypted
  * (AES-GCM with a key derived from MASTER_SECRET); only the public key and the
  * self-signed certificate are stored in the clear.
  */
-export const userKeys = sqliteTable("user_keys", {
+export const userKeys = pgTable("user_keys", {
 	userEmail: text("user_email").primaryKey(),
 	publicKey: text("public_key").notNull(),
 	encryptedPrivateKey: text("encrypted_private_key").notNull(),
 	certificate: text("certificate").notNull(),
 	algorithm: text("algorithm").notNull(),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
 /**
@@ -25,7 +33,7 @@ export const userKeys = sqliteTable("user_keys", {
  * of the latest signed PDF bytes — used by the public verifier to confirm an
  * uploaded copy is bit-identical to what we stored.
  */
-export const signatureDocuments = sqliteTable("signature_documents", {
+export const signatureDocuments = pgTable("signature_documents", {
 	id: text("id").primaryKey(), // UUID
 	title: text("title").notNull(),
 	ownerEmail: text("owner_email").notNull(),
@@ -34,15 +42,15 @@ export const signatureDocuments = sqliteTable("signature_documents", {
 	driveThumbnailLink: text("drive_thumbnail_link"),
 	driveOwnerEmail: text("drive_owner_email"), // whose Drive the file lives in
 	documentHash: text("document_hash"), // SHA-256 hex of latest signed PDF
-	isPublic: integer("is_public", { mode: "boolean" }).notNull().default(false),
+	isPublic: boolean("is_public").notNull().default(false),
 	// DRAFT (uploaded, no signatures yet) | PARTIAL | COMPLETED
 	status: text("status").notNull().default("DRAFT"),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: text("updated_at")
+		.defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
 /**
@@ -50,10 +58,10 @@ export const signatureDocuments = sqliteTable("signature_documents", {
  * Invited signers (status INVITED) can view & sign the document WITHOUT holding
  * the `correspondence` feature permission (bypass).
  */
-export const signatureSigners = sqliteTable(
+export const signatureSigners = pgTable(
 	"signature_signers",
 	{
-		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		id: serial("id").primaryKey(),
 		documentId: text("document_id")
 			.notNull()
 			.references(() => signatureDocuments.id, { onDelete: "cascade" }),
@@ -74,9 +82,9 @@ export const signatureSigners = sqliteTable(
 		qrWidth: real("qr_width"),
 		qrHeight: real("qr_height"),
 		signedAt: text("signed_at"),
-		createdAt: text("created_at")
+		createdAt: timestamp("created_at", { mode: "string" })
 			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`),
+			.defaultNow(),
 	},
 	(t) => ({
 		unq: unique().on(t.documentId, t.signerEmail),
@@ -84,13 +92,13 @@ export const signatureSigners = sqliteTable(
 );
 
 /** Immutable audit log / timestamp store for each signing event. */
-export const documentLogs = sqliteTable("document_logs", {
+export const documentLogs = pgTable("document_logs", {
 	id: text("id").primaryKey(), // UUID
 	documentId: text("document_id").notNull(),
 	signerEmail: text("signer_email").notNull(),
 	documentHash: text("document_hash").notNull(),
 	gdriveFileId: text("gdrive_file_id"),
-	signedAt: text("signed_at")
+	signedAt: timestamp("signed_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });

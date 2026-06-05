@@ -1,11 +1,17 @@
-import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
-import { sql } from "drizzle-orm";
+import {
+	pgTable,
+	text,
+	integer,
+	serial,
+	timestamp,
+	unique,
+} from "drizzle-orm/pg-core";
 
 // Better Auth (sessions/accounts) + Correspondence (TTE) tables.
 export * from "./auth-schema";
 export * from "./tte-schema";
 
-export const deviceUsers = sqliteTable("device_users", {
+export const deviceUsers = pgTable("device_users", {
 	// Hardware limit ID from 0 to 999
 	id: integer("id").primaryKey(),
 	// Google Workspace Email to link the user
@@ -14,7 +20,7 @@ export const deviceUsers = sqliteTable("device_users", {
 	fingerprint: text("fingerprint"),
 });
 
-export const terminals = sqliteTable("terminals", {
+export const terminals = pgTable("terminals", {
 	id: text("id").primaryKey(), // MAC Address or UUID
 	name: text("name").notNull(),
 	status: text("status").notNull().default("0"), // 0 = Idle, 2 = Enroll, 3 = Copy, etc.
@@ -27,13 +33,13 @@ export const terminals = sqliteTable("terminals", {
 	syncQueue: text("sync_queue"),
 });
 
-export const attendanceSheets = sqliteTable("attendance_sheets", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const attendanceSheets = pgTable("attendance_sheets", {
+	id: serial("id").primaryKey(),
 	name: text("name").notNull(),
 });
 
-export const sheetTargets = sqliteTable("sheet_targets", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const sheetTargets = pgTable("sheet_targets", {
+	id: serial("id").primaryKey(),
 	sheetId: integer("sheet_id")
 		.notNull()
 		.references(() => attendanceSheets.id, { onDelete: "cascade" }),
@@ -41,8 +47,8 @@ export const sheetTargets = sqliteTable("sheet_targets", {
 	alias: text("alias").notNull(), // e.g., "10 PPLG 1"
 });
 
-export const presencePoints = sqliteTable("presence_points", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const presencePoints = pgTable("presence_points", {
+	id: serial("id").primaryKey(),
 	sheetId: integer("sheet_id")
 		.notNull()
 		.references(() => attendanceSheets.id, { onDelete: "cascade" }),
@@ -53,10 +59,10 @@ export const presencePoints = sqliteTable("presence_points", {
 	endTime: integer("end_time").notNull(),
 });
 
-export const schedules = sqliteTable(
+export const schedules = pgTable(
 	"schedules",
 	{
-		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		id: serial("id").primaryKey(),
 		terminalId: text("terminal_id")
 			.notNull()
 			.references(() => terminals.id, { onDelete: "cascade" }),
@@ -72,8 +78,8 @@ export const schedules = sqliteTable(
 	}),
 );
 
-export const presenceLogs = sqliteTable("presence_logs", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const presenceLogs = pgTable("presence_logs", {
+	id: serial("id").primaryKey(),
 	deviceUserId: integer("device_user_id")
 		.notNull()
 		.references(() => deviceUsers.id, { onDelete: "cascade" }),
@@ -88,29 +94,29 @@ export const presenceLogs = sqliteTable("presence_logs", {
 	status: text("status").notNull(), // PRESENT, LATE, ABSENT, SICK, PERMIT
 });
 
-export const shortLinks = sqliteTable("short_links", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const shortLinks = pgTable("short_links", {
+	id: serial("id").primaryKey(),
 	slug: text("slug").notNull().unique(),
 	originalUrl: text("original_url").notNull(),
 	createdByEmail: text("created_by_email").notNull(),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
-	clickCount: integer("click_count", { mode: "number" }).notNull().default(0),
+		.defaultNow(),
+	clickCount: integer("click_count").notNull().default(0),
 });
 
-export const inventories = sqliteTable("inventories", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const inventories = pgTable("inventories", {
+	id: serial("id").primaryKey(),
 	name: text("name").notNull(),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
-export const inventoryMembers = sqliteTable(
+export const inventoryMembers = pgTable(
 	"inventory_members",
 	{
-		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		id: serial("id").primaryKey(),
 		inventoryId: integer("inventory_id")
 			.notNull()
 			.references(() => inventories.id, { onDelete: "cascade" }),
@@ -122,8 +128,8 @@ export const inventoryMembers = sqliteTable(
 	}),
 );
 
-export const inventoryItems = sqliteTable("inventory_items", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const inventoryItems = pgTable("inventory_items", {
+	id: serial("id").primaryKey(),
 	inventoryId: integer("inventory_id")
 		.notNull()
 		.references(() => inventories.id, { onDelete: "cascade" }),
@@ -133,16 +139,16 @@ export const inventoryItems = sqliteTable("inventory_items", {
 	quantity: integer("quantity").notNull().default(0),
 	unit: text("unit").notNull().default("pcs"),
 	location: text("location"),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
-	updatedAt: text("updated_at")
+		.defaultNow(),
+	updatedAt: timestamp("updated_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
-export const inventoryTransactions = sqliteTable("inventory_transactions", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const inventoryTransactions = pgTable("inventory_transactions", {
+	id: serial("id").primaryKey(),
 	inventoryId: integer("inventory_id")
 		.notNull()
 		.references(() => inventories.id, { onDelete: "cascade" }),
@@ -153,13 +159,13 @@ export const inventoryTransactions = sqliteTable("inventory_transactions", {
 	quantity: integer("quantity").notNull(),
 	notes: text("notes"),
 	createdByEmail: text("created_by_email").notNull(),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
-export const inventoryFiles = sqliteTable("inventory_files", {
-	id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+export const inventoryFiles = pgTable("inventory_files", {
+	id: serial("id").primaryKey(),
 	inventoryId: integer("inventory_id")
 		.notNull()
 		.references(() => inventories.id, { onDelete: "cascade" }),
@@ -168,15 +174,15 @@ export const inventoryFiles = sqliteTable("inventory_files", {
 	webViewLink: text("web_view_link"),
 	thumbnailLink: text("thumbnail_link"),
 	uploadedByEmail: text("uploaded_by_email").notNull(),
-	createdAt: text("created_at")
+	createdAt: timestamp("created_at", { mode: "string" })
 		.notNull()
-		.default(sql`CURRENT_TIMESTAMP`),
+		.defaultNow(),
 });
 
-export const inventoryItemAttachments = sqliteTable(
+export const inventoryItemAttachments = pgTable(
 	"inventory_item_attachments",
 	{
-		id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+		id: serial("id").primaryKey(),
 		itemId: integer("item_id")
 			.notNull()
 			.references(() => inventoryItems.id, { onDelete: "cascade" }),

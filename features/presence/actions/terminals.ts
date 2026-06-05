@@ -44,7 +44,7 @@ export async function rotateTerminalPassword(terminalId: string) {
 		.select({ id: terminals.id })
 		.from(terminals)
 		.where(eq(terminals.id, terminalId))
-		.get();
+		.then((r) => r[0]);
 	if (!terminal) throw new Error("Perangkat tidak ditemukan");
 
 	const password = generateTerminalPassword();
@@ -78,7 +78,7 @@ export async function deleteTerminal(id: string) {
 export async function syncAllFingerprints(terminalId: string) {
 	const db = await getDb();
 	const { deviceUsers } = await import("@/lib/db/schema");
-	const users = await db.select().from(deviceUsers).all();
+	const users = await db.select().from(deviceUsers);
 
 	const fidsWithFingerprints = users.filter((u) => !!u.fingerprint).map((u) => u.id);
 
@@ -86,7 +86,7 @@ export async function syncAllFingerprints(terminalId: string) {
 		.select()
 		.from(terminals)
 		.where(eq(terminals.id, terminalId))
-		.get();
+		.then((r) => r[0]);
 	if (!terminal) throw new Error("Terminal tidak ditemukan");
 
 	// Command 6 (empty) runs first; after device ACK, route drains syncQueue as copy (3).
