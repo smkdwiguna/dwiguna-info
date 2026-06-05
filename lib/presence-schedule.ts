@@ -127,6 +127,55 @@ export function findScheduleConflicts(
 }
 
 /**
+ * Current wall-clock in the attendance timezone (WIB / Asia/Jakarta), as a
+ * YYYY-MM-DD date key plus minutes-from-midnight. Used by the device endpoint
+ * to decide which point (if any) is open right now.
+ */
+export const ATTENDANCE_TIME_ZONE = "Asia/Jakarta";
+
+export function nowInJakarta(epochMs: number = Date.now()): {
+	dateKey: string;
+	minutes: number;
+} {
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: ATTENDANCE_TIME_ZONE,
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		hour12: false,
+	}).formatToParts(new Date(epochMs));
+	const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+	const dateKey = `${get("year")}-${get("month")}-${get("day")}`;
+	// Intl may emit "24" for midnight in some runtimes; normalize to 0.
+	const hour = Number(get("hour")) % 24;
+	const minutes = hour * 60 + Number(get("minute"));
+	return { dateKey, minutes };
+}
+
+/**
+ * Among already (terminal, date)-filtered schedules, return the one whose
+ * resolved window is open at `minutes` (start <= minutes < end). The conflict
+ * invariant guarantees at most one match, so the first hit is returned.
+ */
+export function findOpenSchedule<T extends PointScheduleLike>(
+	schedules: T[],
+	defaultsByPointId: Map<number, ResolvedWindow>,
+	minutes: number,
+): { schedule: T; window: ResolvedWindow } | null {
+	for (const s of schedules) {
+		const defaults = defaultsByPointId.get(s.presencePointId);
+		if (!defaults) continue;
+		const window = resolveWindow(s, defaults);
+		if (minutes >= window.startTime && minutes < window.endTime) {
+			return { schedule: s, window };
+		}
+	}
+	return null;
+}
+
+/**
  * Validate a full set of schedules at once and return all conflicting pairs.
  * Used server-side as the final guarantee, and when a point's default times
  * change (which can retroactively make previously-fine schedules overlap).

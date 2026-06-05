@@ -86,9 +86,10 @@ Aturan:
 | `5`  | Remove  | Server → Device | `fid`                | Hapus fingerprint tertentu dari memori device.             |
 | `6`  | Empty   | Server → Device | -                    | Hapus semua fingerprint dari device.                       |
 | `7`  | Success | Server → Device | `name`, `photoHex`   | Tampilkan nama dan foto user setelah identifikasi. `photoHex` adalah JPEG persegi 120×120 px (quality ~72), di-encode sebagai byte hex lowercase. Jika foto Workspace tidak ada, server mengirim avatar inisial (latar warna deterministik + 1–2 huruf). |
-| `8`  | Search  | Device → Server | `fid`                | Device menemukan fingerprint; server merespons dengan `7`. |
+| `8`  | Search  | Device → Server | `fid`                | Device menemukan fingerprint. Server mencatat kehadiran lalu merespons `7` jika ada titik kehadiran yang sedang terbuka di terminal itu; jika tidak, server merespons `ERR;{pesan}` (lihat di bawah). |
 | `9`  | Upload  | Device → Server | `fid`, `templateHex` | Device mengirim template fingerprint hasil enrollment.     |
 | `A`  | Ack     | Device → Server | opsional             | Menandakan command terakhir sudah dieksekusi.              |
+| `ERR`| Reject  | Server → Device | `pesan`              | Permintaan ditolak (mis. scan di luar jam kehadiran, atau autentikasi gagal). Format `ERR;{pesan}`. Device menampilkan layar merah "Ditolak" beserta `pesan`. |
 
 ## Endpoint
 
@@ -100,7 +101,7 @@ Ini satu-satunya endpoint device. Device melakukan polling dengan POST, server m
 
 1. Jika `terminals.status` bukan `0` / `INHERIT` (mis. enroll `2`, copy `3`, open `1`), **respons HTTP selalu perintah itu** (`{status};{metadata}`) sampai device mengirim `A`.
 2. Event di body (mis. `8;fid` scan) tetap diproses sebagai efek samping jika relevan (mis. upload template `9`), tetapi **tidak menimpa** perintah pending di respons maupun di database.
-3. Hanya jika tidak ada perintah pending: scan `8` → respons `7`, atau antrean `syncQueue` → promot `3`.
+3. Hanya jika tidak ada perintah pending: scan `8` → server cek titik kehadiran terbuka di terminal+tanggal itu (lihat [Pencatatan Kehadiran](#pencatatan-kehadiran)) → respons `7` (kehadiran tercatat) atau `ERR;{pesan}` (ditolak); atau bila tidak ada scan, antrean `syncQueue` → promot `3`.
 4. `A` mengosongkan `status` ke `0` dan `metadata` ke `NULL` (dan mengeluarkan head `syncQueue` jika perintah terakhir adalah `3`).
 
 ## Redesign Note
@@ -135,7 +136,7 @@ A
 Makna event:
 
 - `A` = Ack. Server menghapus command yang sedang pending dan lanjut ke antrean sync berikutnya bila ada.
-- `8;{fid}` = hasil pencarian fingerprint. Server merespons dengan `7;{name};{photoHex}` untuk request itu juga.
+- `8;{fid}` = hasil pencarian fingerprint. Server mencatat kehadiran untuk titik kehadiran yang sedang terbuka di terminal itu lalu merespons `7;{name};{photoHex}`. Bila tidak ada titik kehadiran yang terbuka saat itu, server merespons `ERR;{pesan}` dan tidak mencatat apa pun.
 - `9;{fid};{templateHex}` = upload template fingerprint ke server, disimpan di tabel `device_users`.
 
 ### Response
@@ -159,6 +160,21 @@ Response selalu satu command string plain text. Contoh:
 - Sumber foto: **People API** (`searchDirectoryPeople` → `people.get` + URL CDN `=s512-c`), fallback Admin `photos.get`, lalu `thumbnailPhotoUrl`.
 - Tanpa foto di Google Workspace, server membuat **avatar inisial** (mis. `BS` untuk Budi Santoso) dengan warna latar dari hash nama.
 - Firmware cukup decode JPEG dari hex; tidak perlu resize lagi di device.
+
+## Pencatatan Kehadiran
+
+Saat menerima `8;{fid}` (dan tidak ada command pending), server menentukan apakah ada **titik kehadiran** yang sedang terbuka:
+
+1. Ambil semua `point_schedules` untuk `terminalId` ini pada tanggal hari ini (zona waktu **Asia/Jakarta**).
+2. Untuk tiap jadwal, hitung window efektif: override per-hari bila ada, kalau tidak pakai default titik (`presence_points`).
+3. Cari window yang memuat waktu sekarang (`start <= sekarang < end`). Invariant anti-bentrok menjamin **paling banyak satu** titik terbuka per terminal pada satu waktu.
+4. Bila ada titik terbuka:
+   - Catat `presence_logs` (`deviceUserId`, `presencePointId`, `terminalId`, `timestamp`, `date`, `status`). `status` = `PRESENT` bila `sekarang <= thresholdTime`, selain itu `LATE`.
+   - Pencatatan **idempoten** per `(deviceUserId, presencePointId, date)` — scan ulang dalam window yang sama tidak menggandakan log dan tetap membalas `7`.
+   - Respons `7;{name};{photoHex}`.
+5. Bila tidak ada titik terbuka, respons `ERR;{pesan}` tanpa mencatat apa pun. Pesan: `Belum waktunya`, `Sudah ditutup`, `Di luar jam presensi`, atau `Tidak ada sesi kehadiran`.
+
+> Kesimpulan harian (HADIR/SAKIT/IZIN/ALPA) dihitung di dashboard `/presence` dari kumpulan `presence_logs` + override `attendance_marks`, bukan oleh device.
 
 ## Server-Side Command Storage
 
