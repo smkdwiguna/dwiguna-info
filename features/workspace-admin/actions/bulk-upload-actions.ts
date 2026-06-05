@@ -1,6 +1,6 @@
 "use server";
 
-import { getAdminService } from "@/lib/google-api";
+import { getAdminService, GOOGLE_CUSTOM_SCHEMA_NAME } from "@/lib/google-api";
 import {
 	fetchAllWorkspaceUsers,
 	buildIgnoreList,
@@ -41,8 +41,7 @@ function getErrorMessage(error: unknown) {
 }
 
 async function resolveCustomSchemaName(adminService: ReturnType<typeof getAdminService>) {
-	const configuredSchema = process.env.GOOGLE_CUSTOM_SCHEMA_NAME;
-	if (configuredSchema) return configuredSchema;
+	if (GOOGLE_CUSTOM_SCHEMA_NAME) return GOOGLE_CUSTOM_SCHEMA_NAME;
 
 	try {
 		const response = await adminService.schemas.list({

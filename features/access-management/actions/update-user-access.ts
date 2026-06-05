@@ -1,6 +1,6 @@
 "use server";
 
-import { getAdminService } from "@/lib/google-api";
+import { getAdminService, GOOGLE_CUSTOM_SCHEMA_NAME } from "@/lib/google-api";
 import { requireSuperUser } from "./require-superuser";
 
 const ACCESS_FIELD_CANDIDATES = [
@@ -12,13 +12,7 @@ const ACCESS_FIELD_CANDIDATES = [
 export async function updateUserAccess(userId: string, accessValue: string) {
 	await requireSuperUser();
 	const adminService = getAdminService();
-	const schemaName = process.env.GOOGLE_CUSTOM_SCHEMA_NAME?.trim();
-
-	if (!schemaName) {
-		throw new Error(
-			"GOOGLE_CUSTOM_SCHEMA_NAME wajib diisi untuk menyimpan akses.",
-		);
-	}
+	const schemaName = GOOGLE_CUSTOM_SCHEMA_NAME;
 
 	try {
 		const schemaList = await adminService.schemas.list({

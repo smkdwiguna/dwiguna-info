@@ -1,6 +1,6 @@
 "use server";
 
-import { getAdminService } from "@/lib/google-api";
+import { getAdminService, GOOGLE_CUSTOM_SCHEMA_NAME } from "@/lib/google-api";
 import { requireUsersAccess } from "./require-users-access";
 
 /**
@@ -25,12 +25,7 @@ export async function updateUser(
 		let requestBody: Record<string, unknown> = { ...rest };
 
 		if (customFields) {
-			const schemaName = process.env.GOOGLE_CUSTOM_SCHEMA_NAME?.trim();
-			if (!schemaName) {
-				throw new Error(
-					"GOOGLE_CUSTOM_SCHEMA_NAME wajib diisi untuk menyimpan custom field.",
-				);
-			}
+			const schemaName = GOOGLE_CUSTOM_SCHEMA_NAME;
 
 			const schemaList = await adminService.schemas.list({
 				customerId: "my_customer",
