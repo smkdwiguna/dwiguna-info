@@ -1,5 +1,9 @@
 import { getDb } from "@/lib/db";
-import { attendanceSheets, schedules } from "@/lib/db/schema";
+import {
+	attendanceSheets,
+	pointSchedules,
+	presencePoints,
+} from "@/lib/db/schema";
 import { Suspense } from "react";
 import { SheetsListClient } from "@/features/presence/components/sheets-list-client";
 import { PageShell } from "@/components/ui/page-header";
@@ -26,12 +30,18 @@ async function SheetsFetcher() {
 
 	// Fetch all sheets
 	const allSheets = await db.select().from(attendanceSheets);
-	const allSchedules = await db.select().from(schedules);
+	const [allPoints, allSchedules] = await Promise.all([
+		db.select().from(presencePoints),
+		db.select().from(pointSchedules),
+	]);
+	const sheetIdByPointId = new Map(allPoints.map((p) => [p.id, p.sheetId]));
 
 	// Calculate date ranges
 	const structuredSheets = allSheets.map((sheet) => {
-		const sheetSchedules = allSchedules.filter((s) => s.sheetId === sheet.id);
-		const dates = sheetSchedules.map((s) => s.date).sort();
+		const dates = allSchedules
+			.filter((s) => sheetIdByPointId.get(s.presencePointId) === sheet.id)
+			.map((s) => s.date)
+			.sort();
 
 		let dateRange = "Belum ada jadwal";
 		if (dates.length > 0) {

@@ -78,6 +78,35 @@ export const schedules = pgTable(
 	}),
 );
 
+// Per-day activation of a single presence point on a single terminal.
+// This is the granular schedule that powers the global agenda/calendar:
+// a day can have only a subset of a sheet's points, and each instance may
+// override the point's default time window. A null override falls back to the
+// presence point's default startTime/thresholdTime/endTime.
+export const pointSchedules = pgTable(
+	"point_schedules",
+	{
+		id: serial("id").primaryKey(),
+		presencePointId: integer("presence_point_id")
+			.notNull()
+			.references(() => presencePoints.id, { onDelete: "cascade" }),
+		terminalId: text("terminal_id")
+			.notNull()
+			.references(() => terminals.id, { onDelete: "cascade" }),
+		date: text("date").notNull(), // YYYY-MM-DD
+		// Optional per-day overrides (minutes from midnight). Null = use default.
+		startTime: integer("start_time"),
+		thresholdTime: integer("threshold_time"),
+		endTime: integer("end_time"),
+	},
+	(t) => ({
+		// A given point can only be activated once per terminal per date.
+		// Overlap between *different* points on the same terminal+date is
+		// rejected in application logic (see lib/presence-schedule.ts).
+		unq: unique().on(t.presencePointId, t.terminalId, t.date),
+	}),
+);
+
 export const presenceLogs = pgTable("presence_logs", {
 	id: serial("id").primaryKey(),
 	deviceUserId: integer("device_user_id")
@@ -93,6 +122,33 @@ export const presenceLogs = pgTable("presence_logs", {
 	date: text("date").notNull(), // YYYY-MM-DD for easier querying
 	status: text("status").notNull(), // PRESENT, LATE, ABSENT, SICK, PERMIT
 });
+
+// Manual, daily-level attendance override for a user on a sheet for a date.
+// `presenceLogs` are per presence point; the *daily* conclusion (HADIR/SAKIT/
+// IZIN/ALPA) is normally derived automatically, but holders of
+// `presence.edit.attendances` can override it here (e.g. mark SICK/PERMIT).
+export const attendanceMarks = pgTable(
+	"attendance_marks",
+	{
+		id: serial("id").primaryKey(),
+		deviceUserId: integer("device_user_id")
+			.notNull()
+			.references(() => deviceUsers.id, { onDelete: "cascade" }),
+		sheetId: integer("sheet_id")
+			.notNull()
+			.references(() => attendanceSheets.id, { onDelete: "cascade" }),
+		date: text("date").notNull(), // YYYY-MM-DD
+		status: text("status").notNull(), // PRESENT, SICK, PERMIT, ABSENT
+		note: text("note"),
+		editedByEmail: text("edited_by_email").notNull(),
+		updatedAt: timestamp("updated_at", { mode: "string" })
+			.notNull()
+			.defaultNow(),
+	},
+	(t) => ({
+		unq: unique().on(t.deviceUserId, t.sheetId, t.date),
+	}),
+);
 
 export const shortLinks = pgTable("short_links", {
 	id: serial("id").primaryKey(),

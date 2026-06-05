@@ -8,6 +8,13 @@
       "when": 1780647447047,
       "tag": "0000_curved_sabretooth",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780663882393,
+      "tag": "0001_graceful_blue_blade",
+      "breakpoints": true
     }
   ]
 }

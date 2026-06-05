@@ -3,8 +3,6 @@ import {
 	attendanceSheets,
 	sheetTargets,
 	presencePoints,
-	schedules,
-	terminals,
 } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Suspense } from "react";
@@ -21,7 +19,7 @@ export default async function SheetDetailPage({
 }) {
 	const resolvedParams = await params;
 	const sheetId = parseInt(resolvedParams.sheetId, 10);
-	await requirePermissionOrRedirect("presence");
+	await requirePermissionOrRedirect("presence.edit.sheets");
 	return (
 		<PageShell>
 			<Suspense fallback={<SuspenseSpinner />}>
@@ -51,12 +49,6 @@ async function SheetDetailFetcher({ sheetId }: { sheetId: number }) {
 		.select()
 		.from(presencePoints)
 		.where(eq(presencePoints.sheetId, sheetId));
-	const sheetSchedules = await db
-		.select()
-		.from(schedules)
-		.where(eq(schedules.sheetId, sheetId));
-
-	const allTerminals = await db.select().from(terminals);
 
 	const orgUnits = await fetchAllOrgUnits();
 
@@ -65,8 +57,6 @@ async function SheetDetailFetcher({ sheetId }: { sheetId: number }) {
 			sheet={sheet}
 			targets={targets}
 			points={points}
-			schedules={sheetSchedules}
-			terminals={allTerminals}
 			orgUnits={orgUnits}
 		/>
 	);
