@@ -10,6 +10,13 @@ export const PEOPLE_SCOPES = [
 ] as const;
 
 const SUBJECT = "proktor@smkdwiguna.sch.id";
+
+/**
+ * Name of the Google Workspace custom schema that stores app-specific fields
+ * (access/permissions, NISN/NIS/NUPTK/TTL). Fixed per-org Workspace config, so
+ * it's a constant rather than an env var.
+ */
+export const GOOGLE_CUSTOM_SCHEMA_NAME = "dwiguna";
 export const ADMIN_BASE = "https://admin.googleapis.com/admin/directory/v1";
 export const PEOPLE_BASE = "https://people.googleapis.com";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -449,7 +456,7 @@ export async function fetchUserAccessFromWorkspace(
 			normalizeCustomSchemaValue(fields.permissions) ||
 			normalizeCustomSchemaValue(fields.permission);
 
-		const targetSchema = process.env.GOOGLE_CUSTOM_SCHEMA_NAME;
+		const targetSchema = GOOGLE_CUSTOM_SCHEMA_NAME;
 		if (targetSchema && customSchemas[targetSchema]) {
 			const v = pickAccess(customSchemas[targetSchema]);
 			if (v) return v;
