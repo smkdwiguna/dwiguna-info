@@ -56,7 +56,7 @@ async function SheetDetailFetcher({ sheetId }: { sheetId: number }) {
 		.from(schedules)
 		.where(eq(schedules.sheetId, sheetId));
 
-	const allTerminals = await db.select().from(terminals).all();
+	const allTerminals = await db.select().from(terminals);
 
 	const orgUnits = await fetchAllOrgUnits();
 

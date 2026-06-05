@@ -1,0 +1,12 @@
+[build]
+  command = "next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# The official Next.js runtime (provisions Netlify Functions for SSR, API
+# routes and Server Actions, and Edge Functions for middleware). Netlify
+# installs this automatically when a Next.js site is detected.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

@@ -15,7 +15,7 @@ export async function deleteDeviceUser(id: number) {
 export async function enrollFingerprint(fid: number, terminalId: string) {
 	const db = await getDb();
 	const { terminals } = await import("@/lib/db/schema");
-	const terminal = await db.select().from(terminals).where(eq(terminals.id, terminalId)).get();
+	const terminal = await db.select().from(terminals).where(eq(terminals.id, terminalId)).then((r) => r[0]);
 	if (!terminal) throw new Error("Perangkat tidak ditemukan");
 
 	await db

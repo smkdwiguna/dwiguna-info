@@ -1,16 +1,23 @@
-import { drizzle } from "drizzle-orm/d1";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@netlify/neon";
 import * as schema from "./schema";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+/**
+ * Netlify DB (Neon / Postgres) connection.
+ *
+ * `neon()` reads the connection string from `NETLIFY_DATABASE_URL` (injected by
+ * Netlify automatically once a database is provisioned). The HTTP driver is a
+ * good fit for serverless functions — the app uses no interactive transactions.
+ *
+ * Kept async so existing callers (`await getDb()`) stay unchanged.
+ */
 export async function getDb() {
-	const { env } = await getCloudflareContext({ async: true });
-
-	if (!env || (!env.DB && !env.dwigunaInfo)) {
+	if (!process.env.NETLIFY_DATABASE_URL) {
 		throw new Error(
-			"Database binding 'dwigunaInfo' tidak ditemukan. Jika Anda menjalankan 'npm run dev', bindings Cloudflare (seperti D1) tidak akan tersedia secara otomatis. Silakan gunakan perintah 'npm run preview' (yang menjalankan OpenNext & Wrangler) untuk menguji fitur database secara lokal.",
+			"NETLIFY_DATABASE_URL tidak ditemukan. Provision Netlify DB (`npx netlify db init`) atau set variabel ini di environment Netlify / .env lokal.",
 		);
 	}
 
-	const dbBinding = (env.dwigunaInfo || env.DB) as any;
-	return drizzle(dbBinding, { schema });
+	const sql = neon();
+	return drizzle(sql, { schema });
 }

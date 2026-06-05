@@ -49,10 +49,10 @@ function formatTimestamp(value: number) {
 async function PresenceDashboard() {
 	const db = await getDb();
 	const [allSchedules, allPoints, allLogs, allDeviceUsers] = await Promise.all([
-		db.select().from(schedules).all(),
-		db.select().from(presencePoints).all(),
-		db.select().from(presenceLogs).all(),
-		db.select().from(deviceUsers).all(),
+		db.select().from(schedules),
+		db.select().from(presencePoints),
+		db.select().from(presenceLogs),
+		db.select().from(deviceUsers),
 	]);
 
 	const scheduleBySheet = new Map<number, string[]>();
