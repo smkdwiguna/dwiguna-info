@@ -8,6 +8,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Download, Upload, XCircle } from "lucide-react";
+import { verifyUploadedPdf } from "../actions/verify";
 import type { VerificationResult } from "../actions/verify";
 import type { PublicDocumentInfo } from "../actions/verify";
 import { PdfViewer } from "./pdf-viewer";
@@ -48,11 +49,7 @@ export function VerifyClient({
 			const formData = new FormData();
 			formData.set("file", file);
 			if (documentId) formData.set("documentId", documentId);
-			const res = await fetch("/api/verify", {
-				method: "POST",
-				body: formData,
-			});
-			const json = (await res.json()) as VerificationResult;
+			const json = await verifyUploadedPdf(formData);
 			setResult(json);
 		} catch {
 			setResult(null);
