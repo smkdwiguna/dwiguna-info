@@ -289,18 +289,18 @@ export async function uploadFileToDrive(
 	};
 
 	const boundary = "314159265358979323846";
-	const delimiter = `\r\n--${boundary}\r\n`;
+	const encoder = new TextEncoder();
+
+	const metadataPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
+	const mediaPartHeader = `--${boundary}\r\nContent-Type: ${fileMime}\r\n\r\n`;
 	const closeDelimiter = `\r\n--${boundary}--`;
 
-	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}`;
-	const mediaPartHeader = `${delimiter}Content-Type: ${fileMime}\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
-
-	// Use Buffer (nodejs_compat) for a fast, chunk-free base64 encode — the old
-	// char-by-char reduce blew up memory/time on multi-MB PDFs.
-	const base64Data = Buffer.from(new Uint8Array(fileBuffer)).toString("base64");
-
-	const multipartBody =
-		metadataPart + mediaPartHeader + base64Data + closeDelimiter;
+	const multipartBody = concatUint8Arrays([
+		encoder.encode(metadataPart),
+		encoder.encode(mediaPartHeader),
+		new Uint8Array(fileBuffer),
+		encoder.encode(closeDelimiter),
+	]);
 
 	const uploadResult = await driveRequest<{ id: string }>("/files", {
 		method: "POST",
@@ -311,7 +311,7 @@ export async function uploadFileToDrive(
 		headers: {
 			"Content-Type": `multipart/related; boundary=${boundary}`,
 		},
-		rawBody: multipartBody,
+		rawBody: multipartBody as any,
 	});
 
 	const fileId = uploadResult.id;
@@ -401,13 +401,18 @@ async function uploadPdfBytes(
 	const metadata = { name: uniqueName, parents: [folderId] };
 
 	const boundary = "314159265358979323846";
-	const delimiter = `\r\n--${boundary}\r\n`;
+	const encoder = new TextEncoder();
+
+	const metadataPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
+	const mediaPartHeader = `--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`;
 	const closeDelimiter = `\r\n--${boundary}--`;
-	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}`;
-	const mediaPartHeader = `${delimiter}Content-Type: application/pdf\r\nContent-Transfer-Encoding: base64\r\n\r\n`;
-	const base64Data = Buffer.from(pdfBytes).toString("base64");
-	const multipartBody =
-		metadataPart + mediaPartHeader + base64Data + closeDelimiter;
+
+	const multipartBody = concatUint8Arrays([
+		encoder.encode(metadataPart),
+		encoder.encode(mediaPartHeader),
+		pdfBytes,
+		encoder.encode(closeDelimiter),
+	]);
 
 	const uploadResult = await driveRequest<{ id: string }>("/files", {
 		method: "POST",
@@ -415,7 +420,7 @@ async function uploadPdfBytes(
 		subject,
 		params: { uploadType: "multipart" },
 		headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-		rawBody: multipartBody,
+		rawBody: multipartBody as any,
 	});
 
 	const fileId = uploadResult.id;
@@ -530,4 +535,18 @@ export async function setDriveFilePublic(
 			subject,
 		});
 	}
+}
+
+/**
+ * Concatenates multiple Uint8Arrays into one.
+ */
+function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+	const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+	const result = new Uint8Array(totalLength);
+	let offset = 0;
+	for (const arr of arrays) {
+		result.set(arr, offset);
+		offset += arr.length;
+	}
+	return result;
 }

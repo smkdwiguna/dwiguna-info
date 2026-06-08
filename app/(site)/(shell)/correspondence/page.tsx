@@ -32,6 +32,7 @@ export default async function CorrespondencePage() {
 					documents={documents}
 					canUpload={ctx.canUpload}
 					users={users}
+					currentUser={{ email: ctx.email, name: ctx.displayName }}
 				/>
 			</PageShell>
 		</>

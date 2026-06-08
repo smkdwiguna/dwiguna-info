@@ -107,24 +107,17 @@ export async function createDocument(formData: FormData): Promise<string> {
 		status: "DRAFT",
 	});
 
-	// Owner is a signer too; invited signers get the bypass.
-	const signerRows = [
-		{
-			documentId,
-			signerEmail: ctx.email,
-			invitedByEmail: ctx.email,
-			status: "INVITED",
-		},
-		...invitedEmails
-			.filter((email) => email !== ctx.email)
-			.map((email) => ({
-				documentId,
-				signerEmail: email,
-				invitedByEmail: ctx.email,
-				status: "INVITED",
-			})),
-	];
-	await db.insert(signatureSigners).values(signerRows);
+	// Invited signers get the bypass.
+	const signerRows = invitedEmails.map((email) => ({
+		documentId,
+		signerEmail: email,
+		invitedByEmail: ctx.email,
+		status: "INVITED",
+	}));
+
+	if (signerRows.length > 0) {
+		await db.insert(signatureSigners).values(signerRows);
+	}
 
 	return documentId;
 }
