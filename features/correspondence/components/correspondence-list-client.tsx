@@ -194,14 +194,14 @@ export function CorrespondenceListClient({
 								<CardContent className="flex gap-2 items-center justify-between">
 									<div className="flex items-start gap-3">
 										<div>
-											<p className="font-medium">{doc.title}</p>
+											<p className="font-bold">{doc.title}</p>
 											<p className="text-xs text-muted-foreground">
 												{doc.ownerName}
 												{doc.isOwner ? " (Anda)" : ""}
 											</p>
 										</div>
 									</div>
-									<div className="flex flex-col items-end md:flex-row md:items-center">
+									<div className="flex flex-col items-end">
 										<span className="text-sm font-bold text-muted-foreground">
 											{doc.signedCount}/{doc.signerCount} tanda tangan
 										</span>
