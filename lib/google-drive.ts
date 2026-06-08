@@ -289,17 +289,17 @@ export async function uploadFileToDrive(
 	};
 
 	const boundary = "314159265358979323846";
-	const encoder = new TextEncoder();
-
-	const metadataPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
-	const mediaPartHeader = `--${boundary}\r\nContent-Type: ${fileMime}\r\n\r\n`;
+	const delimiter = `--${boundary}\r\n`;
 	const closeDelimiter = `\r\n--${boundary}--`;
 
-	const multipartBody = concatUint8Arrays([
-		encoder.encode(metadataPart),
-		encoder.encode(mediaPartHeader),
-		new Uint8Array(fileBuffer),
-		encoder.encode(closeDelimiter),
+	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
+	const mediaPartHeader = `${delimiter}Content-Type: ${fileMime}\r\n\r\n`;
+
+	const multipartBody = Buffer.concat([
+		Buffer.from(metadataPart),
+		Buffer.from(mediaPartHeader),
+		Buffer.from(fileBuffer),
+		Buffer.from(closeDelimiter),
 	]);
 
 	const uploadResult = await driveRequest<{ id: string }>("/files", {
@@ -401,17 +401,17 @@ async function uploadPdfBytes(
 	const metadata = { name: uniqueName, parents: [folderId] };
 
 	const boundary = "314159265358979323846";
-	const encoder = new TextEncoder();
-
-	const metadataPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
-	const mediaPartHeader = `--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`;
+	const delimiter = `--${boundary}\r\n`;
 	const closeDelimiter = `\r\n--${boundary}--`;
 
-	const multipartBody = concatUint8Arrays([
-		encoder.encode(metadataPart),
-		encoder.encode(mediaPartHeader),
-		pdfBytes,
-		encoder.encode(closeDelimiter),
+	const metadataPart = `${delimiter}Content-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`;
+	const mediaPartHeader = `${delimiter}Content-Type: application/pdf\r\n\r\n`;
+
+	const multipartBody = Buffer.concat([
+		Buffer.from(metadataPart),
+		Buffer.from(mediaPartHeader),
+		Buffer.from(pdfBytes),
+		Buffer.from(closeDelimiter),
 	]);
 
 	const uploadResult = await driveRequest<{ id: string }>("/files", {
