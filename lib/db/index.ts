@@ -1,6 +1,8 @@
 import { drizzle } from "drizzle-orm/libsql";
-import { createClient } from "@libsql/client";
+import { createClient, type Client } from "@libsql/client";
 import * as schema from "./schema";
+
+let client: Client | null = null;
 
 /**
  * Turso DB (SQLite) connection.
@@ -17,9 +19,12 @@ export async function getDb() {
 		);
 	}
 
-	const client = createClient({
-		url: process.env.TURSO_DATABASE_URL,
-		authToken: process.env.TURSO_AUTH_TOKEN,
-	});
+	if (!client) {
+		client = createClient({
+			url: process.env.TURSO_DATABASE_URL,
+			authToken: process.env.TURSO_AUTH_TOKEN,
+		});
+	}
+
 	return drizzle(client, { schema });
 }
