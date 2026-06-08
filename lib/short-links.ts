@@ -8,6 +8,7 @@ const SHORT_LINK_RESERVED_SEGMENTS = new Set(
 		"login",
 		"correspondence",
 		"presence",
+		"academic",
 		"settings",
 		"shortlinks",
 		"users",

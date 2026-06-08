@@ -17,6 +17,7 @@ Folder ini berisi catatan implementasi yang mengikuti kondisi kode saat ini. Jik
 - [Shortlink](shortlink.md)
 - [Site Shell and User Management](workspace-admin.md)
 - [Access Management](access-management.md)
+- [Academic](academic.md)
 
 ## Maintenance Notes
 

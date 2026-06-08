@@ -6,9 +6,10 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-// Better Auth (sessions/accounts) + Correspondence (TTE) tables.
+// Better Auth (sessions/accounts) + Correspondence (TTE) + Academic tables.
 export * from "./auth-schema";
 export * from "./tte-schema";
+export * from "./academic-schema";
 
 export const deviceUsers = sqliteTable("device_users", {
 	// Hardware limit ID from 0 to 999
