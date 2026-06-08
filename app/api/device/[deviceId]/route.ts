@@ -1,5 +1,11 @@
 import { getDb } from "@/lib/db";
-import { deviceUsers, terminals } from "@/lib/db/schema";
+import {
+	deviceUsers,
+	pointSchedules,
+	presenceLogs,
+	presencePoints,
+	terminals,
+} from "@/lib/db/schema";
 import { buildDevicePhotoHex } from "@/lib/device-user-photo";
 import { getAdminService, type GoogleUserRecord } from "@/lib/google-api";
 import { loadGoogleUserPhotoBytes } from "@/lib/google-user-photo";
@@ -9,7 +15,13 @@ import {
 	hasTerminalPendingCommand,
 	isTerminalIdle,
 } from "@/lib/terminal-command";
-import { eq } from "drizzle-orm";
+import {
+	findOpenSchedule,
+	nowInJakarta,
+	type PointScheduleLike,
+	type ResolvedWindow,
+} from "@/lib/presence-schedule";
+import { and, eq } from "drizzle-orm";
 
 const LINE_BREAK_REGEX = /\r?\n/;
 
@@ -57,6 +69,106 @@ function parseSyncQueue(raw?: string | null): number[] {
 		if (Array.isArray(parsed)) return parsed;
 	} catch {}
 	return [];
+}
+
+type Db = Awaited<ReturnType<typeof getDb>>;
+
+type AttendanceResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Record a fingerprint scan as attendance, if a presence point is currently
+ * open on this terminal. Returns a rejection message otherwise so the device
+ * can show its "Ditolak" screen (via ERR;<message>). Recording is idempotent
+ * per (user, point, date) so re-scanning within the window is harmless.
+ */
+async function recordAttendanceScan(
+	db: Db,
+	terminalId: string,
+	deviceUserId: number,
+	epochMs: number,
+): Promise<AttendanceResult> {
+	const { dateKey, minutes } = nowInJakarta(epochMs);
+
+	const rows = await db
+		.select({
+			presencePointId: pointSchedules.presencePointId,
+			startTime: pointSchedules.startTime,
+			thresholdTime: pointSchedules.thresholdTime,
+			endTime: pointSchedules.endTime,
+			defStart: presencePoints.startTime,
+			defThreshold: presencePoints.thresholdTime,
+			defEnd: presencePoints.endTime,
+		})
+		.from(pointSchedules)
+		.innerJoin(
+			presencePoints,
+			eq(pointSchedules.presencePointId, presencePoints.id),
+		)
+		.where(
+			and(
+				eq(pointSchedules.terminalId, terminalId),
+				eq(pointSchedules.date, dateKey),
+			),
+		);
+
+	if (rows.length === 0) {
+		return { ok: false, message: "Tidak ada sesi kehadiran" };
+	}
+
+	const defaultsByPointId = new Map<number, ResolvedWindow>();
+	const schedules: PointScheduleLike[] = [];
+	let minStart = Number.POSITIVE_INFINITY;
+	let maxEnd = Number.NEGATIVE_INFINITY;
+	for (const r of rows) {
+		defaultsByPointId.set(r.presencePointId, {
+			startTime: r.defStart,
+			thresholdTime: r.defThreshold,
+			endTime: r.defEnd,
+		});
+		schedules.push({
+			presencePointId: r.presencePointId,
+			terminalId,
+			date: dateKey,
+			startTime: r.startTime,
+			thresholdTime: r.thresholdTime,
+			endTime: r.endTime,
+		});
+		minStart = Math.min(minStart, r.startTime ?? r.defStart);
+		maxEnd = Math.max(maxEnd, r.endTime ?? r.defEnd);
+	}
+
+	const open = findOpenSchedule(schedules, defaultsByPointId, minutes);
+	if (!open) {
+		if (minutes < minStart) return { ok: false, message: "Belum waktunya" };
+		if (minutes >= maxEnd) return { ok: false, message: "Sudah ditutup" };
+		return { ok: false, message: "Di luar jam presensi" };
+	}
+
+	const status = minutes <= open.window.thresholdTime ? "PRESENT" : "LATE";
+
+	const [existing] = await db
+		.select({ id: presenceLogs.id })
+		.from(presenceLogs)
+		.where(
+			and(
+				eq(presenceLogs.deviceUserId, deviceUserId),
+				eq(presenceLogs.presencePointId, open.schedule.presencePointId),
+				eq(presenceLogs.date, dateKey),
+			),
+		);
+
+	if (!existing) {
+		await db.insert(presenceLogs).values({
+			deviceUserId,
+			presencePointId: open.schedule.presencePointId,
+			terminalId,
+			timestamp: Math.floor(epochMs / 1000),
+			date: dateKey,
+			status,
+		});
+	}
+
+	return { ok: true };
 }
 
 export async function POST(
@@ -143,6 +255,7 @@ export async function POST(
 
 	let responseStatus = storedStatus;
 	let responseMetadata = storedMetadata;
+	let rejectMessage: string | null = null;
 
 	// Pending dashboard commands always win over search/sync for this response
 	if (hasTerminalPendingCommand(storedStatus)) {
@@ -150,11 +263,22 @@ export async function POST(
 		responseMetadata = storedMetadata;
 	} else {
 		if (searchedId !== null) {
-			const presentation = await resolveUserPresentation(searchedId);
-			responseStatus = "7";
-			responseMetadata = `${presentation.name};${presentation.photoHex}`;
-			storedStatus = responseStatus;
-			storedMetadata = responseMetadata;
+			const attendance = await recordAttendanceScan(
+				db,
+				auth.terminal.id,
+				searchedId,
+				Date.now(),
+			);
+			if (attendance.ok) {
+				const presentation = await resolveUserPresentation(searchedId);
+				responseStatus = "7";
+				responseMetadata = `${presentation.name};${presentation.photoHex}`;
+				storedStatus = responseStatus;
+				storedMetadata = responseMetadata;
+			} else {
+				// No point open: reject the scan. Terminal stays idle.
+				rejectMessage = attendance.message;
+			}
 		} else if (syncQueue.length > 0) {
 			while (syncQueue.length > 0) {
 				const nextFid = syncQueue[0];
@@ -188,7 +312,10 @@ export async function POST(
 		})
 		.where(eq(terminals.id, auth.terminal.id));
 
-	const payload = formatTerminalCommand(responseStatus, responseMetadata);
+	const payload =
+		rejectMessage !== null
+			? `ERR;${sanitizeField(rejectMessage)}`
+			: formatTerminalCommand(responseStatus, responseMetadata);
 
 	return new Response(payload, {
 		headers: { "content-type": "text/plain; charset=utf-8" },

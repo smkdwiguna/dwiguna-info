@@ -72,6 +72,7 @@ export function SiteLayout({
 	}, [pathname, router, searchParams]);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setIsRoutePending(false);
 	}, [pathname, searchParams]);
 
@@ -274,6 +275,18 @@ function AppSidebar({
 												onNavigate={onNavigate}
 											>
 												<span>Sidik Jari</span>
+											</ShellNavLink>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<ShellNavLink
+												href="/presence/agenda"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
+												<span>Agenda</span>
 											</ShellNavLink>
 										</SidebarMenuSubButton>
 									</SidebarMenuSubItem>

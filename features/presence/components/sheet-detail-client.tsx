@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, CalendarDays, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,30 +44,15 @@ interface Point {
 	endTime: number | string;
 }
 
-interface Schedule {
-	id?: number;
-	terminalId: string;
-	date: string;
-}
-
-interface Terminal {
-	id: string;
-	name: string;
-}
-
 export function SheetDetailClient({
 	sheet,
 	targets: initialTargets,
 	points: initialPoints,
-	schedules,
-	terminals,
 	orgUnits,
 }: {
 	sheet: Sheet;
 	targets: Target[];
 	points: Point[];
-	schedules: Schedule[];
-	terminals: Terminal[];
 	orgUnits: string[];
 }) {
 	const router = useRouter();
@@ -111,8 +97,6 @@ export function SheetDetailClient({
 				],
 	);
 
-	const [schedulesList, setSchedulesList] = useState<Schedule[]>(schedules);
-
 	const handleSave = async () => {
 		if (!name) return toast.error("Nama lembar harus diisi");
 
@@ -131,7 +115,6 @@ export function SheetDetailClient({
 						thresholdTime: timeToMinutes(p.thresholdTime as string),
 						endTime: timeToMinutes(p.endTime as string),
 					})),
-				schedules: schedulesList.filter((s) => s.terminalId && s.date),
 			};
 
 			await updateAttendanceSheet(payload);
@@ -332,74 +315,25 @@ export function SheetDetailClient({
 					</div>
 				</div>
 
-				{/* SCHEDULES */}
-				<div className="space-y-4">
-					<div className="flex items-center justify-between">
-						<div>
-							<Label className="text-lg font-semibold">Jadwal Perangkat</Label>
+				{/* SCHEDULING (moved to global agenda) */}
+				<div className="space-y-3">
+					<Label className="text-lg font-semibold">Jadwal Aktif</Label>
+					<Link
+						href="/presence/agenda"
+						className="flex items-center justify-between gap-3 rounded-md border p-4 transition-colors hover:bg-muted"
+					>
+						<div className="flex items-center gap-3">
+							<CalendarDays className="w-5 h-5 text-muted-foreground" />
+							<div className="text-sm">
+								<p className="font-medium">Atur tanggal aktif di Agenda</p>
+								<p className="text-muted-foreground">
+									Pilih tanggal & perangkat per titik kehadiran lewat kalender
+									global (termasuk override waktu per hari).
+								</p>
+							</div>
 						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() =>
-								setSchedulesList([
-									...schedulesList,
-									{ terminalId: "", date: "" },
-								])
-							}
-						>
-							<Plus className="w-4 h-4 mr-2" /> Tambah Jadwal
-						</Button>
-					</div>
-					<div className="space-y-2">
-						{schedulesList.map((s, idx) => (
-							<div key={idx} className="flex gap-2 items-center">
-								<Select
-									value={s.terminalId}
-									onValueChange={(value) => {
-										const newS = [...schedulesList];
-										newS[idx].terminalId = value;
-										setSchedulesList(newS);
-									}}
-								>
-									<SelectTrigger className="flex-1">
-										<SelectValue placeholder="Pilih Perangkat..." />
-									</SelectTrigger>
-									<SelectContent>
-										{terminals.map((t) => (
-											<SelectItem key={t.id} value={t.id}>
-												{t.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-								<Input
-									type="date"
-									value={s.date}
-									onChange={(e) => {
-										const newS = [...schedulesList];
-										newS[idx].date = e.target.value;
-										setSchedulesList(newS);
-									}}
-									className="flex-1"
-								/>
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={() =>
-										setSchedulesList(schedulesList.filter((_, i) => i !== idx))
-									}
-								>
-									<Trash2 className="w-4 h-4 text-destructive" />
-								</Button>
-							</div>
-						))}
-						{schedulesList.length === 0 && (
-							<div className="p-4 text-center border border-dashed rounded-md text-muted-foreground text-sm">
-								Belum ada jadwal perangkat.
-							</div>
-						)}
-					</div>
+						<ArrowRight className="w-4 h-4 text-muted-foreground" />
+					</Link>
 				</div>
 			</div>
 		</PageShell>

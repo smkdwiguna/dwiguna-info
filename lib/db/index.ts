@@ -1,23 +1,25 @@
-import { drizzle } from "drizzle-orm/neon-http";
-import { neon } from "@netlify/neon";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
 /**
- * Netlify DB (Neon / Postgres) connection.
+ * Turso DB (SQLite) connection.
  *
- * `neon()` reads the connection string from `NETLIFY_DATABASE_URL` (injected by
- * Netlify automatically once a database is provisioned). The HTTP driver is a
- * good fit for serverless functions — the app uses no interactive transactions.
+ * `createClient()` reads the connection string from `TURSO_DATABASE_URL` and
+ * `TURSO_AUTH_TOKEN`.
  *
  * Kept async so existing callers (`await getDb()`) stay unchanged.
  */
 export async function getDb() {
-	if (!process.env.NETLIFY_DATABASE_URL) {
+	if (!process.env.TURSO_DATABASE_URL) {
 		throw new Error(
-			"NETLIFY_DATABASE_URL tidak ditemukan. Provision Netlify DB (`npx netlify db init`) atau set variabel ini di environment Netlify / .env lokal.",
+			"TURSO_DATABASE_URL tidak ditemukan. Set variabel ini di environment Turso / .env lokal.",
 		);
 	}
 
-	const sql = neon();
-	return drizzle(sql, { schema });
+	const client = createClient({
+		url: process.env.TURSO_DATABASE_URL,
+		authToken: process.env.TURSO_AUTH_TOKEN,
+	});
+	return drizzle(client, { schema });
 }
