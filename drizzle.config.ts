@@ -1,10 +1,12 @@
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  dialect: "postgresql",
+  dialect: "sqlite",
   schema: "./lib/db/schema.ts",
   out: "./drizzle",
+  driver: "turso",
   dbCredentials: {
-    url: process.env.NETLIFY_DATABASE_URL!,
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN,
   },
-});
+} as any);
