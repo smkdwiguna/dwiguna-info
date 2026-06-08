@@ -1,31 +1,31 @@
 /**
- * Better Auth tables, persisted in Netlify DB (Neon / Postgres).
+ * Better Auth tables, persisted in Turso (SQLite).
  *
- * Using a real database adapter means sessions live in Postgres instead of
+ * Using a real database adapter means sessions live in SQLite instead of
  * fragile cookies — this fixes the frequent forced re-logins and lets us keep
  * Google OAuth account tokens.
  *
  * Table/column names follow Better Auth's defaults so no adapter field mapping
  * is required.
  */
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const user = pgTable("user", {
+export const user = sqliteTable("user", {
 	id: text("id").primaryKey(),
 	name: text("name").notNull(),
 	email: text("email").notNull().unique(),
-	emailVerified: boolean("email_verified").default(false).notNull(),
+	emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
 	image: text("image"),
-	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" }).defaultNow().notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }).defaultNow().notNull(),
 });
 
-export const session = pgTable("session", {
+export const session = sqliteTable("session", {
 	id: text("id").primaryKey(),
-	expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+	expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
 	token: text("token").notNull().unique(),
-	createdAt: timestamp("created_at", { mode: "date" }).notNull(),
-	updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 	ipAddress: text("ip_address"),
 	userAgent: text("user_agent"),
 	userId: text("user_id")
@@ -33,7 +33,7 @@ export const session = pgTable("session", {
 		.references(() => user.id, { onDelete: "cascade" }),
 });
 
-export const account = pgTable("account", {
+export const account = sqliteTable("account", {
 	id: text("id").primaryKey(),
 	accountId: text("account_id").notNull(),
 	providerId: text("provider_id").notNull(),
@@ -43,19 +43,19 @@ export const account = pgTable("account", {
 	accessToken: text("access_token"),
 	refreshToken: text("refresh_token"),
 	idToken: text("id_token"),
-	accessTokenExpiresAt: timestamp("access_token_expires_at", { mode: "date" }),
-	refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { mode: "date" }),
+	accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp" }),
+	refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp" }),
 	scope: text("scope"),
 	password: text("password"),
-	createdAt: timestamp("created_at", { mode: "date" }).notNull(),
-	updatedAt: timestamp("updated_at", { mode: "date" }).notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });
 
-export const verification = pgTable("verification", {
+export const verification = sqliteTable("verification", {
 	id: text("id").primaryKey(),
 	identifier: text("identifier").notNull(),
 	value: text("value").notNull(),
-	expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
-	createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+	expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+	createdAt: integer("created_at", { mode: "timestamp" }).defaultNow().notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }).defaultNow().notNull(),
 });

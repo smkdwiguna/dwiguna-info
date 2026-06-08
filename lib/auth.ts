@@ -17,7 +17,7 @@ function buildAuth(db: Awaited<ReturnType<typeof getDb>>) {
 			process.env.BETTER_AUTH_URL?.replace(/;$/, "") || "http://localhost:3000",
 		],
 		database: drizzleAdapter(db, {
-			provider: "pg",
+			provider: "sqlite",
 			// Table variables already use Better Auth's default singular names.
 			schema: {
 				user: schema.user,
