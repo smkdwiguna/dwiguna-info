@@ -20,9 +20,9 @@ import { fromBase64 } from "./crypto";
 import { LOGO_MARK_PNG_BASE64 } from "./logo-data";
 
 /** Center-logo footprint as a ratio of the QR size (incl. its white padding). */
-const LOGO_RATIO = 0.26;
+const LOGO_RATIO = 0.25;
 /** White padding around the logo, as a ratio of the QR size. */
-const LOGO_PAD_RATIO = 0.04;
+const LOGO_PAD_RATIO = 0;
 
 export interface QrPlacement {
 	/** 0-based page index. */
@@ -180,7 +180,9 @@ export async function signPdf(
 		signingTime,
 	);
 	if (!signer.signedContent) {
-		throw new Error("Gagal menandatangani PDF: konten ByteRange tidak terbaca.");
+		throw new Error(
+			"Gagal menandatangani PDF: konten ByteRange tidak terbaca.",
+		);
 	}
 	return {
 		signedPdf: new Uint8Array(signed),
@@ -196,7 +198,8 @@ export interface ExtractedByteRange {
 	contents: Uint8Array;
 }
 
-const BYTE_RANGE_REGEX = /\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g;
+const BYTE_RANGE_REGEX =
+	/\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g;
 
 /**
  * Parse every signature ByteRange in a PDF and return the covered content plus
@@ -223,9 +226,9 @@ export function extractByteRanges(pdfBytes: Uint8Array): ExtractedByteRange[] {
 		content.set(second, first.length);
 
 		// /Contents hex string lives between the two ByteRange segments.
-		const contentsHex = Buffer.from(
-			pdfBytes.slice(a + b + 1, c - 1),
-		).toString("latin1");
+		const contentsHex = Buffer.from(pdfBytes.slice(a + b + 1, c - 1)).toString(
+			"latin1",
+		);
 		const cleanHex = contentsHex.replace(/[^0-9a-fA-F]/g, "");
 		const contents = new Uint8Array(
 			(cleanHex.match(/.{1,2}/g) ?? []).map((h) => parseInt(h, 16)),

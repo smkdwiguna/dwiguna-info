@@ -311,7 +311,7 @@ export async function uploadFileToDrive(
 		headers: {
 			"Content-Type": `multipart/related; boundary=${boundary}`,
 		},
-		rawBody: multipartBody,
+		rawBody: multipartBody as any,
 	});
 
 	const fileId = uploadResult.id;
@@ -420,7 +420,7 @@ async function uploadPdfBytes(
 		subject,
 		params: { uploadType: "multipart" },
 		headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-		rawBody: multipartBody,
+		rawBody: multipartBody as any,
 	});
 
 	const fileId = uploadResult.id;
@@ -535,4 +535,18 @@ export async function setDriveFilePublic(
 			subject,
 		});
 	}
+}
+
+/**
+ * Concatenates multiple Uint8Arrays into one.
+ */
+function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
+	const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
+	const result = new Uint8Array(totalLength);
+	let offset = 0;
+	for (const arr of arrays) {
+		result.set(arr, offset);
+		offset += arr.length;
+	}
+	return result;
 }

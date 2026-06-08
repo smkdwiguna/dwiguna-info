@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -32,10 +32,12 @@ export function CorrespondenceListClient({
 	documents,
 	canUpload,
 	users = [],
+	currentUser,
 }: {
 	documents: DocumentSummary[];
 	canUpload: boolean;
 	users?: UserOption[];
+	currentUser?: { email: string; name: string };
 }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
@@ -44,6 +46,20 @@ export function CorrespondenceListClient({
 	const [isPublic, setIsPublic] = useState(false);
 	const [signers, setSigners] = useState<string[]>([]);
 	const fileRef = useRef<HTMLInputElement>(null);
+
+	const sortedUsers = useMemo(() => {
+		if (!currentUser) return users;
+		const otherUsers = users.filter(
+			(u) => u.email.toLowerCase() !== currentUser.email.toLowerCase(),
+		);
+		return [
+			{
+				email: currentUser.email,
+				name: `${currentUser.name} (Anda)`,
+			},
+			...otherUsers,
+		];
+	}, [users, currentUser]);
 
 	function handleSubmit() {
 		const file = fileRef.current?.files?.[0];
@@ -120,7 +136,7 @@ export function CorrespondenceListClient({
 									<div className="space-y-2">
 										<Label>Undang penandatangan (opsional)</Label>
 										<UserPicker
-											users={users}
+											users={sortedUsers}
 											value={signers}
 											onChange={setSigners}
 											disabled={isPending}
@@ -178,14 +194,14 @@ export function CorrespondenceListClient({
 								<CardContent className="flex gap-2 items-center justify-between">
 									<div className="flex items-start gap-3">
 										<div>
-											<p className="font-medium">{doc.title}</p>
+											<p className="font-bold">{doc.title}</p>
 											<p className="text-xs text-muted-foreground">
 												{doc.ownerName}
 												{doc.isOwner ? " (Anda)" : ""}
 											</p>
 										</div>
 									</div>
-									<div className="flex flex-col items-end md:flex-row md:items-center">
+									<div className="flex flex-col items-end">
 										<span className="text-sm font-bold text-muted-foreground">
 											{doc.signedCount}/{doc.signerCount} tanda tangan
 										</span>
