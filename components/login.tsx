@@ -3,12 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandLogo } from "@/components/brand-logo";
 
-// Small same-origin page the OAuth popup lands on after sign-in; it closes
-// itself (and notifies this window as a fast path). Kept in sync with
-// app/login/popup-done.
 const POPUP_DONE_PATH = "/login/popup-done";
 export const AUTH_SUCCESS_MESSAGE = "dwiguna-auth-success";
 
@@ -116,41 +112,33 @@ export default function Login() {
 
 	return (
 		<main className="min-h-svh bg-muted/40 flex flex-col items-center justify-center p-4">
-			<div className="w-full max-w-sm space-y-6">
+			<div className="w-full max-w-sm">
 				<BrandLogo
-					className="mx-auto h-12 w-fit"
+					className="mx-auto h-12 w-fit mb-6"
 					imageClassName="h-12 w-auto"
 					width={300}
 					height={48}
 				/>
-
-				<Card>
-					<CardHeader className="text-center">
-						<CardTitle className="text-xl">Dwiguna.Info</CardTitle>
-					</CardHeader>
-					<CardContent className="flex flex-col gap-3">
-						<Button
-							variant="outline"
-							size="lg"
-							className="w-full"
-							onClick={handleGoogleLogin}
-							disabled={connecting}
-						>
-							{connecting
-								? "Menghubungkan ke Google..."
-								: "Lanjutkan dengan akun smkdwiguna.sch.id"}
-						</Button>
-						{connecting && (
-							<button
-								type="button"
-								onClick={cancel}
-								className="text-xs text-muted-foreground underline-offset-4 hover:underline"
-							>
-								Batal
-							</button>
-						)}
-					</CardContent>
-				</Card>
+				<Button
+					variant="outline"
+					size="lg"
+					className="w-full"
+					onClick={handleGoogleLogin}
+					disabled={connecting}
+				>
+					{connecting
+						? "Menghubungkan ke Google..."
+						: "Lanjutkan dengan akun smkdwiguna.sch.id"}
+				</Button>
+				{connecting && (
+					<button
+						type="button"
+						onClick={cancel}
+						className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+					>
+						Batal
+					</button>
+				)}
 			</div>
 		</main>
 	);
