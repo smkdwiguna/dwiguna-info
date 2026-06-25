@@ -134,7 +134,7 @@ export default function Login() {
 					<button
 						type="button"
 						onClick={cancel}
-						className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+						className="text-xs text-muted-foreground text-center w-full underline-offset-4 hover:underline"
 					>
 						Batal
 					</button>
