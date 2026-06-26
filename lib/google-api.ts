@@ -9,7 +9,7 @@ export const PEOPLE_SCOPES = [
 	"https://www.googleapis.com/auth/directory.readonly",
 ] as const;
 
-const SUBJECT = "proktor@smkdwiguna.sch.id";
+const SUBJECT = "ict@smkdwiguna.sch.id";
 
 /**
  * Name of the Google Workspace custom schema that stores app-specific fields

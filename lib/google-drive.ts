@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 
 const DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"];
 
-const SUBJECT = "proktor@smkdwiguna.sch.id";
+const SUBJECT = "ict@smkdwiguna.sch.id";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const DRIVE_BASE = "https://www.googleapis.com/drive/v3";
 const UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3";
@@ -48,7 +48,7 @@ async function buildJWT(
 		JSON.stringify({
 			iss: clientEmail,
 			// Domain-wide delegation: impersonate this workspace user so files
-			// land in *their* Drive. Defaults to the central proktor account.
+			// land in *their* Drive. Defaults to the central ICT account.
 			sub: subject,
 			scope: DRIVE_SCOPES.join(" "),
 			aud: TOKEN_ENDPOINT,
@@ -377,7 +377,11 @@ async function getSignatureFolderId(
 	ownerEmail: string,
 	subject?: string,
 ): Promise<string> {
-	const rootFolderId = await findOrCreateFolder("Dwiguna.Info", undefined, subject);
+	const rootFolderId = await findOrCreateFolder(
+		"Dwiguna.Info",
+		undefined,
+		subject,
+	);
 	const signFolderId = await findOrCreateFolder(
 		"Persuratan",
 		rootFolderId,

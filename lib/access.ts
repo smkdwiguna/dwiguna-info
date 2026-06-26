@@ -1,4 +1,4 @@
-export const SUPERUSER_EMAIL = "proktor@smkdwiguna.sch.id";
+export const SUPERUSER_EMAIL = "ict@smkdwiguna.sch.id";
 export const WORKSPACE_DOMAIN = "smkdwiguna.sch.id";
 
 const ACCESS_SEPARATOR_REGEX = /[,\n;]+/;
