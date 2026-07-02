@@ -174,6 +174,64 @@ function AppSidebar({
 							</ShellNavLink>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
+
+					{(isSuperUser ||
+						permissions.includes("academic") ||
+						showAcademic) && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Akademik">
+								<ShellNavLink
+									href="/academic"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
+									<GraduationCap />
+									<span>Akademik</span>
+								</ShellNavLink>
+							</SidebarMenuButton>
+							<SidebarMenuSub>
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild>
+										<ShellNavLink
+											href="/academic/timetable"
+											isShellBusy={isShellBusy}
+											currentPath={currentPath}
+											onNavigate={onNavigate}
+										>
+											<span>Jadwal</span>
+										</ShellNavLink>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild>
+										<ShellNavLink
+											href="/academic/grading"
+											isShellBusy={isShellBusy}
+											currentPath={currentPath}
+											onNavigate={onNavigate}
+										>
+											<span>Penilaian</span>
+										</ShellNavLink>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+								{(isSuperUser || permissions.includes("academic")) && (
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<ShellNavLink
+												href="/academic/lessons"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
+												<span>Mata Pelajaran</span>
+											</ShellNavLink>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+								)}
+							</SidebarMenuSub>
+						</SidebarMenuItem>
+					)}
 					{(isSuperUser || permissions.includes("users")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Pengguna">
@@ -350,62 +408,6 @@ function AppSidebar({
 									<span>Persuratan</span>
 								</ShellNavLink>
 							</SidebarMenuButton>
-						</SidebarMenuItem>
-					)}
-
-					{(isSuperUser || permissions.includes("academic") || showAcademic) && (
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip="Akademik">
-								<ShellNavLink
-									href="/academic"
-									isShellBusy={isShellBusy}
-									currentPath={currentPath}
-									onNavigate={onNavigate}
-								>
-									<GraduationCap />
-									<span>Akademik</span>
-								</ShellNavLink>
-							</SidebarMenuButton>
-							<SidebarMenuSub>
-								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild>
-										<ShellNavLink
-											href="/academic/timetable"
-											isShellBusy={isShellBusy}
-											currentPath={currentPath}
-											onNavigate={onNavigate}
-										>
-											<span>Jadwal</span>
-										</ShellNavLink>
-									</SidebarMenuSubButton>
-								</SidebarMenuSubItem>
-								<SidebarMenuSubItem>
-									<SidebarMenuSubButton asChild>
-										<ShellNavLink
-											href="/academic/grading"
-											isShellBusy={isShellBusy}
-											currentPath={currentPath}
-											onNavigate={onNavigate}
-										>
-											<span>Penilaian</span>
-										</ShellNavLink>
-									</SidebarMenuSubButton>
-								</SidebarMenuSubItem>
-								{(isSuperUser || permissions.includes("academic")) && (
-									<SidebarMenuSubItem>
-										<SidebarMenuSubButton asChild>
-											<ShellNavLink
-												href="/academic/lessons"
-												isShellBusy={isShellBusy}
-												currentPath={currentPath}
-												onNavigate={onNavigate}
-											>
-												<span>Mata Pelajaran</span>
-											</ShellNavLink>
-										</SidebarMenuSubButton>
-									</SidebarMenuSubItem>
-								)}
-							</SidebarMenuSub>
 						</SidebarMenuItem>
 					)}
 				</SidebarMenu>
