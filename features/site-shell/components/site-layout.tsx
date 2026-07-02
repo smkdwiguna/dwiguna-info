@@ -25,6 +25,7 @@ import {
 	LinkIcon,
 	ShelvingUnit,
 	FileSignature,
+	GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import Logout from "@/components/logout";
@@ -44,6 +45,7 @@ interface SiteLayoutProps {
 	permissions?: string[];
 	inventoryEntries?: { id: number; name: string }[];
 	showCorrespondence?: boolean;
+	showAcademic?: boolean;
 }
 
 export function SiteLayout({
@@ -52,6 +54,7 @@ export function SiteLayout({
 	permissions,
 	inventoryEntries = [],
 	showCorrespondence = false,
+	showAcademic = false,
 }: SiteLayoutProps) {
 	const superUser = isSuperUser(userEmail);
 	const router = useRouter();
@@ -93,6 +96,7 @@ export function SiteLayout({
 					onNavigate={() => setIsRoutePending(true)}
 					permissions={permissions ?? []}
 					showCorrespondence={showCorrespondence}
+					showAcademic={showAcademic}
 				/>
 				<SidebarInset>
 					<header className="flex z-50 h-16 sticky top-0 bg-background shrink-0 items-center gap-2 border-b px-5.5">
@@ -136,6 +140,7 @@ function AppSidebar({
 	onNavigate,
 	permissions,
 	showCorrespondence,
+	showAcademic,
 }: {
 	isSuperUser: boolean;
 	inventoryEntries: { id: number; name: string }[];
@@ -144,6 +149,7 @@ function AppSidebar({
 	onNavigate: () => void;
 	permissions: string[];
 	showCorrespondence: boolean;
+	showAcademic: boolean;
 }) {
 	const showInventoryMenu =
 		isSuperUser ||
@@ -168,6 +174,64 @@ function AppSidebar({
 							</ShellNavLink>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
+
+					{(isSuperUser ||
+						permissions.includes("academic") ||
+						showAcademic) && (
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild tooltip="Akademik">
+								<ShellNavLink
+									href="/academic"
+									isShellBusy={isShellBusy}
+									currentPath={currentPath}
+									onNavigate={onNavigate}
+								>
+									<GraduationCap />
+									<span>Akademik</span>
+								</ShellNavLink>
+							</SidebarMenuButton>
+							<SidebarMenuSub>
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild>
+										<ShellNavLink
+											href="/academic/timetable"
+											isShellBusy={isShellBusy}
+											currentPath={currentPath}
+											onNavigate={onNavigate}
+										>
+											<span>Jadwal</span>
+										</ShellNavLink>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+								<SidebarMenuSubItem>
+									<SidebarMenuSubButton asChild>
+										<ShellNavLink
+											href="/academic/grading"
+											isShellBusy={isShellBusy}
+											currentPath={currentPath}
+											onNavigate={onNavigate}
+										>
+											<span>Penilaian</span>
+										</ShellNavLink>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+								{(isSuperUser || permissions.includes("academic")) && (
+									<SidebarMenuSubItem>
+										<SidebarMenuSubButton asChild>
+											<ShellNavLink
+												href="/academic/lessons"
+												isShellBusy={isShellBusy}
+												currentPath={currentPath}
+												onNavigate={onNavigate}
+											>
+												<span>Mata Pelajaran</span>
+											</ShellNavLink>
+										</SidebarMenuSubButton>
+									</SidebarMenuSubItem>
+								)}
+							</SidebarMenuSub>
+						</SidebarMenuItem>
+					)}
 					{(isSuperUser || permissions.includes("users")) && (
 						<SidebarMenuItem>
 							<SidebarMenuButton asChild tooltip="Pengguna">
