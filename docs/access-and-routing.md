@@ -22,6 +22,7 @@ Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page salin
 - `requirePermissionOrRedirect()` dipakai untuk halaman yang butuh permission global tertentu.
 - `requireSuperUserOrRedirect()` dipakai untuk halaman yang hanya boleh dibuka superuser.
 - `inventory` dipakai untuk akses administratif inventaris, terutama membuat inventaris baru dan aksi global inventaris.
+- `users` dipakai untuk user management dan upload kartu massal.
 - Akses melihat inventaris tertentu tetap berbasis membership baris-per-barang di database, bukan permission global tunggal.
 - Pengguna yang tidak punya membership inventaris dan juga tidak punya permission `inventory` akan ditolak saat membuka `/inventory` dan diarahkan ke dashboard dengan flash message.
 - Inventory tidak lagi menyimpan deskripsi level inventaris. Yang tersisa di entitas inventaris hanyalah nama dan timestamp pembuatan.
@@ -36,6 +37,12 @@ Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page salin
 - Menu Inventaris muncul jika user adalah superuser, punya permission `inventory`, atau punya membership pada setidaknya satu inventaris.
 - Submenu Inventaris berisi daftar semua inventaris yang bisa diakses user aktif.
 - Loading sidebar memakai satu state gabungan agar izin dan daftar inventaris tampil serempak setelah semua data siap.
+
+## Route Kartu
+
+- `POST /api/account-passes/bulk` dipakai untuk upload kartu massal.
+- Route ini harus lolos izin `users` atau superuser.
+- Halaman dasbor hanya menampilkan kartu kalau data kartu memang sudah ada untuk akun aktif.
 
 ## Route Safety untuk Shortlink
 

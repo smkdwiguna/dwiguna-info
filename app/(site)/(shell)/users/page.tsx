@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { BulkPhotoUploadClient } from "@/features/workspace-admin/components/bulk-photo-upload-client";
+import { BulkPassUploadClient } from "@/features/workspace-admin/components/bulk-pass-upload-client";
 import {
 	PageHeader,
 	PageHeaderActions,
@@ -28,6 +29,7 @@ export default async function UsersPage() {
 					</PageHeaderHeading>
 					<PageHeaderActions>
 						<BulkPhotoUploadClient />
+						<BulkPassUploadClient />
 						<Button asChild>
 							<Link href="/bulk-upload">
 								<Plus className="h-4 w-4" /> Tambah Pengguna

@@ -36,6 +36,18 @@ async function importPrivateKey(pem: string): Promise<CryptoKey> {
 	);
 }
 
+export async function getDriveFileMetadata(
+	fileId: string,
+	subject?: string,
+): Promise<{ name: string; mimeType: string | null }> {
+	return driveRequest<{ name: string; mimeType: string | null }>(
+		`/files/${fileId}`,
+		{
+			subject,
+			params: { fields: "name,mimeType" },
+		},
+	);
+}
 async function buildJWT(
 	clientEmail: string,
 	privateKey: string,
@@ -125,7 +137,7 @@ async function driveRequest<T>(
 	options: {
 		method?: string;
 		params?: Record<string, string>;
-		body?: any;
+		body?: unknown;
 		headers?: Record<string, string>;
 		isUpload?: boolean;
 		rawBody?: BodyInit;
@@ -147,10 +159,10 @@ async function driveRequest<T>(
 		...options.headers,
 	};
 
-	let requestBody: any = undefined;
+	let requestBody: BodyInit | undefined;
 	if (options.rawBody) {
 		requestBody = options.rawBody;
-	} else if (options.body) {
+	} else if (options.body !== undefined) {
 		requestBody = JSON.stringify(options.body);
 		headers["Content-Type"] = "application/json";
 	}
@@ -166,7 +178,7 @@ async function driveRequest<T>(
 		throw new Error(`Google Drive API error (${res.status}): ${text}`);
 	}
 
-	if (res.status === 204) return undefined as any;
+	if (res.status === 204) return undefined as T;
 	return (await res.json()) as T;
 }
 
@@ -265,24 +277,18 @@ async function getUniqueFileName(
 	return `${base} (${timestamp})${ext}`;
 }
 
-/**
- * Uploads a file to Google Drive.
- */
-export async function uploadFileToDrive(
-	inventoryName: string,
+async function uploadBinaryToDrive(
+	folderId: string,
 	fileName: string,
 	fileMime: string,
 	fileBuffer: ArrayBuffer,
-): Promise<{
-	id: string;
-	name: string;
-	webViewLink: string;
-	thumbnailLink: string;
-}> {
-	const folderId = await getInventoryFolderId(inventoryName);
-	const uniqueName = await getUniqueFileName(folderId, fileName);
-
-	// Multipart upload metadata & media
+	options: { subject?: string; makePublic?: boolean } = {},
+): Promise<DriveUploadResult> {
+	const uniqueName = await getUniqueFileName(
+		folderId,
+		fileName,
+		options.subject,
+	);
 	const metadata = {
 		name: uniqueName,
 		parents: [folderId],
@@ -305,36 +311,30 @@ export async function uploadFileToDrive(
 	const uploadResult = await driveRequest<{ id: string }>("/files", {
 		method: "POST",
 		isUpload: true,
-		params: {
-			uploadType: "multipart",
-		},
-		headers: {
-			"Content-Type": `multipart/related; boundary=${boundary}`,
-		},
-		rawBody: multipartBody as any,
+		subject: options.subject,
+		params: { uploadType: "multipart" },
+		headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
+		rawBody: multipartBody,
 	});
 
 	const fileId = uploadResult.id;
 
-	// Set file permissions so anyone inside or outside can view it via link
-	await driveRequest(`/files/${fileId}/permissions`, {
-		method: "POST",
-		body: {
-			role: "reader",
-			type: "anyone",
-		},
-	});
+	if (options.makePublic ?? true) {
+		await driveRequest(`/files/${fileId}/permissions`, {
+			method: "POST",
+			subject: options.subject,
+			body: { role: "reader", type: "anyone" },
+		});
+	}
 
-	// Fetch fresh links
 	const fileDetails = await driveRequest<{
 		id: string;
 		name: string;
 		webViewLink: string;
 		thumbnailLink: string;
 	}>(`/files/${fileId}`, {
-		params: {
-			fields: "id,name,webViewLink,thumbnailLink",
-		},
+		subject: options.subject,
+		params: { fields: "id,name,webViewLink,thumbnailLink" },
 	});
 
 	return {
@@ -342,7 +342,55 @@ export async function uploadFileToDrive(
 		name: fileDetails.name,
 		webViewLink: fileDetails.webViewLink,
 		thumbnailLink: fileDetails.thumbnailLink || "",
+		ownerEmail: options.subject ?? SUBJECT,
 	};
+}
+
+/**
+ * Uploads a file to Google Drive.
+ */
+export async function uploadFileToDrive(
+	inventoryName: string,
+	fileName: string,
+	fileMime: string,
+	fileBuffer: ArrayBuffer,
+): Promise<{
+	id: string;
+	name: string;
+	webViewLink: string;
+	thumbnailLink: string;
+}> {
+	const folderId = await getInventoryFolderId(inventoryName);
+	const uploaded = await uploadBinaryToDrive(
+		folderId,
+		fileName,
+		fileMime,
+		fileBuffer,
+	);
+	return {
+		id: uploaded.id,
+		name: uploaded.name,
+		webViewLink: uploaded.webViewLink,
+		thumbnailLink: uploaded.thumbnailLink,
+	};
+}
+
+async function getPassFolderId(ownerEmail: string): Promise<string> {
+	const rootFolderId = await findOrCreateFolder("Dwiguna.Info");
+	const passFolderId = await findOrCreateFolder("Kartu", rootFolderId);
+	return findOrCreateFolder(ownerEmail, passFolderId);
+}
+
+export async function uploadPassAssetToDrive(
+	ownerEmail: string,
+	fileName: string,
+	fileMime: string,
+	fileBuffer: ArrayBuffer,
+): Promise<DriveUploadResult> {
+	const folderId = await getPassFolderId(ownerEmail);
+	return uploadBinaryToDrive(folderId, fileName, fileMime, fileBuffer, {
+		makePublic: true,
+	});
 }
 
 /**
@@ -424,7 +472,7 @@ async function uploadPdfBytes(
 		subject,
 		params: { uploadType: "multipart" },
 		headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
-		rawBody: multipartBody as any,
+		rawBody: multipartBody,
 	});
 
 	const fileId = uploadResult.id;
@@ -539,18 +587,4 @@ export async function setDriveFilePublic(
 			subject,
 		});
 	}
-}
-
-/**
- * Concatenates multiple Uint8Arrays into one.
- */
-function concatUint8Arrays(arrays: Uint8Array[]): Uint8Array {
-	const totalLength = arrays.reduce((acc, arr) => acc + arr.length, 0);
-	const result = new Uint8Array(totalLength);
-	let offset = 0;
-	for (const arr of arrays) {
-		result.set(arr, offset);
-		offset += arr.length;
-	}
-	return result;
 }

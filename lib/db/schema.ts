@@ -1,9 +1,4 @@
-import {
-	sqliteTable,
-	text,
-	integer,
-	unique,
-} from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, unique } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // Better Auth (sessions/accounts) + Correspondence (TTE) tables.
@@ -158,6 +153,21 @@ export const shortLinks = sqliteTable("short_links", {
 		.notNull()
 		.default(sql`(CURRENT_TIMESTAMP)`),
 	clickCount: integer("click_count").notNull().default(0),
+});
+
+export const accountPasses = sqliteTable("account_passes", {
+	id: integer("id").primaryKey({ autoIncrement: true }),
+	ownerEmail: text("owner_email").notNull().unique(),
+	frontDriveFileId: text("front_drive_file_id"),
+	backDriveFileId: text("back_drive_file_id"),
+	qrPayload: text("qr_payload"),
+	walletStatus: text("wallet_status").notNull().default("NOT_READY"),
+	createdAt: text("created_at")
+		.notNull()
+		.default(sql`(CURRENT_TIMESTAMP)`),
+	updatedAt: text("updated_at")
+		.notNull()
+		.default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 export const inventories = sqliteTable("inventories", {

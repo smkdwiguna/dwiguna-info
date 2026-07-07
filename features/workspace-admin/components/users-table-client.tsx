@@ -39,6 +39,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { normalizeAccessList } from "@/lib/access";
 import { ButtonGroup } from "@/components/ui/button-group";
+import Link from "next/link";
 import {
 	InputGroup,
 	InputGroupAddon,
@@ -61,6 +62,13 @@ interface WorkspaceUser {
 	creationTime?: string | null;
 }
 
+interface AccountPassSummary {
+	ownerEmail: string;
+	hasFront: boolean;
+	hasBack: boolean;
+	downloadPdfUrl: string;
+}
+
 export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const [localUsers, setLocalUsers] = useState(users);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -75,6 +83,9 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const [isInfoLoading, setIsInfoLoading] = useState(false);
 	const [isResetting, setIsResetting] = useState(false);
 	const [resetPassword, setResetPassword] = useState<string | null>(null);
+	const [passSummary, setPassSummary] = useState<AccountPassSummary | null>(
+		null,
+	);
 	const [editCustomFields, setEditCustomFields] = useState({
 		nisn: "",
 		nis: "",
@@ -190,6 +201,7 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 	const openInfo = async (user: WorkspaceUser) => {
 		setInfoUser(user);
 		setResetPassword(null);
+		setPassSummary(null);
 		setIsInfoOpen(true);
 		setIsInfoLoading(true);
 		try {
@@ -199,6 +211,16 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 			}
 			const detail = await getUserDetails(user.primaryEmail);
 			setInfoUser(detail);
+			const passResponse = await fetch(
+				`/api/account-passes/${encodeURIComponent(user.primaryEmail)}`,
+			);
+			if (passResponse.ok) {
+				const passJson = (await passResponse.json()) as {
+					success: boolean;
+					pass: AccountPassSummary | null;
+				};
+				setPassSummary(passJson.pass);
+			}
 		} catch (error) {
 			console.error("Failed to load user info", error);
 			toast.error("Gagal memuat informasi pengguna.");
@@ -512,13 +534,28 @@ export function UsersTableClient({ users }: { users: WorkspaceUser[] }) {
 						>
 							Tutup
 						</Button>
-						<Button
-							onClick={handleResetPassword}
-							disabled={isResetting || isInfoLoading || !infoUser?.primaryEmail}
-						>
-							<KeyRound className="h-4 w-4" />
-							{isResetting ? "Mereset..." : "Reset Password"}
-						</Button>
+						<span className="flex gap-2">
+							{passSummary?.downloadPdfUrl && (
+								<Button asChild variant="outline" className="ml-2">
+									<Link
+										href={passSummary.downloadPdfUrl}
+										target="_blank"
+										rel="noreferrer"
+									>
+										Unduh Kartu
+									</Link>
+								</Button>
+							)}
+							<Button
+								onClick={handleResetPassword}
+								disabled={
+									isResetting || isInfoLoading || !infoUser?.primaryEmail
+								}
+							>
+								<KeyRound className="h-4 w-4" />
+								{isResetting ? "Mereset..." : "Reset Password"}
+							</Button>
+						</span>
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>

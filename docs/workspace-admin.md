@@ -7,6 +7,7 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 - Shell dashboard dan sidebar ada di `features/site-shell/components/site-layout.tsx`.
 - Compatibility alias lama masih tersedia di `features/workspace-admin/components/site-layout.tsx`.
 - Bulk upload, reset password, update foto, dan edit user ada di `features/workspace-admin/actions/`.
+- Upload kartu massal ada di `features/workspace-admin/components/bulk-kartu-upload-client.tsx` dan route `POST /api/account-passes/bulk`.
 
 ## Runtime
 
@@ -19,6 +20,7 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 - `users` memberi akses ke user management.
 - `shortlink` memberi akses ke manajemen shortlink.
 - `inventory` dipakai untuk create inventory dan aksi administratif inventaris.
+- `users` juga dipakai untuk upload kartu massal.
 - `presence` tetap dikelola sebagai area superuser di shell dashboard.
 - Superuser menembus pengecekan permission individual.
 
@@ -52,10 +54,10 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 
 Service account memakai **dua token terpisah**:
 
-| Token | Scope | Dipakai untuk |
-|-------|--------|----------------|
-| Admin | `admin.directory.*` (user, group, orgunit, userschema) | Directory users, foto thumbnail Admin, device presence |
-| People (opsional) | `directory.readonly` | Foto profil high-res via People API |
+| Token             | Scope                                                  | Dipakai untuk                                          |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| Admin             | `admin.directory.*` (user, group, orgunit, userschema) | Directory users, foto thumbnail Admin, device presence |
+| People (opsional) | `directory.readonly`                                   | Foto profil high-res via People API                    |
 
 Jika scope People **belum** ditambahkan di Google Admin → Security → API controls → Domain-wide delegation (client ID service account), People API dilewati dan foto device memakai Admin SDK + `thumbnailPhotoUrl`.
 
