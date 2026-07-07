@@ -7,7 +7,7 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 - Shell dashboard dan sidebar ada di `features/site-shell/components/site-layout.tsx`.
 - Compatibility alias lama masih tersedia di `features/workspace-admin/components/site-layout.tsx`.
 - Bulk upload, reset password, update foto, dan edit user ada di `features/workspace-admin/actions/`.
-- Upload kartu massal ada di `features/workspace-admin/components/bulk-kartu-upload-client.tsx` dan route `POST /api/account-passes/bulk`.
+- Upload kartu massal ada di `features/workspace-admin/components/bulk-pass-upload-client.tsx` dan route `POST /api/account-passes/bulk`.
 
 ## Runtime
 

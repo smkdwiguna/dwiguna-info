@@ -42,6 +42,8 @@ Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page salin
 
 - `POST /api/account-passes/bulk` dipakai untuk upload kartu massal.
 - Route ini harus lolos izin `users` atau superuser.
+- `GET /api/account-passes/[ownerEmail]/file?side=front|back` dipakai untuk preview sisi kartu.
+- `GET /api/account-passes/[ownerEmail]/pdf` dipakai untuk unduh PDF gabungan.
 - Halaman dasbor hanya menampilkan kartu kalau data kartu memang sudah ada untuk akun aktif.
 
 ## Route Safety untuk Shortlink

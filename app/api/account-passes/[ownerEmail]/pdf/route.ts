@@ -55,7 +55,7 @@ export async function GET(
 
 	if (!record || (!record.frontDriveFileId && !record.backDriveFileId)) {
 		return NextResponse.json(
-			{ error: "Pass tidak ditemukan." },
+			{ error: "Kartu tidak ditemukan." },
 			{ status: 404 },
 		);
 	}
@@ -79,7 +79,7 @@ export async function GET(
 		await addImagePage(pdf, bytes, mimeType);
 	}
 
-	const pdfBytes = await pdf.save();
+	const pdfBytes = new Uint8Array(await pdf.save());
 	return new NextResponse(pdfBytes, {
 		headers: {
 			"Content-Type": "application/pdf",

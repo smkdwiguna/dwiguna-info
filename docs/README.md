@@ -15,7 +15,7 @@ Folder ini berisi catatan implementasi yang mengikuti kondisi kode saat ini. Jik
 - [Inventory](inventory.md)
 - [Presence](presence.md)
 - [Shortlink](shortlink.md)
-- [Kartu](kartu.md)
+- [Kartu](pass.md)
 - [Site Shell and User Management](workspace-admin.md)
 - [Access Management](access-management.md)
 

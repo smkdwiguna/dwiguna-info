@@ -1,7 +1,6 @@
 import { getServerSession } from "@/lib/server-session";
 import {
 	Card,
-	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
@@ -10,8 +9,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getHighResPeoplePhotoUrl } from "@/lib/google-people-photo";
 import { Button } from "@/components/ui/button";
 import { getAccountPassByEmail } from "@/features/account-passes/actions";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { CreditCardIcon } from "lucide-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
+import { CreditCardIcon, DownloadIcon } from "lucide-react";
+import Image from "next/image";
 
 export default async function DashboardPage() {
 	const session = await getServerSession();
@@ -22,6 +29,22 @@ export default async function DashboardPage() {
 
 	const photo = await getHighResPeoplePhotoUrl(user.email);
 	const accountPass = await getAccountPassByEmail(user.email);
+	const encodedEmail = encodeURIComponent(user.email);
+	const passPdfUrl = `/api/account-passes/${encodedEmail}/pdf`;
+	const passSides = [
+		accountPass?.frontDriveFileId
+			? {
+					label: "Depan",
+					src: `/api/account-passes/${encodedEmail}/file?side=front`,
+				}
+			: null,
+		accountPass?.backDriveFileId
+			? {
+					label: "Belakang",
+					src: `/api/account-passes/${encodedEmail}/file?side=back`,
+				}
+			: null,
+	].filter((side): side is { label: string; src: string } => Boolean(side));
 
 	return (
 		<div className="space-y-4">
@@ -49,11 +72,60 @@ export default async function DashboardPage() {
 								<div>
 									<Dialog>
 										<DialogTrigger asChild>
-											<Button variant="outline" size="icon">
+											<Button
+												variant="outline"
+												size="icon"
+												aria-label="Buka kartu"
+											>
 												<CreditCardIcon />
+												<span className="sr-only">Buka kartu</span>
 											</Button>
 										</DialogTrigger>
-										<DialogContent>{/* TODO */}</DialogContent>
+										<DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+											<DialogHeader>
+												<div className="flex flex-wrap items-start justify-between gap-2 pr-8">
+													<div className="space-y-1">
+														<DialogTitle>Kartu</DialogTitle>
+													</div>
+												</div>
+											</DialogHeader>
+											<div
+												className={
+													passSides.length > 1
+														? "grid gap-3 grid-cols-2"
+														: "grid gap-3"
+												}
+											>
+												{passSides.map((side) => (
+													<figure key={side.label} className="space-y-2">
+														<div className="aspect-[1/1.52] overflow-hidden rounded-lg border bg-muted">
+															<Image
+																src={side.src}
+																alt={`Kartu ${side.label.toLowerCase()} ${user.name || user.email}`}
+																className="h-full w-full object-contain"
+																loading="lazy"
+																width={504}
+																height={800}
+																sizes={
+																	passSides.length > 1
+																		? "(min-width: 768px) 50vw, 100vw"
+																		: "100vw"
+																}
+																unoptimized
+															/>
+														</div>
+													</figure>
+												))}
+											</div>
+											<DialogFooter>
+												<Button asChild variant="outline">
+													<a href={passPdfUrl} target="_blank" rel="noreferrer">
+														<DownloadIcon />
+														Unduh PDF
+													</a>
+												</Button>
+											</DialogFooter>
+										</DialogContent>
 									</Dialog>
 								</div>
 							)}
