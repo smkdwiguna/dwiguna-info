@@ -106,9 +106,9 @@ export function CreditsDialog() {
 							</Link>
 						))}
 					</div>
-					<DialogFooter className="justify-between">
-						<span>Qeis Ismail</span>
-						<span>
+					<DialogFooter className="items-center justify-between!">
+						<span>Dibangun oleh ICT Kebersamaan</span>
+						<span className="space-x-2">
 							<Link
 								href="https://github.com/smkdwiguna/dwiguna-info"
 								target="_blank"
