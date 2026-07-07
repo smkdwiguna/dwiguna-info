@@ -48,6 +48,32 @@ Catatan data: untuk Apple, tambahkan field seperti `applePassSerialNumber`, `app
 - `walletStatus` dan `qrPayload` sudah disiapkan di skema agar tahap berikutnya tidak perlu migrasi besar.
 - Putuskan apakah data kartu dianggap sensitif. Jika iya, evaluasi tipe pass yang lebih privat di Google Wallet dan jangan memublikasikan gambar kartu sebagai asset wallet terbuka.
 
+## Cara Implementasi Wallet
+
+### Google Wallet
+
+- Siapkan issuer, aktifkan Google Wallet API, dan gunakan service account yang memang diberi akses Wallet.
+- Buat `GenericClass` untuk kartu Dwiguna lalu `GenericObject` per akun, dengan ID stabil berbasis username atau email yang dinormalisasi.
+- Isi object dari data kartu yang sudah ada: nama, email, `qrPayload`, status, dan link PDF jika memang diperlukan.
+- Sediakan endpoint server untuk menandatangani JWT dan mengembalikan URL save-to-wallet.
+- Simpan identifier dan URL hasil penerbitan di database supaya statusnya bisa diaudit tanpa regenerasi terus-menerus.
+
+### Apple Wallet
+
+- Daftarkan Pass Type ID, siapkan sertifikat signing pass, dan simpan private key dengan aman.
+- Bangun file `.pkpass` per akun dari `pass.json`, asset wajib, manifest hash, dan signature Apple.
+- Sajikan file itu dari endpoint khusus dengan MIME `application/vnd.apple.pkpass`.
+- Jika ingin update otomatis, siapkan PassKit web service, token per pass, dan mekanisme update/push.
+
+### Data Tambahan yang Disarankan
+
+- `googleWalletClassId`
+- `googleWalletObjectId`
+- `googleWalletSaveUrl`
+- `applePassSerialNumber`
+- `applePassUpdatedAt`
+- token update per pass bila update otomatis diperlukan
+
 ## Referensi Resmi
 
 - Google Wallet Generic pass: https://developers.google.com/wallet/generic
