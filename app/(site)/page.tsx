@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getHighResPeoplePhotoUrl } from "@/lib/google-people-photo";
 import { Button } from "@/components/ui/button";
 import { getAccountPassByEmail } from "@/features/account-passes/actions";
+import { getLatestAnnouncements } from "@/features/announcements/actions/announcements";
 import {
 	Dialog,
 	DialogContent,
@@ -17,8 +18,10 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreditCardIcon, DownloadIcon } from "lucide-react";
+import { CreditCardIcon, DownloadIcon, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { CardContent } from "@/components/ui/card";
 
 export default async function DashboardPage() {
 	const session = await getServerSession();
@@ -46,8 +49,10 @@ export default async function DashboardPage() {
 			: null,
 	].filter((side): side is { label: string; src: string } => Boolean(side));
 
+	const latestAnnouncements = await getLatestAnnouncements(3);
+
 	return (
-		<div className="space-y-4">
+		<div className="space-y-6">
 			<Card>
 				<CardHeader>
 					<div className="flex items-start gap-4">
@@ -133,6 +138,55 @@ export default async function DashboardPage() {
 					</div>
 				</CardHeader>
 			</Card>
+
+			<div className="space-y-4">
+				<div className="flex items-center justify-between">
+					<h2 className="text-xl font-semibold tracking-tight">Pengumuman Terbaru</h2>
+					<Link href="/announcements">
+						<Button variant="ghost" size="sm" className="gap-2">
+							Lihat Semua
+							<ArrowRight className="h-4 w-4" />
+						</Button>
+					</Link>
+				</div>
+
+				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+					{latestAnnouncements.length === 0 ? (
+						<Card className="col-span-full">
+							<CardContent className="py-8 text-center text-muted-foreground">
+								Belum ada pengumuman.
+							</CardContent>
+						</Card>
+					) : (
+						latestAnnouncements.map((announcement) => (
+							<Card key={announcement.id} className="flex flex-col">
+								<CardHeader>
+									<CardTitle className="line-clamp-2 text-lg">
+										<Link
+											href={`/announcements/${announcement.id}`}
+											className="hover:underline"
+										>
+											{announcement.title}
+										</Link>
+									</CardTitle>
+									<div className="text-xs text-muted-foreground pt-1">
+										{new Date(announcement.createdAt).toLocaleDateString("id-ID", {
+											year: "numeric",
+											month: "short",
+											day: "numeric",
+										})}
+									</div>
+								</CardHeader>
+								<CardContent className="flex-grow">
+									<p className="line-clamp-3 text-sm text-muted-foreground">
+										{announcement.content.replace(/<[^>]*>?/gm, "")}
+									</p>
+								</CardContent>
+							</Card>
+						))
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }

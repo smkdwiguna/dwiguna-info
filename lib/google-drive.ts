@@ -403,6 +403,43 @@ export async function deleteFileFromDrive(fileId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Announcement (Pengumuman) helpers
+// ---------------------------------------------------------------------------
+
+async function getAnnouncementFolderId(subject?: string): Promise<string> {
+	const rootFolderId = await findOrCreateFolder("Dwiguna.Info", undefined, subject);
+	return findOrCreateFolder("Pengumuman", rootFolderId, subject);
+}
+
+export async function uploadAnnouncementAssetToDrive(
+	fileName: string,
+	fileMime: string,
+	fileBuffer: ArrayBuffer,
+): Promise<{
+	id: string;
+	name: string;
+	webViewLink: string;
+	thumbnailLink: string;
+}> {
+	// For announcements, we can use the central service account Drive
+	// so files are stored centrally and not inside the specific uploader's Drive.
+	const folderId = await getAnnouncementFolderId(undefined);
+	const uploaded = await uploadBinaryToDrive(
+		folderId,
+		fileName,
+		fileMime,
+		fileBuffer,
+		{ makePublic: true, subject: undefined },
+	);
+	return {
+		id: uploaded.id,
+		name: uploaded.name,
+		webViewLink: uploaded.webViewLink,
+		thumbnailLink: uploaded.thumbnailLink,
+	};
+}
+
+// ---------------------------------------------------------------------------
 // Correspondence (TTE) helpers
 // ---------------------------------------------------------------------------
 

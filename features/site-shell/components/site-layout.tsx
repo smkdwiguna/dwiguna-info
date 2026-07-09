@@ -23,6 +23,7 @@ import {
 	Clock,
 	Shield,
 	LinkIcon,
+	Megaphone,
 	ShelvingUnit,
 	FileSignature,
 	GraduationCap,
@@ -171,6 +172,20 @@ function AppSidebar({
 							>
 								<LayoutDashboard />
 								<span>Dasbor</span>
+							</ShellNavLink>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+
+					<SidebarMenuItem>
+						<SidebarMenuButton asChild tooltip="Pengumuman">
+							<ShellNavLink
+								href="/announcements"
+								isShellBusy={isShellBusy}
+								currentPath={currentPath}
+								onNavigate={onNavigate}
+							>
+								<Megaphone />
+								<span>Pengumuman</span>
 							</ShellNavLink>
 						</SidebarMenuButton>
 					</SidebarMenuItem>

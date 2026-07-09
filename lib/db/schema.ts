@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 // Better Auth (sessions/accounts) + Correspondence (TTE) tables.
 export * from "./auth-schema";
 export * from "./tte-schema";
+export * from "./announcement-schema";
 
 export const deviceUsers = sqliteTable("device_users", {
 	// Hardware limit ID from 0 to 999
