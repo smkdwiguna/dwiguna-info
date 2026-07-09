@@ -38,5 +38,5 @@ export async function getServerSession(): Promise<ServerSession> {
 		headers: cleanHeaders,
 	})) as ServerSession;
 
-	return session ?? null;
+	return session ?? auth.api.signOut({ headers: headerStore }).then(() => null);
 }
