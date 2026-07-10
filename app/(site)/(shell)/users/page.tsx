@@ -31,7 +31,7 @@ export default async function UsersPage() {
 						<BulkPhotoUploadClient />
 						<BulkPassUploadClient />
 						<Button asChild>
-							<Link href="/bulk-upload">
+							<Link href="/users/bulk-upload">
 								<Plus className="h-4 w-4" /> Tambah Pengguna
 							</Link>
 						</Button>

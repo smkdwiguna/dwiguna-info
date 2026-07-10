@@ -304,7 +304,7 @@ export function BulkUploadClient() {
 			const result = await generateUserEmailsWithPasswords(groupBlocks);
 			if (result.success && result.users) {
 				sessionStorage.setItem(PREVIEW_USERS_KEY, JSON.stringify(result.users));
-				router.push("/bulk-upload/preview");
+				router.push("/users/bulk-upload/preview");
 			} else {
 				toast.error("Gagal memproses data: " + result.error);
 			}

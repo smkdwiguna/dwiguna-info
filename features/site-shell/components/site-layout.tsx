@@ -264,7 +264,7 @@ function AppSidebar({
 								<SidebarMenuSubItem>
 									<SidebarMenuSubButton asChild>
 										<ShellNavLink
-											href="/bulk-upload"
+											href="/users/bulk-upload"
 											isShellBusy={isShellBusy}
 											currentPath={currentPath}
 											onNavigate={onNavigate}
