@@ -1,7 +1,4 @@
-import {
-	getAllAnnouncements,
-	getLiveAnnouncementPermission,
-} from "@/features/announcements/actions/announcements";
+import { getAllAnnouncements } from "@/features/announcements/actions/announcements";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -13,12 +10,16 @@ import {
 } from "@/components/ui/page-header";
 import { AnnouncementCard } from "@/features/announcements/components/announcement-card";
 import { AnnouncementFormDialog } from "@/features/announcements/components/announcement-form-dialog";
+import { getUserDetails } from "@/features/workspace-admin/actions/get-user-details";
+import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
 export default async function AnnouncementsPage() {
-	const [announcements, { canCreate }] = await Promise.all([
+	const [announcements, { isSuperUser, permissions }] = await Promise.all([
 		getAllAnnouncements(),
-		getLiveAnnouncementPermission(),
+		getLivePermissions(),
 	]);
+
+	const canCreate = permissions.includes("announcement") || isSuperUser;
 
 	return (
 		<PageShell>
@@ -29,21 +30,21 @@ export default async function AnnouncementsPage() {
 				{canCreate && (
 					<PageHeaderActions>
 						<AnnouncementFormDialog>
-							<Button>
-								<Plus className="mr-2 h-4 w-4" />
-								Buat Pengumuman
-							</Button>
+							<Button>Buat Pengumuman</Button>
 						</AnnouncementFormDialog>
 					</PageHeaderActions>
 				)}
 			</PageHeader>
 
 			<div className="grid gap-4">
-				{announcements.map((announcement) => (
+				{announcements.map(async (announcement) => (
 					<AnnouncementCard
 						key={announcement.id}
 						announcement={announcement}
-						authorName={announcement.authorName || announcement.authorEmail}
+						authorName={
+							(await getUserDetails(announcement.authorEmail))?.name
+								?.fullName || announcement.authorEmail
+						}
 						canEdit={canCreate}
 					/>
 				))}

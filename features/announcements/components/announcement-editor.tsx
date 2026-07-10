@@ -3,7 +3,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
 import Youtube from "@tiptap/extension-youtube";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +24,13 @@ import { useCallback, useState } from "react";
 import { uploadAnnouncementImage } from "../actions/upload";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	DialogFooter,
 } from "@/components/ui/dialog";
 
 interface AnnouncementEditorProps {
@@ -45,15 +44,15 @@ export function AnnouncementEditor({
 }: AnnouncementEditorProps) {
 	const editor = useEditor({
 		extensions: [
-			StarterKit,
+			StarterKit.configure({
+				link: {
+					openOnClick: false,
+				},
+			}),
 			Image.configure({
 				HTMLAttributes: {
 					referrerpolicy: "no-referrer",
 				},
-			}),
-			Link.configure({
-				openOnClick: false,
-				autolink: true,
 			}),
 			Youtube.configure({
 				width: 480,
@@ -343,20 +342,17 @@ export function AnnouncementEditor({
 						<DialogHeader>
 							<DialogTitle>Sisipkan Tautan</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="url">URL Tautan</Label>
-								<Input
-									id="url"
-									value={linkUrl}
-									onChange={(e) => setLinkUrl(e.target.value)}
-									placeholder="https://example.com"
-								/>
-							</div>
+						<Input
+							id="url"
+							value={linkUrl}
+							onChange={(e) => setLinkUrl(e.target.value)}
+							placeholder="https://example.com"
+						/>
+						<DialogFooter>
 							<Button type="button" onClick={setLink}>
 								Simpan Tautan
 							</Button>
-						</div>
+						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 
@@ -377,15 +373,12 @@ export function AnnouncementEditor({
 							<ImageIcon className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
-					<DialogContent>
+					<DialogContent className="min-w-fit">
 						<DialogHeader>
 							<DialogTitle>Sisipkan Gambar / Berkas</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
+						<div className="grid gap-4">
 							<div className="grid gap-2">
-								<Label htmlFor="imageFile">
-									Unggah Berkas (Gambar atau Dokumen, Maks 6MB)
-								</Label>
 								<Input
 									id="imageFile"
 									type="file"
@@ -424,7 +417,6 @@ export function AnnouncementEditor({
 								</div>
 							</div>
 							<div className="grid gap-2">
-								<Label htmlFor="imageUrl">URL Gambar</Label>
 								<Input
 									id="imageUrl"
 									value={imageUrl}
@@ -461,16 +453,13 @@ export function AnnouncementEditor({
 						<DialogHeader>
 							<DialogTitle>Sisipkan Video YouTube</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="youtubeUrl">URL YouTube</Label>
-								<Input
-									id="youtubeUrl"
-									value={youtubeUrl}
-									onChange={(e) => setYoutubeUrl(e.target.value)}
-									placeholder="https://www.youtube.com/watch?v=..."
-								/>
-							</div>
+						<Input
+							id="youtubeUrl"
+							value={youtubeUrl}
+							onChange={(e) => setYoutubeUrl(e.target.value)}
+							placeholder="https://www.youtube.com/watch?v=..."
+						/>
+						<DialogFooter>
 							<Button
 								type="button"
 								onClick={addYoutubeVideo}
@@ -478,7 +467,7 @@ export function AnnouncementEditor({
 							>
 								Tambah Video
 							</Button>
-						</div>
+						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 			</div>

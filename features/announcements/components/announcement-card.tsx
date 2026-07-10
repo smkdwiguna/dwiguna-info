@@ -58,62 +58,62 @@ export function AnnouncementCard({
 
 	return (
 		<>
-			<Card className="flex flex-col relative group">
+			<Card className="flex flex-col relative group hover:bg-accent hover:text-accent-foreground transition-colors">
 				<CardHeader>
-					<div className="flex items-start justify-between gap-4">
-						<CardTitle className="line-clamp-2 text-lg font-bold flex-grow">
+					<div className="flex max-md:flex-col items-start justify-between font-bold md:gap-4">
+						<CardTitle className="line-clamp-2 text-lg grow">
 							<Link
 								href={`/announcements/${announcement.id}`}
-								className="hover:underline"
+								className="after:absolute after:inset-0 after:z-0"
 							>
 								{announcement.title}
 							</Link>
 						</CardTitle>
-						{canEdit && (
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon" className="-mt-2 -mr-2">
-										<MoreHorizontal className="h-4 w-4" />
-										<span className="sr-only">Menu aksi</span>
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end">
-									<DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
-										<Pencil className="mr-2 h-4 w-4" />
-										<span>Ubah</span>
-									</DropdownMenuItem>
-									<DropdownMenuItem
-										className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-										onSelect={() => setIsDeleteDialogOpen(true)}
-									>
-										<Trash2 className="mr-2 h-4 w-4" />
-										<span>Hapus</span>
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
-						)}
-					</div>
-					<div className="text-sm text-muted-foreground font-normal flex flex-wrap gap-1 mt-2">
-						<span>{authorName}</span>
-						<span>•</span>
-						<span>
-							{new Date(announcement.createdAt).toLocaleDateString("id-ID", {
-								year: "numeric",
-								month: "long",
-								day: "numeric",
-							})}
-						</span>
+						<div className="text-sm text-muted-foreground w-fit items-center md:justify-end flex gap-1">
+							<span suppressHydrationWarning>
+								{authorName} •{" "}
+								{new Date(announcement.createdAt).toLocaleDateString("id-ID", {
+									year: "numeric",
+									month: "long",
+									day: "numeric",
+								})}
+							</span>
+
+							{canEdit && (
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button variant="ghost" className="z-2" size="icon">
+											<MoreHorizontal />
+											<span className="sr-only">Menu aksi</span>
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem
+											onSelect={() => setIsEditDialogOpen(true)}
+										>
+											<Pencil className="mr-2 h-4 w-4" />
+											<span>Edit</span>
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+											onSelect={() => setIsDeleteDialogOpen(true)}
+										>
+											<Trash2 className="mr-2 h-4 w-4" />
+											<span>Hapus</span>
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							)}
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
-					<Link href={`/announcements/${announcement.id}`} className="block">
-						<div
-							className="prose prose-sm sm:prose-base dark:prose-invert line-clamp-3 max-w-none text-muted-foreground"
-							dangerouslySetInnerHTML={{
-								__html: announcement.content,
-							}}
-						/>
-					</Link>
+					<div
+						className="prose prose-sm sm:prose-base pointer-events-none dark:prose-invert line-clamp-3 max-w-none text-muted-foreground"
+						dangerouslySetInnerHTML={{
+							__html: announcement.content,
+						}}
+					/>
 				</CardContent>
 			</Card>
 
@@ -122,17 +122,19 @@ export function AnnouncementCard({
 				open={isEditDialogOpen}
 				onOpenChange={setIsEditDialogOpen}
 			>
-				{/* The dialog trigger is hidden here since we open it via controlled state */}
 				<span className="hidden"></span>
 			</AnnouncementFormDialog>
 
-			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+			<AlertDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Hapus Pengumuman?</AlertDialogTitle>
 						<AlertDialogDescription>
-							Apakah Anda yakin ingin menghapus pengumuman ini? Tindakan ini tidak
-							dapat dibatalkan.
+							Apakah Anda yakin ingin menghapus pengumuman ini? Tindakan ini
+							tidak dapat dibatalkan.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>

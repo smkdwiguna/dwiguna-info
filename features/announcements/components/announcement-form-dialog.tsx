@@ -9,15 +9,15 @@ import {
 } from "../actions/announcements";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
+	AlertDialog,
+	AlertDialogContent,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Announcement {
 	id: number;
@@ -45,10 +45,8 @@ export function AnnouncementFormDialog({
 	const [title, setTitle] = useState("");
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
-
 	const isEditing = !!announcement;
 	const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
-
 	const setOpen = (newOpen: boolean) => {
 		if (controlledOpen !== undefined && setControlledOpen) {
 			setControlledOpen(newOpen);
@@ -103,17 +101,16 @@ export function AnnouncementFormDialog({
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle>
-						{isEditing ? "Ubah Pengumuman" : "Buat Pengumuman Baru"}
-					</DialogTitle>
-				</DialogHeader>
-				<form onSubmit={handleSubmit} className="space-y-6 py-4">
+		<AlertDialog open={open} onOpenChange={setOpen}>
+			<AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
+			<AlertDialogContent className="min-w-[50vw] overflow-y-auto">
+				<AlertDialogHeader>
+					<AlertDialogTitle>
+						{isEditing ? "Edit Pengumuman" : "Buat Pengumuman"}
+					</AlertDialogTitle>
+				</AlertDialogHeader>
+				<form onSubmit={handleSubmit} className="space-y-2">
 					<div className="space-y-2">
-						<Label htmlFor="title">Judul Pengumuman</Label>
 						<Input
 							id="title"
 							value={title}
@@ -123,12 +120,11 @@ export function AnnouncementFormDialog({
 						/>
 					</div>
 
-					<div className="space-y-2">
-						<Label htmlFor="content">Isi Pengumuman</Label>
+					<div className="overflow-y-auto max-h-[50vh]">
 						<AnnouncementEditor value={content} onChange={setContent} />
 					</div>
 
-					<div className="flex justify-end gap-2">
+					<AlertDialogFooter>
 						<Button
 							type="button"
 							variant="outline"
@@ -138,11 +134,11 @@ export function AnnouncementFormDialog({
 							Batal
 						</Button>
 						<Button type="submit" disabled={isSubmitting}>
-							{isSubmitting ? "Menyimpan..." : "Simpan Pengumuman"}
+							{isSubmitting ? "Menyimpan..." : "Simpan"}
 						</Button>
-					</div>
+					</AlertDialogFooter>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</AlertDialogContent>
+		</AlertDialog>
 	);
 }

@@ -72,7 +72,10 @@ export function AnnouncementActionButtons({
 				<span className="hidden"></span>
 			</AnnouncementFormDialog>
 
-			<AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+			<AlertDialog
+				open={isDeleteDialogOpen}
+				onOpenChange={setIsDeleteDialogOpen}
+			>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Hapus Pengumuman?</AlertDialogTitle>

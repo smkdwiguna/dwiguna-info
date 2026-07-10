@@ -4,10 +4,7 @@ import { getDb } from "@/lib/db";
 import { announcements } from "@/lib/db/announcement-schema";
 import { desc, eq, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/server-session";
-import {
-	requirePermission,
-	getLivePermissions,
-} from "@/features/access-management/actions/require-permission";
+import { requirePermission } from "@/features/access-management/actions/require-permission";
 import sanitizeHtml from "sanitize-html";
 
 export async function getLatestAnnouncements(limit: number = 3) {
@@ -50,7 +47,7 @@ export async function createAnnouncement(title: string, content: string) {
 		allowedAttributes: {
 			...sanitizeHtml.defaults.allowedAttributes,
 			img: ["src", "alt", "title", "width", "height", "referrerpolicy"],
-			a: ["href", "name", "target"],
+			a: ["href", "name", "target", "rel"],
 			iframe: [
 				"src",
 				"width",
@@ -87,7 +84,6 @@ export async function createAnnouncement(title: string, content: string) {
 			title,
 			content: sanitizedContent,
 			authorEmail: session.user.email,
-			authorName: session.user.name,
 		})
 		.returning();
 
@@ -160,12 +156,4 @@ export async function deleteAnnouncement(id: number) {
 
 	const db = await getDb();
 	await db.delete(announcements).where(eq(announcements.id, id));
-}
-
-export async function getLiveAnnouncementPermission() {
-	const { session, permissions, isSuperUser } = await getLivePermissions();
-	if (!session?.user) return { canCreate: false };
-
-	if (isSuperUser) return { canCreate: true };
-	return { canCreate: permissions.includes("announcement") };
 }
