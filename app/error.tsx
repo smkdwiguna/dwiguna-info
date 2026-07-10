@@ -7,10 +7,8 @@ import { BrandLogo } from "@/components/brand-logo";
 
 export default function Error({
 	error,
-	reset,
 }: {
 	error: Error & { digest?: string };
-	reset: () => void;
 }) {
 	return (
 		<div className="flex min-h-svh items-center justify-center bg-muted/20 p-4">
@@ -31,9 +29,6 @@ export default function Error({
 						</p>
 					) : null}
 					<div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
-						<Button variant="outline" onClick={reset}>
-							Coba Lagi
-						</Button>
 						<Button asChild>
 							<Link href="/">Ke Beranda</Link>
 						</Button>
