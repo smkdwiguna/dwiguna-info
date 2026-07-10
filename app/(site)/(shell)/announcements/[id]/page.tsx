@@ -1,4 +1,4 @@
-import { getAnnouncement } from "@/features/announcements/actions/announcements";
+import { getAnnouncement, getLiveAnnouncementPermission } from "@/features/announcements/actions/announcements";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -8,7 +8,7 @@ import {
 	PageHeaderTitle,
 	PageShell,
 } from "@/components/ui/page-header";
-import { getUserDetails } from "@/features/workspace-admin/actions/get-user-details";
+import { AnnouncementActionButtons } from "@/features/announcements/components/announcement-action-buttons";
 
 export default async function AnnouncementDetailPage({
 	params,
@@ -21,7 +21,10 @@ export default async function AnnouncementDetailPage({
 		notFound();
 	}
 
-	const announcement = await getAnnouncement(id);
+	const [announcement, { canCreate }] = await Promise.all([
+		getAnnouncement(id),
+		getLiveAnnouncementPermission(),
+	]);
 
 	if (!announcement) {
 		notFound();
@@ -29,16 +32,22 @@ export default async function AnnouncementDetailPage({
 
 	return (
 		<PageShell>
-			<PageHeader>
-				<PageHeaderHeading>
-					<PageHeaderBack />
-					<PageHeaderTitle>{announcement.title}</PageHeaderTitle>
-				</PageHeaderHeading>
-			</PageHeader>
+			<div className="flex justify-between items-start gap-4">
+				<PageHeader className="flex-grow">
+					<PageHeaderHeading>
+						<PageHeaderBack />
+						<PageHeaderTitle className="break-words">{announcement.title}</PageHeaderTitle>
+					</PageHeaderHeading>
+				</PageHeader>
+				{canCreate && (
+					<AnnouncementActionButtons announcement={announcement} />
+				)}
+			</div>
+
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-muted-foreground flex items-center justify-center text-sm text">
-						{(await getUserDetails(announcement.authorEmail)).name?.fullName +
+					<CardTitle className="text-muted-foreground flex items-center justify-center text-sm text font-normal">
+						{(announcement.authorName || announcement.authorEmail) +
 							" • " +
 							new Date(announcement.createdAt).toLocaleDateString("id-ID", {
 								year: "numeric",

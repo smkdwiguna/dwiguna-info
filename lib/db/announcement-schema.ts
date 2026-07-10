@@ -6,6 +6,7 @@ export const announcements = sqliteTable("announcements", {
 	title: text("title").notNull(),
 	content: text("content").notNull(), // HTML content from WYSIWYG
 	authorEmail: text("author_email").notNull(),
+	authorName: text("author_name"),
 	createdAt: text("created_at")
 		.notNull()
 		.default(sql`(CURRENT_TIMESTAMP)`),

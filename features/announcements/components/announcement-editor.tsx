@@ -129,7 +129,7 @@ export function AnnouncementEditor({
 
 	const handleImageUpload = useCallback(async () => {
 		if (!selectedFile) {
-			toast.error("Please select a file first");
+			toast.error("Pilih berkas terlebih dahulu");
 			return;
 		}
 
@@ -145,7 +145,7 @@ export function AnnouncementEditor({
 			setImageUrl("");
 		} catch (error) {
 			console.error("Failed to upload image", error);
-			toast.error("Failed to upload image");
+			toast.error("Gagal mengunggah gambar");
 		} finally {
 			setIsUploading(false);
 		}
@@ -172,7 +172,7 @@ export function AnnouncementEditor({
 
 	const handleFileUpload = useCallback(async () => {
 		if (!selectedFile) {
-			toast.error("Please select a file first");
+			toast.error("Pilih berkas terlebih dahulu");
 			return;
 		}
 
@@ -187,7 +187,7 @@ export function AnnouncementEditor({
 				?.chain()
 				.focus()
 				.insertContent(
-					`<a href="${result.url}" target="_blank">Download ${selectedFile.name}</a>`,
+					`<a href="${result.url}" target="_blank">Unduh ${selectedFile.name}</a>`,
 				)
 				.run();
 
@@ -195,7 +195,7 @@ export function AnnouncementEditor({
 			setSelectedFile(null);
 		} catch (error) {
 			console.error("Failed to upload file", error);
-			toast.error("Failed to upload file");
+			toast.error("Gagal mengunggah berkas");
 		} finally {
 			setIsUploading(false);
 		}
@@ -341,11 +341,11 @@ export function AnnouncementEditor({
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Insert Link</DialogTitle>
+							<DialogTitle>Sisipkan Tautan</DialogTitle>
 						</DialogHeader>
 						<div className="grid gap-4 py-4">
 							<div className="grid gap-2">
-								<Label htmlFor="url">URL</Label>
+								<Label htmlFor="url">URL Tautan</Label>
 								<Input
 									id="url"
 									value={linkUrl}
@@ -354,7 +354,7 @@ export function AnnouncementEditor({
 								/>
 							</div>
 							<Button type="button" onClick={setLink}>
-								Save Link
+								Simpan Tautan
 							</Button>
 						</div>
 					</DialogContent>
@@ -379,12 +379,12 @@ export function AnnouncementEditor({
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Insert Image / File</DialogTitle>
+							<DialogTitle>Sisipkan Gambar / Berkas</DialogTitle>
 						</DialogHeader>
 						<div className="grid gap-4 py-4">
 							<div className="grid gap-2">
 								<Label htmlFor="imageFile">
-									Upload File (Image or Document, Max 6MB)
+									Unggah Berkas (Gambar atau Dokumen, Maks 6MB)
 								</Label>
 								<Input
 									id="imageFile"
@@ -399,7 +399,7 @@ export function AnnouncementEditor({
 										className="flex-1"
 									>
 										<ImageIcon className="w-4 h-4 mr-2" />
-										Upload as Image
+										{isUploading ? "Mengunggah..." : "Unggah sebagai Gambar"}
 									</Button>
 									<Button
 										type="button"
@@ -409,7 +409,7 @@ export function AnnouncementEditor({
 										variant="secondary"
 									>
 										<FileDown className="w-4 h-4 mr-2" />
-										Upload as Link
+										{isUploading ? "Mengunggah..." : "Unggah sebagai Tautan"}
 									</Button>
 								</div>
 							</div>
@@ -419,12 +419,12 @@ export function AnnouncementEditor({
 								</div>
 								<div className="relative flex justify-center text-xs uppercase">
 									<span className="bg-background px-2 text-muted-foreground">
-										Or enter URL
+										Atau masukkan URL
 									</span>
 								</div>
 							</div>
 							<div className="grid gap-2">
-								<Label htmlFor="imageUrl">Image URL</Label>
+								<Label htmlFor="imageUrl">URL Gambar</Label>
 								<Input
 									id="imageUrl"
 									value={imageUrl}
@@ -436,7 +436,7 @@ export function AnnouncementEditor({
 									onClick={addImageUrl}
 									disabled={!imageUrl}
 								>
-									Add by URL
+									Tambah dari URL
 								</Button>
 							</div>
 						</div>
@@ -452,18 +452,18 @@ export function AnnouncementEditor({
 							variant="ghost"
 							size="sm"
 							type="button"
-							aria-label="YouTube Video"
+							aria-label="Video YouTube"
 						>
 							<Video className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Insert YouTube Video</DialogTitle>
+							<DialogTitle>Sisipkan Video YouTube</DialogTitle>
 						</DialogHeader>
 						<div className="grid gap-4 py-4">
 							<div className="grid gap-2">
-								<Label htmlFor="youtubeUrl">YouTube URL</Label>
+								<Label htmlFor="youtubeUrl">URL YouTube</Label>
 								<Input
 									id="youtubeUrl"
 									value={youtubeUrl}
@@ -476,7 +476,7 @@ export function AnnouncementEditor({
 								onClick={addYoutubeVideo}
 								disabled={!youtubeUrl}
 							>
-								Add Video
+								Tambah Video
 							</Button>
 						</div>
 					</DialogContent>

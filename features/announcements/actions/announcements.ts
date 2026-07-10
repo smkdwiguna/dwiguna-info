@@ -2,7 +2,7 @@
 
 import { getDb } from "@/lib/db";
 import { announcements } from "@/lib/db/announcement-schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/server-session";
 import {
 	requirePermission,
@@ -87,10 +87,79 @@ export async function createAnnouncement(title: string, content: string) {
 			title,
 			content: sanitizedContent,
 			authorEmail: session.user.email,
+			authorName: session.user.name,
 		})
 		.returning();
 
 	return newAnnouncement;
+}
+
+export async function updateAnnouncement(
+	id: number,
+	title: string,
+	content: string,
+) {
+	const session = await getServerSession();
+	if (!session?.user?.email) {
+		throw new Error("Unauthorized");
+	}
+
+	await requirePermission("announcement");
+
+	const sanitizedContent = sanitizeHtml(content, {
+		allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "iframe"],
+		allowedAttributes: {
+			...sanitizeHtml.defaults.allowedAttributes,
+			img: ["src", "alt", "title", "width", "height", "referrerpolicy"],
+			a: ["href", "name", "target"],
+			iframe: [
+				"src",
+				"width",
+				"height",
+				"allow",
+				"allowfullscreen",
+				"frameborder",
+			],
+		},
+		allowedClasses: {},
+		transformTags: {
+			img: (tagName, attribs) => {
+				return {
+					tagName: "img",
+					attribs: {
+						...attribs,
+						referrerpolicy: attribs.referrerpolicy || "no-referrer",
+					},
+				};
+			},
+		},
+		allowedIframeHostnames: ["www.youtube.com", "youtube.com", "youtu.be"],
+	});
+
+	const db = await getDb();
+	const [updatedAnnouncement] = await db
+		.update(announcements)
+		.set({
+			title,
+			content: sanitizedContent,
+			updatedAt: sql`(CURRENT_TIMESTAMP)`,
+		})
+		.where(eq(announcements.id, id))
+		.returning();
+
+	return updatedAnnouncement;
+}
+
+export async function deleteAnnouncement(id: number) {
+	const session = await getServerSession();
+	if (!session?.user?.email) {
+		throw new Error("Unauthorized");
+	}
+
+	await requirePermission("announcement");
+
+	const db = await getDb();
+	await db.delete(announcements).where(eq(announcements.id, id));
 }
 
 export async function getLiveAnnouncementPermission() {

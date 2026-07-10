@@ -23,6 +23,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CardContent } from "@/components/ui/card";
 import { AnnouncementCard } from "@/features/announcements/components/announcement-card";
+import { getLiveAnnouncementPermission } from "@/features/announcements/actions/announcements";
 
 export default async function DashboardPage() {
 	const session = await getServerSession();
@@ -50,7 +51,10 @@ export default async function DashboardPage() {
 			: null,
 	].filter((side): side is { label: string; src: string } => Boolean(side));
 
-	const latestAnnouncements = await getLatestAnnouncements(3);
+	const [latestAnnouncements, { canCreate }] = await Promise.all([
+		getLatestAnnouncements(3),
+		getLiveAnnouncementPermission(),
+	]);
 
 	return (
 		<div className="space-y-4">
@@ -161,10 +165,12 @@ export default async function DashboardPage() {
 							</CardContent>
 						</Card>
 					) : (
-						latestAnnouncements.map(async (announcement) => (
+						latestAnnouncements.map((announcement) => (
 							<AnnouncementCard
 								key={announcement.id}
 								announcement={announcement}
+								authorName={announcement.authorName || announcement.authorEmail}
+								canEdit={canCreate}
 							/>
 						))
 					)}
