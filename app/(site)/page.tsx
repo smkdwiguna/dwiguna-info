@@ -22,6 +22,7 @@ import { CreditCardIcon, DownloadIcon, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { CardContent } from "@/components/ui/card";
+import { AnnouncementCard } from "@/features/announcements/components/announcement-card";
 
 export default async function DashboardPage() {
 	const session = await getServerSession();
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
 	const latestAnnouncements = await getLatestAnnouncements(3);
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<Card>
 				<CardHeader>
 					<div className="flex items-start gap-4">
@@ -141,7 +142,9 @@ export default async function DashboardPage() {
 
 			<div className="space-y-4">
 				<div className="flex items-center justify-between">
-					<h2 className="text-xl font-semibold tracking-tight">Pengumuman Terbaru</h2>
+					<h2 className="text-xl font-semibold tracking-tight">
+						Pengumuman Terbaru
+					</h2>
 					<Link href="/announcements">
 						<Button variant="ghost" size="sm" className="gap-2">
 							Lihat Semua
@@ -150,7 +153,7 @@ export default async function DashboardPage() {
 					</Link>
 				</div>
 
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+				<div className="grid gap-4">
 					{latestAnnouncements.length === 0 ? (
 						<Card className="col-span-full">
 							<CardContent className="py-8 text-center text-muted-foreground">
@@ -158,31 +161,11 @@ export default async function DashboardPage() {
 							</CardContent>
 						</Card>
 					) : (
-						latestAnnouncements.map((announcement) => (
-							<Card key={announcement.id} className="flex flex-col">
-								<CardHeader>
-									<CardTitle className="line-clamp-2 text-lg">
-										<Link
-											href={`/announcements/${announcement.id}`}
-											className="hover:underline"
-										>
-											{announcement.title}
-										</Link>
-									</CardTitle>
-									<div className="text-xs text-muted-foreground pt-1">
-										{new Date(announcement.createdAt).toLocaleDateString("id-ID", {
-											year: "numeric",
-											month: "short",
-											day: "numeric",
-										})}
-									</div>
-								</CardHeader>
-								<CardContent className="flex-grow">
-									<p className="line-clamp-3 text-sm text-muted-foreground">
-										{announcement.content.replace(/<[^>]*>?/gm, "")}
-									</p>
-								</CardContent>
-							</Card>
+						latestAnnouncements.map(async (announcement) => (
+							<AnnouncementCard
+								key={announcement.id}
+								announcement={announcement}
+							/>
 						))
 					)}
 				</div>

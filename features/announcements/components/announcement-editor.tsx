@@ -18,7 +18,7 @@ import {
 	Heading1,
 	Heading2,
 	Heading3,
-	Youtube as YoutubeIcon,
+	Video,
 	FileDown,
 } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -46,7 +46,11 @@ export function AnnouncementEditor({
 	const editor = useEditor({
 		extensions: [
 			StarterKit,
-			Image,
+			Image.configure({
+				HTMLAttributes: {
+					referrerpolicy: "no-referrer",
+				},
+			}),
 			Link.configure({
 				openOnClick: false,
 				autolink: true,
@@ -134,7 +138,7 @@ export function AnnouncementEditor({
 			const formData = new FormData();
 			formData.append("file", selectedFile);
 			const result = await uploadAnnouncementImage(formData);
-
+			console.log(result);
 			editor?.chain().focus().setImage({ src: result.url }).run();
 			setIsImageDialogOpen(false);
 			setSelectedFile(null);
@@ -182,7 +186,9 @@ export function AnnouncementEditor({
 			editor
 				?.chain()
 				.focus()
-				.insertContent(`<a href="${result.url}" target="_blank">Download ${selectedFile.name}</a>`)
+				.insertContent(
+					`<a href="${result.url}" target="_blank">Download ${selectedFile.name}</a>`,
+				)
 				.run();
 
 			setIsImageDialogOpen(false); // Also using this dialog for generic files for now
@@ -200,13 +206,15 @@ export function AnnouncementEditor({
 	}
 
 	return (
-		<div className="border border-input rounded-md overflow-hidden bg-background flex flex-col min-h-[400px]">
+		<div className="border border-input rounded-md overflow-hidden bg-background flex flex-col h-full">
 			<div className="bg-muted p-2 flex flex-wrap gap-1 border-b border-input items-center sticky top-0 z-10">
 				<Button
 					variant="ghost"
 					size="sm"
 					onClick={toggleBold}
-					className={editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Bold"
 				>
@@ -216,7 +224,9 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleItalic}
-					className={editor.isActive("italic") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("italic") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Italic"
 				>
@@ -226,7 +236,9 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleStrike}
-					className={editor.isActive("strike") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("strike") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Strikethrough"
 				>
@@ -239,7 +251,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(1)}
-					className={editor.isActive("heading", { level: 1 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 1 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 1"
 				>
@@ -249,7 +265,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(2)}
-					className={editor.isActive("heading", { level: 2 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 2 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 2"
 				>
@@ -259,7 +279,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(3)}
-					className={editor.isActive("heading", { level: 3 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 3 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 3"
 				>
@@ -272,7 +296,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleBulletList}
-					className={editor.isActive("bulletList") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("bulletList")
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Bullet List"
 				>
@@ -282,7 +310,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleOrderedList}
-					className={editor.isActive("orderedList") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("orderedList")
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Ordered List"
 				>
@@ -296,7 +328,11 @@ export function AnnouncementEditor({
 						<Button
 							variant="ghost"
 							size="sm"
-							className={editor.isActive("link") ? "bg-accent text-accent-foreground" : ""}
+							className={
+								editor.isActive("link")
+									? "bg-accent text-accent-foreground"
+									: ""
+							}
 							type="button"
 							aria-label="Link"
 						>
@@ -317,7 +353,9 @@ export function AnnouncementEditor({
 									placeholder="https://example.com"
 								/>
 							</div>
-							<Button type="button" onClick={setLink}>Save Link</Button>
+							<Button type="button" onClick={setLink}>
+								Save Link
+							</Button>
 						</div>
 					</DialogContent>
 				</Dialog>
@@ -335,12 +373,7 @@ export function AnnouncementEditor({
 
 				<Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
 					<DialogTrigger asChild>
-						<Button
-							variant="ghost"
-							size="sm"
-							type="button"
-							aria-label="Image"
-						>
+						<Button variant="ghost" size="sm" type="button" aria-label="Image">
 							<ImageIcon className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
@@ -350,7 +383,9 @@ export function AnnouncementEditor({
 						</DialogHeader>
 						<div className="grid gap-4 py-4">
 							<div className="grid gap-2">
-								<Label htmlFor="imageFile">Upload File (Image or Document)</Label>
+								<Label htmlFor="imageFile">
+									Upload File (Image or Document, Max 6MB)
+								</Label>
 								<Input
 									id="imageFile"
 									type="file"
@@ -396,7 +431,11 @@ export function AnnouncementEditor({
 									onChange={(e) => setImageUrl(e.target.value)}
 									placeholder="https://example.com/image.jpg"
 								/>
-								<Button type="button" onClick={addImageUrl} disabled={!imageUrl}>
+								<Button
+									type="button"
+									onClick={addImageUrl}
+									disabled={!imageUrl}
+								>
 									Add by URL
 								</Button>
 							</div>
@@ -404,7 +443,10 @@ export function AnnouncementEditor({
 					</DialogContent>
 				</Dialog>
 
-				<Dialog open={isYoutubeDialogOpen} onOpenChange={setIsYoutubeDialogOpen}>
+				<Dialog
+					open={isYoutubeDialogOpen}
+					onOpenChange={setIsYoutubeDialogOpen}
+				>
 					<DialogTrigger asChild>
 						<Button
 							variant="ghost"
@@ -412,7 +454,7 @@ export function AnnouncementEditor({
 							type="button"
 							aria-label="YouTube Video"
 						>
-							<YoutubeIcon className="w-4 h-4" />
+							<Video className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
@@ -429,7 +471,11 @@ export function AnnouncementEditor({
 									placeholder="https://www.youtube.com/watch?v=..."
 								/>
 							</div>
-							<Button type="button" onClick={addYoutubeVideo} disabled={!youtubeUrl}>
+							<Button
+								type="button"
+								onClick={addYoutubeVideo}
+								disabled={!youtubeUrl}
+							>
 								Add Video
 							</Button>
 						</div>
@@ -437,7 +483,7 @@ export function AnnouncementEditor({
 				</Dialog>
 			</div>
 
-			<div className="p-4 flex-grow prose prose-sm sm:prose-base max-w-none dark:prose-invert focus:outline-none focus-within:ring-0 [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none">
+			<div className="p-4 grow prose max-w-none dark:prose-invert focus:outline-none focus-within:ring-0 [&_.ProseMirror]:min-h-75 [&_.ProseMirror]:outline-none">
 				<EditorContent editor={editor} />
 			</div>
 		</div>

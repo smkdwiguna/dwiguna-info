@@ -41,14 +41,42 @@ export async function createAnnouncement(title: string, content: string) {
 	await requirePermission("announcement");
 
 	// Sanitize the HTML content before saving
+
 	const sanitizedContent = sanitizeHtml(content, {
-		allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "iframe"]),
+		// 1. Ensure tags are extended cleanly
+		allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "iframe"],
+
+		// 2. Explicitly map your image attributes
 		allowedAttributes: {
 			...sanitizeHtml.defaults.allowedAttributes,
-			img: ["src", "alt", "title", "width", "height"],
+			img: ["src", "alt", "title", "width", "height", "referrerpolicy"],
 			a: ["href", "name", "target"],
-			iframe: ["src", "width", "height", "allow", "allowfullscreen", "frameborder"],
+			iframe: [
+				"src",
+				"width",
+				"height",
+				"allow",
+				"allowfullscreen",
+				"frameborder",
+			],
 		},
+
+		// 3. FORCE strict string enforcement values for referrerpolicy
+		// Without this block, sanitize-html drops custom HTML5 validation parameters
+		allowedClasses: {},
+		transformTags: {
+			img: (tagName, attribs) => {
+				// Force the value to stay lowercase or fallback if missing
+				return {
+					tagName: "img",
+					attribs: {
+						...attribs,
+						referrerpolicy: attribs.referrerpolicy || "no-referrer",
+					},
+				};
+			},
+		},
+
 		allowedIframeHostnames: ["www.youtube.com", "youtube.com", "youtu.be"],
 	});
 
