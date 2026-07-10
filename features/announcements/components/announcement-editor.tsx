@@ -3,7 +3,6 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
 import Youtube from "@tiptap/extension-youtube";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,20 +17,20 @@ import {
 	Heading1,
 	Heading2,
 	Heading3,
-	Youtube as YoutubeIcon,
+	Video,
 	FileDown,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { uploadAnnouncementImage } from "../actions/upload";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
+	DialogFooter,
 } from "@/components/ui/dialog";
 
 interface AnnouncementEditorProps {
@@ -45,11 +44,15 @@ export function AnnouncementEditor({
 }: AnnouncementEditorProps) {
 	const editor = useEditor({
 		extensions: [
-			StarterKit,
-			Image,
-			Link.configure({
-				openOnClick: false,
-				autolink: true,
+			StarterKit.configure({
+				link: {
+					openOnClick: false,
+				},
+			}),
+			Image.configure({
+				HTMLAttributes: {
+					referrerpolicy: "no-referrer",
+				},
 			}),
 			Youtube.configure({
 				width: 480,
@@ -125,7 +128,7 @@ export function AnnouncementEditor({
 
 	const handleImageUpload = useCallback(async () => {
 		if (!selectedFile) {
-			toast.error("Please select a file first");
+			toast.error("Pilih berkas terlebih dahulu");
 			return;
 		}
 
@@ -134,14 +137,14 @@ export function AnnouncementEditor({
 			const formData = new FormData();
 			formData.append("file", selectedFile);
 			const result = await uploadAnnouncementImage(formData);
-
+			console.log(result);
 			editor?.chain().focus().setImage({ src: result.url }).run();
 			setIsImageDialogOpen(false);
 			setSelectedFile(null);
 			setImageUrl("");
 		} catch (error) {
 			console.error("Failed to upload image", error);
-			toast.error("Failed to upload image");
+			toast.error("Gagal mengunggah gambar");
 		} finally {
 			setIsUploading(false);
 		}
@@ -168,7 +171,7 @@ export function AnnouncementEditor({
 
 	const handleFileUpload = useCallback(async () => {
 		if (!selectedFile) {
-			toast.error("Please select a file first");
+			toast.error("Pilih berkas terlebih dahulu");
 			return;
 		}
 
@@ -182,14 +185,16 @@ export function AnnouncementEditor({
 			editor
 				?.chain()
 				.focus()
-				.insertContent(`<a href="${result.url}" target="_blank">Download ${selectedFile.name}</a>`)
+				.insertContent(
+					`<a href="${result.url}" target="_blank">Unduh ${selectedFile.name}</a>`,
+				)
 				.run();
 
 			setIsImageDialogOpen(false); // Also using this dialog for generic files for now
 			setSelectedFile(null);
 		} catch (error) {
 			console.error("Failed to upload file", error);
-			toast.error("Failed to upload file");
+			toast.error("Gagal mengunggah berkas");
 		} finally {
 			setIsUploading(false);
 		}
@@ -200,13 +205,15 @@ export function AnnouncementEditor({
 	}
 
 	return (
-		<div className="border border-input rounded-md overflow-hidden bg-background flex flex-col min-h-[400px]">
+		<div className="border border-input rounded-md overflow-hidden bg-background flex flex-col h-full">
 			<div className="bg-muted p-2 flex flex-wrap gap-1 border-b border-input items-center sticky top-0 z-10">
 				<Button
 					variant="ghost"
 					size="sm"
 					onClick={toggleBold}
-					className={editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("bold") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Bold"
 				>
@@ -216,7 +223,9 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleItalic}
-					className={editor.isActive("italic") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("italic") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Italic"
 				>
@@ -226,7 +235,9 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleStrike}
-					className={editor.isActive("strike") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("strike") ? "bg-accent text-accent-foreground" : ""
+					}
 					type="button"
 					aria-label="Strikethrough"
 				>
@@ -239,7 +250,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(1)}
-					className={editor.isActive("heading", { level: 1 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 1 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 1"
 				>
@@ -249,7 +264,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(2)}
-					className={editor.isActive("heading", { level: 2 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 2 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 2"
 				>
@@ -259,7 +278,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={() => toggleHeading(3)}
-					className={editor.isActive("heading", { level: 3 }) ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("heading", { level: 3 })
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Heading 3"
 				>
@@ -272,7 +295,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleBulletList}
-					className={editor.isActive("bulletList") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("bulletList")
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Bullet List"
 				>
@@ -282,7 +309,11 @@ export function AnnouncementEditor({
 					variant="ghost"
 					size="sm"
 					onClick={toggleOrderedList}
-					className={editor.isActive("orderedList") ? "bg-accent text-accent-foreground" : ""}
+					className={
+						editor.isActive("orderedList")
+							? "bg-accent text-accent-foreground"
+							: ""
+					}
 					type="button"
 					aria-label="Ordered List"
 				>
@@ -296,7 +327,11 @@ export function AnnouncementEditor({
 						<Button
 							variant="ghost"
 							size="sm"
-							className={editor.isActive("link") ? "bg-accent text-accent-foreground" : ""}
+							className={
+								editor.isActive("link")
+									? "bg-accent text-accent-foreground"
+									: ""
+							}
 							type="button"
 							aria-label="Link"
 						>
@@ -305,20 +340,19 @@ export function AnnouncementEditor({
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Insert Link</DialogTitle>
+							<DialogTitle>Sisipkan Tautan</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="url">URL</Label>
-								<Input
-									id="url"
-									value={linkUrl}
-									onChange={(e) => setLinkUrl(e.target.value)}
-									placeholder="https://example.com"
-								/>
-							</div>
-							<Button type="button" onClick={setLink}>Save Link</Button>
-						</div>
+						<Input
+							id="url"
+							value={linkUrl}
+							onChange={(e) => setLinkUrl(e.target.value)}
+							placeholder="https://example.com"
+						/>
+						<DialogFooter>
+							<Button type="button" onClick={setLink}>
+								Simpan Tautan
+							</Button>
+						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 
@@ -335,22 +369,16 @@ export function AnnouncementEditor({
 
 				<Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
 					<DialogTrigger asChild>
-						<Button
-							variant="ghost"
-							size="sm"
-							type="button"
-							aria-label="Image"
-						>
+						<Button variant="ghost" size="sm" type="button" aria-label="Image">
 							<ImageIcon className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
-					<DialogContent>
+					<DialogContent className="min-w-fit">
 						<DialogHeader>
-							<DialogTitle>Insert Image / File</DialogTitle>
+							<DialogTitle>Sisipkan Gambar / Berkas</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
+						<div className="grid gap-4">
 							<div className="grid gap-2">
-								<Label htmlFor="imageFile">Upload File (Image or Document)</Label>
 								<Input
 									id="imageFile"
 									type="file"
@@ -364,7 +392,7 @@ export function AnnouncementEditor({
 										className="flex-1"
 									>
 										<ImageIcon className="w-4 h-4 mr-2" />
-										Upload as Image
+										{isUploading ? "Mengunggah..." : "Unggah sebagai Gambar"}
 									</Button>
 									<Button
 										type="button"
@@ -374,7 +402,7 @@ export function AnnouncementEditor({
 										variant="secondary"
 									>
 										<FileDown className="w-4 h-4 mr-2" />
-										Upload as Link
+										{isUploading ? "Mengunggah..." : "Unggah sebagai Tautan"}
 									</Button>
 								</div>
 							</div>
@@ -384,60 +412,67 @@ export function AnnouncementEditor({
 								</div>
 								<div className="relative flex justify-center text-xs uppercase">
 									<span className="bg-background px-2 text-muted-foreground">
-										Or enter URL
+										Atau masukkan URL
 									</span>
 								</div>
 							</div>
 							<div className="grid gap-2">
-								<Label htmlFor="imageUrl">Image URL</Label>
 								<Input
 									id="imageUrl"
 									value={imageUrl}
 									onChange={(e) => setImageUrl(e.target.value)}
 									placeholder="https://example.com/image.jpg"
 								/>
-								<Button type="button" onClick={addImageUrl} disabled={!imageUrl}>
-									Add by URL
+								<Button
+									type="button"
+									onClick={addImageUrl}
+									disabled={!imageUrl}
+								>
+									Tambah dari URL
 								</Button>
 							</div>
 						</div>
 					</DialogContent>
 				</Dialog>
 
-				<Dialog open={isYoutubeDialogOpen} onOpenChange={setIsYoutubeDialogOpen}>
+				<Dialog
+					open={isYoutubeDialogOpen}
+					onOpenChange={setIsYoutubeDialogOpen}
+				>
 					<DialogTrigger asChild>
 						<Button
 							variant="ghost"
 							size="sm"
 							type="button"
-							aria-label="YouTube Video"
+							aria-label="Video YouTube"
 						>
-							<YoutubeIcon className="w-4 h-4" />
+							<Video className="w-4 h-4" />
 						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>
-							<DialogTitle>Insert YouTube Video</DialogTitle>
+							<DialogTitle>Sisipkan Video YouTube</DialogTitle>
 						</DialogHeader>
-						<div className="grid gap-4 py-4">
-							<div className="grid gap-2">
-								<Label htmlFor="youtubeUrl">YouTube URL</Label>
-								<Input
-									id="youtubeUrl"
-									value={youtubeUrl}
-									onChange={(e) => setYoutubeUrl(e.target.value)}
-									placeholder="https://www.youtube.com/watch?v=..."
-								/>
-							</div>
-							<Button type="button" onClick={addYoutubeVideo} disabled={!youtubeUrl}>
-								Add Video
+						<Input
+							id="youtubeUrl"
+							value={youtubeUrl}
+							onChange={(e) => setYoutubeUrl(e.target.value)}
+							placeholder="https://www.youtube.com/watch?v=..."
+						/>
+						<DialogFooter>
+							<Button
+								type="button"
+								onClick={addYoutubeVideo}
+								disabled={!youtubeUrl}
+							>
+								Tambah Video
 							</Button>
-						</div>
+						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 			</div>
 
-			<div className="p-4 flex-grow prose prose-sm sm:prose-base max-w-none dark:prose-invert focus:outline-none focus-within:ring-0 [&_.ProseMirror]:min-h-[300px] [&_.ProseMirror]:outline-none">
+			<div className="p-4 grow prose max-w-none dark:prose-invert focus:outline-none focus-within:ring-0 [&_.ProseMirror]:min-h-75 [&_.ProseMirror]:outline-none">
 				<EditorContent editor={editor} />
 			</div>
 		</div>

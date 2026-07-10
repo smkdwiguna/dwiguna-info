@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SuspenseSpinner } from "@/components/suspense-spinner";
 import { Button } from "@/components/ui/button";

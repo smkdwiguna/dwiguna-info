@@ -27,7 +27,7 @@ Fitur ini mencakup shell dashboard dan alur administrasi user bulk.
 ## Route Ownership
 
 - `/users` menampilkan daftar user.
-- `/bulk-upload` menangani import atau pembuatan user massal.
+- `/users/bulk-upload` menangani import atau pembuatan user massal.
 - `/access` mengelola assignment permission dan dipisah ke feature access-management.
 - `/inventory` menampilkan daftar inventaris multi-tenant.
 - `/inventory/[id]` menampilkan detail item, anggota, dan riwayat untuk satu inventaris.

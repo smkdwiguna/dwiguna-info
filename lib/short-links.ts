@@ -4,7 +4,7 @@ const SHORT_LINK_RESERVED_SEGMENTS = new Set(
 		"access",
 		"academic",
 		"api",
-		"bulk-upload",
+		"announcements",
 		"inventory",
 		"login",
 		"correspondence",

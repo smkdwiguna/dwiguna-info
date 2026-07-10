@@ -2,12 +2,9 @@
 
 import { getDb } from "@/lib/db";
 import { announcements } from "@/lib/db/announcement-schema";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getServerSession } from "@/lib/server-session";
-import {
-	requirePermission,
-	getLivePermissions,
-} from "@/features/access-management/actions/require-permission";
+import { requirePermission } from "@/features/access-management/actions/require-permission";
 import sanitizeHtml from "sanitize-html";
 
 export async function getLatestAnnouncements(limit: number = 3) {
@@ -41,14 +38,42 @@ export async function createAnnouncement(title: string, content: string) {
 	await requirePermission("announcement");
 
 	// Sanitize the HTML content before saving
+
 	const sanitizedContent = sanitizeHtml(content, {
-		allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "iframe"]),
+		// 1. Ensure tags are extended cleanly
+		allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "iframe"],
+
+		// 2. Explicitly map your image attributes
 		allowedAttributes: {
 			...sanitizeHtml.defaults.allowedAttributes,
-			img: ["src", "alt", "title", "width", "height"],
-			a: ["href", "name", "target"],
-			iframe: ["src", "width", "height", "allow", "allowfullscreen", "frameborder"],
+			img: ["src", "alt", "title", "width", "height", "referrerpolicy"],
+			a: ["href", "name", "target", "rel"],
+			iframe: [
+				"src",
+				"width",
+				"height",
+				"allow",
+				"allowfullscreen",
+				"frameborder",
+			],
 		},
+
+		// 3. FORCE strict string enforcement values for referrerpolicy
+		// Without this block, sanitize-html drops custom HTML5 validation parameters
+		allowedClasses: {},
+		transformTags: {
+			img: (tagName, attribs) => {
+				// Force the value to stay lowercase or fallback if missing
+				return {
+					tagName: "img",
+					attribs: {
+						...attribs,
+						referrerpolicy: attribs.referrerpolicy || "no-referrer",
+					},
+				};
+			},
+		},
+
 		allowedIframeHostnames: ["www.youtube.com", "youtube.com", "youtu.be"],
 	});
 
@@ -65,10 +90,70 @@ export async function createAnnouncement(title: string, content: string) {
 	return newAnnouncement;
 }
 
-export async function getLiveAnnouncementPermission() {
-	const { session, permissions, isSuperUser } = await getLivePermissions();
-	if (!session?.user) return { canCreate: false };
+export async function updateAnnouncement(
+	id: number,
+	title: string,
+	content: string,
+) {
+	const session = await getServerSession();
+	if (!session?.user?.email) {
+		throw new Error("Unauthorized");
+	}
 
-	if (isSuperUser) return { canCreate: true };
-	return { canCreate: permissions.includes("announcement") };
+	await requirePermission("announcement");
+
+	const sanitizedContent = sanitizeHtml(content, {
+		allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "iframe"],
+		allowedAttributes: {
+			...sanitizeHtml.defaults.allowedAttributes,
+			img: ["src", "alt", "title", "width", "height", "referrerpolicy"],
+			a: ["href", "name", "target"],
+			iframe: [
+				"src",
+				"width",
+				"height",
+				"allow",
+				"allowfullscreen",
+				"frameborder",
+			],
+		},
+		allowedClasses: {},
+		transformTags: {
+			img: (tagName, attribs) => {
+				return {
+					tagName: "img",
+					attribs: {
+						...attribs,
+						referrerpolicy: attribs.referrerpolicy || "no-referrer",
+					},
+				};
+			},
+		},
+		allowedIframeHostnames: ["www.youtube.com", "youtube.com", "youtu.be"],
+	});
+
+	const db = await getDb();
+	const [updatedAnnouncement] = await db
+		.update(announcements)
+		.set({
+			title,
+			content: sanitizedContent,
+			updatedAt: sql`(CURRENT_TIMESTAMP)`,
+		})
+		.where(eq(announcements.id, id))
+		.returning();
+
+	return updatedAnnouncement;
+}
+
+export async function deleteAnnouncement(id: number) {
+	const session = await getServerSession();
+	if (!session?.user?.email) {
+		throw new Error("Unauthorized");
+	}
+
+	await requirePermission("announcement");
+
+	const db = await getDb();
+	await db.delete(announcements).where(eq(announcements.id, id));
 }

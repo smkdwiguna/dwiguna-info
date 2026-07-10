@@ -1,9 +1,16 @@
 import { getAnnouncement } from "@/features/announcements/actions/announcements";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import {
+	PageHeader,
+	PageHeaderBack,
+	PageHeaderHeading,
+	PageHeaderTitle,
+	PageShell,
+} from "@/components/ui/page-header";
+import { AnnouncementActionButtons } from "@/features/announcements/components/announcement-action-buttons";
+import { getUserDetails } from "@/features/workspace-admin/actions/get-user-details";
+import { getLivePermissions } from "@/features/access-management/actions/require-permission";
 
 export default async function AnnouncementDetailPage({
 	params,
@@ -16,47 +23,53 @@ export default async function AnnouncementDetailPage({
 		notFound();
 	}
 
-	const announcement = await getAnnouncement(id);
+	const [announcement, { isSuperUser, permissions }] = await Promise.all([
+		getAnnouncement(id),
+		getLivePermissions(),
+	]);
+
+	const canEdit = permissions.includes("announcement") || isSuperUser;
 
 	if (!announcement) {
 		notFound();
 	}
 
 	return (
-		<div className="space-y-6 max-w-4xl mx-auto">
-			<Link href="/announcements">
-				<Button variant="ghost" className="mb-4">
-					<ArrowLeft className="mr-2 h-4 w-4" />
-					Kembali ke Daftar
-				</Button>
-			</Link>
+		<PageShell>
+			<div className="flex justify-between items-start gap-4">
+				<PageHeader className="grow">
+					<PageHeaderHeading>
+						<PageHeaderBack />
+						<PageHeaderTitle className="wrap-break-word">
+							{announcement.title}
+						</PageHeaderTitle>
+					</PageHeaderHeading>
+				</PageHeader>
+				{canEdit && <AnnouncementActionButtons announcement={announcement} />}
+			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-3xl font-bold">
-						{announcement.title}
-					</CardTitle>
-					<div className="text-sm text-muted-foreground flex gap-2 pt-2">
-						<span>{announcement.authorEmail}</span>
-						<span>•</span>
-						<span>
-							{new Date(announcement.createdAt).toLocaleDateString("id-ID", {
+					<CardTitle
+						suppressHydrationWarning
+						className="text-muted-foreground flex items-center text-sm text font-normal"
+					>
+						{(await getUserDetails(announcement.authorEmail))?.name?.fullName +
+							" • " +
+							new Date(announcement.createdAt).toLocaleDateString("id-ID", {
 								year: "numeric",
 								month: "long",
 								day: "numeric",
-								hour: "2-digit",
-								minute: "2-digit",
 							})}
-						</span>
-					</div>
+					</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div
-						className="prose prose-sm sm:prose-base dark:prose-invert max-w-none break-words"
+						className="prose prose-sm sm:prose-base dark:prose-invert max-w-none wrap-break-word"
 						dangerouslySetInnerHTML={{ __html: announcement.content }}
 					/>
 				</CardContent>
 			</Card>
-		</div>
+		</PageShell>
 	);
 }

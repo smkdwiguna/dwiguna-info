@@ -1,0 +1,1 @@
+ALTER TABLE `announcements` ADD `author_name` text;

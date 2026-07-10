@@ -57,6 +57,11 @@ const FEATURE_SETS = [
 		title: "Persuratan",
 		permissions: [{ key: "correspondence", label: "Kelola Persuratan & TTE" }],
 	},
+	{
+		key: "announcement",
+		title: "Pengumuman",
+		permissions: [{ key: "announcement", label: "Kelola Pengumuman" }],
+	},
 ];
 
 function extractAccessFromCustomSchemas(

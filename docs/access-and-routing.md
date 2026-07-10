@@ -56,7 +56,7 @@ Dokumen ini menjelaskan bagaimana izin, route, redirect, dan fallback page salin
   - `access`
   - `presence`
   - `inventory`
-  - `bulk-upload`
+  - `announcements`
   - `shortlink`
   - `settings`
   - `api`

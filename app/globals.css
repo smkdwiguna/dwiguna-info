@@ -156,3 +156,33 @@
 		}
 	}
 }
+
+@layer utilities {
+	.prose {
+		& p,
+		ul,
+		ol {
+			margin: 0;
+			line-height: 1.3em;
+
+			&:empty::before {
+				content: "";
+				display: inline-block;
+			}
+		}
+
+		& :is(h1, h2, h3) {
+			margin-top: 0;
+			margin-bottom: theme("spacing.2");
+		}
+
+		& li {
+			margin-block: 0.15em;
+		}
+
+		& img {
+			margin: theme("spacing.2") 0;
+			border-radius: theme("borderRadius.lg");
+		}
+	}
+}

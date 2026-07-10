@@ -30,7 +30,7 @@ export async function uploadAnnouncementImage(
 	// Since we set makePublic: true, we can use the webViewLink
 	// (or construct a more direct link if needed, but webViewLink usually redirects/renders).
 	// A more direct way to view images in Drive is to use the ID:
-	const directUrl = `https://drive.google.com/uc?export=view&id=${uploaded.id}`;
+	const directUrl = `https://lh3.googleusercontent.com/d/${uploaded.id}`;
 
 	return { url: directUrl };
 }
